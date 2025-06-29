@@ -2,6 +2,8 @@ package com.dataury.soloJ.domain.review.entity;
 
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
 import com.dataury.soloJ.domain.review.entity.status.ReviewTags;
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,4 +33,12 @@ public class Review extends BaseEntity {
 
     @Column
     private ReviewTags reviewTags;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "touristSpot_id")
+    private TouristSpot touristSpot;
 }
