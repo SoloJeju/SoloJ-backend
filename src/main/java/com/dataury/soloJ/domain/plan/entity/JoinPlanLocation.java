@@ -4,6 +4,8 @@ import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,6 +17,12 @@ public class JoinPlanLocation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "plan_location_id", unique = true, nullable = false)
     private Long id;
+
+    @Column
+    private LocalDateTime arrivalDate;
+
+    @Column
+    private LocalDateTime duringDate;
 
     @Column
     private String memo;
