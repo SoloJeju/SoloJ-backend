@@ -5,6 +5,8 @@ import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Builder
@@ -17,5 +19,13 @@ public class ChatRoom extends BaseEntity {
     @Column(name = "chat_room_id", unique = true)
     private Long id;
 
+    @Column
+    private Boolean isCompleted;
+
+    @Column
+    private LocalDateTime joinDate;
+
+    @Column
+    private int numberOfMembers;
 
 }

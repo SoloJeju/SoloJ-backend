@@ -28,7 +28,7 @@ public class JoinChat extends BaseEntity {
     private ChatRoom chatRoom;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "join_status")
     private JoinChatStatus status;
 
     // 상태 변경 메서드

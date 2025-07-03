@@ -3,8 +3,11 @@ package com.dataury.soloJ.domain.user.entity;
 import com.dataury.soloJ.domain.user.entity.status.Country;
 import com.dataury.soloJ.domain.user.entity.status.Gender;
 import com.dataury.soloJ.domain.user.entity.status.Role;
+import com.dataury.soloJ.domain.user.entity.status.UserType;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -25,6 +28,9 @@ public class UserProfile {
     @Column(unique = true, nullable = false)
     private String nickName;
 
+    @Column(unique = true, nullable = false)
+    private LocalDate birthDate;
+
     @Column(nullable = false)
     @Builder.Default
     private int point = 0;
@@ -43,6 +49,10 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserType userType;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
