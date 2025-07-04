@@ -18,7 +18,6 @@ import java.time.LocalDate;
 @Table(
         name = "user_profile",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_user_phone_number", columnNames = "phoneNumber"),
                 @UniqueConstraint(name = "uk_user_nick_name", columnNames = "nickName")
         }
 )
@@ -29,8 +28,8 @@ public class UserProfile {
     @Column(name = "user_profile_id", unique = true, nullable = false)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String phoneNumber;
+//    @Column(unique = true, nullable = false)
+//    private String phoneNumber;
 
     @Column(unique = true, nullable = false)
     private String nickName;

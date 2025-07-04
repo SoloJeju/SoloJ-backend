@@ -19,7 +19,6 @@ public class AuthRequestDTO {
         private Gender gender;
         private LocalDate birthDate;
         private String nickName;
-        private String phoneNumber;
 
         private String userType;
 
