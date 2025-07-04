@@ -15,6 +15,13 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(
+        name = "user_profile",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_user_phone_number", columnNames = "phoneNumber"),
+                @UniqueConstraint(name = "uk_user_nick_name", columnNames = "nickName")
+        }
+)
 public class UserProfile {
 
     @Id
@@ -28,7 +35,7 @@ public class UserProfile {
     @Column(unique = true, nullable = false)
     private String nickName;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
     @Column(nullable = false)
@@ -47,11 +54,7 @@ public class UserProfile {
     private Country country = Country.KOREA;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private UserType userType;
 
     @OneToOne(fetch = FetchType.LAZY)
