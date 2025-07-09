@@ -144,4 +144,11 @@ public class AuthController {
         return ApiResponse.onFailure("COMMON400", "이메일 인증번호와 다릅니다.", false);
     }
 
+    @GetMapping("/validate-password")
+    @Operation(summary = "비밀번호 유효성 체크", description = "중복된 닉네임이 있는지 확인합니다. ")
+    public ApiResponse<String> validatePassword(@RequestParam String password) {
+        authService.validatePassword(password);
+        return ApiResponse.onSuccess("비밀번호가 유효합니다");
+    }
+
 }
