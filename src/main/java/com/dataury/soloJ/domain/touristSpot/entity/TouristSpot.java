@@ -6,6 +6,8 @@ import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -33,7 +35,5 @@ public class TouristSpot extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
-    @Column
-    @Enumerated(EnumType.STRING)
-    private ReviewTags reviewTags;
+
 }

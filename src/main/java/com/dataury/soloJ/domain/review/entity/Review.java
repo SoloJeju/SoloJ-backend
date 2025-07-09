@@ -29,9 +29,11 @@ public class Review extends BaseEntity {
     private String reviewText;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private ReviewTags reviewTags;
 
     @ManyToOne(fetch = FetchType.LAZY)

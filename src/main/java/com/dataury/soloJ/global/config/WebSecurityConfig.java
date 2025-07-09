@@ -46,13 +46,16 @@ public class WebSecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // Swagger 경로 인증 비활성화
-        http.authorizeHttpRequests(auth -> {
-            auth
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api/**") // Swagger 관련 경로
-                    .permitAll() // 인증 없이 접근 가능
-                    .anyRequest() // 그 외 모든 요청
-                    .authenticated(); // 인증 필요
-        });
+        http.authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
+                        //.requestMatchers("/api/user/**", "/api/booths/**", "/api/**").permitAll()   // /api 이하 경로 접근 허용\
+                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
+                        .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()  // WebSocket 엔드포인트 허용
+                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.exceptionHandling(except -> {
             // 인증 실패 (401)
@@ -77,9 +80,6 @@ public class WebSecurityConfig {
                 )));
             });
         });
-
-        // JWT 필터 추가
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
