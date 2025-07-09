@@ -14,10 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -98,6 +95,14 @@ public class AuthController {
     })
     public ApiResponse<AuthResponseDTO.SignResponseDTO> kakaoProfile(@Parameter(hidden = true) @AuthUser Long userId, @RequestBody AuthRequestDTO.KakaoRequestDTO kakaoRequestDTO) {
         return ApiResponse.onSuccess(authService.setProfile(userId, kakaoRequestDTO));
+    }
+
+    @GetMapping("/check-email")
+    @Operation(summary = "이메일 중복확인", description = "중복된 이메일이 있는지 확인합니다. ")
+    public ApiResponse<String> checkEmail(@RequestParam String email) {
+        authService.validateEmail(email);
+        authService.duplicationCheckEmail(email);
+        return ApiResponse.onSuccess("중복 없음");
     }
 
 

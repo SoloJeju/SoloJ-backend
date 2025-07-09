@@ -98,6 +98,13 @@ public class AuthService {
 
     }
 
+    // 이메일 중복 체크
+    public void duplicationCheckEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new GeneralException(ErrorStatus.EMAIL_DUPLICATE);
+        }
+    }
+
     //로그인
     @Transactional
     public AuthResponseDTO.LoginResponseDTO login(AuthRequestDTO.LoginRequestDTO dto) {
