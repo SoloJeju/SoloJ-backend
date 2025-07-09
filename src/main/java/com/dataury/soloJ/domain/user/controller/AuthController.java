@@ -5,8 +5,11 @@ import com.dataury.soloJ.domain.user.dto.AuthRequestDTO;
 import com.dataury.soloJ.domain.user.dto.AuthResponseDTO;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.service.AuthService;
+import com.dataury.soloJ.domain.user.service.MailService;
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.auth.AuthUser;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +28,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final MailService mailService;
 
 
     @PostMapping("/adminSignup")
@@ -112,5 +116,32 @@ public class AuthController {
         return ApiResponse.onSuccess("중복 없음");
     }
 
+    @PostMapping("/mailSend")
+    @Operation(summary = "이메일 인증코드 전송", description = "이메일 인증코드를 전송합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<String> mailSend(@RequestBody String email) {
+        if (email == null || email.isEmpty()) {
+            throw new GeneralException(ErrorStatus.EMAIL_NOT_FOUND);
+        }
+        mailService.sendMail(email);
+        return ApiResponse.onSuccess("인증 코드가 이메일로 전송되었습니다.");
+    }
+
+    @GetMapping("/check-number")
+    @Operation(summary = "이메일 인증코드 번호 체크", description = "전송된 이메일 인증코드와 번호를 체크합니다. ")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<Boolean> numberCheck(@RequestParam String email, Integer number) {
+
+        if (mailService.checkVerificationNumber(email, number))
+            return ApiResponse.onSuccess(true);
+
+        return ApiResponse.onFailure("COMMON400", "이메일 인증번호와 다릅니다.", false);
+    }
 
 }

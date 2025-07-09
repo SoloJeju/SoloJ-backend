@@ -36,3 +36,16 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
     cache: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SOLOJ_EMAIL}
+    password: ${APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    default-encoding: UTF-8
