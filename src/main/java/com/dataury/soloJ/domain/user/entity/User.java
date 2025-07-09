@@ -7,9 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
-
-import java.util.Collection;
 
 @Entity
 @Getter
@@ -27,6 +24,9 @@ public class User extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", unique = true, nullable = false)
     private Long id;
+
+    @Column(unique = true)
+    private String kakaoId;
 
     @Column(unique = true, nullable = false)
     private String email;

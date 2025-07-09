@@ -3,6 +3,8 @@ package com.dataury.soloJ.global.config;
 
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.security.JwtAuthenticationFilter;
+import com.dataury.soloJ.global.security.oauth.CustomOAuth2UserService;
+import com.dataury.soloJ.global.security.oauth.OAuth2LoginSuccessHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -37,6 +41,12 @@ public class WebSecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -44,6 +54,8 @@ public class WebSecurityConfig {
         http.httpBasic(basic -> basic.disable());
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()).disable());
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+//        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
 
         // Swagger 경로 인증 비활성화
         http.authorizeHttpRequests(auth -> auth
@@ -51,8 +63,10 @@ public class WebSecurityConfig {
                         .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
                         //.requestMatchers("/api/user/**", "/api/booths/**", "/api/**").permitAll()   // /api 이하 경로 접근 허용\
                         .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/login", "/oauth2/**").permitAll()
                         .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                         .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()  // WebSocket 엔드포인트 허용
+                        .requestMatchers("/favicon.ico", "/favicon.ico/**").permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -81,6 +95,12 @@ public class WebSecurityConfig {
             });
         });
 
+        http.oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(oAuth2LoginSuccessHandler)
+        );
+
+
         return http.build();
     }
 
@@ -108,4 +128,10 @@ public class WebSecurityConfig {
 
         return source;
     }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 }
