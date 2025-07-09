@@ -116,7 +116,7 @@ public class AuthController {
         return ApiResponse.onSuccess("중복 없음");
     }
 
-    @PostMapping("/mailSend")
+    @PostMapping("/send-email")
     @Operation(summary = "이메일 인증코드 전송", description = "이메일 인증코드를 전송합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
