@@ -4,9 +4,10 @@ package com.dataury.soloJ.domain.user.service;
 import com.dataury.soloJ.domain.user.converter.AuthConverter;
 import com.dataury.soloJ.domain.user.dto.AuthRequestDTO;
 import com.dataury.soloJ.domain.user.dto.AuthResponseDTO;
+import com.dataury.soloJ.domain.user.entity.RefreshToken;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.UserProfile;
-import com.dataury.soloJ.domain.user.entity.status.Role;
+import com.dataury.soloJ.domain.user.repository.RefreshTokenRepository;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -14,14 +15,13 @@ import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.TokenProvider;
 import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +30,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final TokenProvider tokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -54,8 +55,6 @@ public class AuthService {
             if (rootMsg != null) {
                 if (rootMsg.contains("uk_user_email")) {
                     throw new GeneralException(ErrorStatus.EMAIL_DUPLICATE);
-                } else if (rootMsg.contains("uk_user_phone_number")) {
-                    throw new GeneralException(ErrorStatus.PHONE_DUPLICATE);
                 } else if (rootMsg.contains("uk_user_nick_name")) {
                     throw new GeneralException(ErrorStatus.NICKNAME_DUPLICATE);
                 }
@@ -97,5 +96,54 @@ public class AuthService {
 
     }
 
+    //로그인
+    @Transactional
+    public AuthResponseDTO.LoginResponseDTO login(AuthRequestDTO.LoginRequestDTO dto) {
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new GeneralException(ErrorStatus.PASSWORD_FAILED);
+        }
+
+        String accessToken = tokenProvider.generateAccessToken(user);
+        String refreshToken = tokenProvider.generateRefreshToken(user);
+
+        refreshTokenRepository.save(new RefreshToken(
+                user.getId(),
+                refreshToken,
+                LocalDateTime.now().plusDays(7)
+        ));
+
+        return new AuthResponseDTO.LoginResponseDTO(accessToken, refreshToken);
+    }
+
+    // 토큰재발급
+    public Map<String, String> reissueAccessToken(String refreshToken) {
+        Claims claims = tokenProvider.parseToken(refreshToken);
+        Long userId = Long.parseLong(claims.getSubject());
+
+        // DB에서 확인
+        RefreshToken saved = refreshTokenRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.REFRESH_TOKEN_NOT_FOUND));
+
+        if (!saved.getRefreshToken().equals(refreshToken)) {
+            throw new GeneralException(ErrorStatus.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        String newAccessToken = tokenProvider.generateAccessToken(user);
+
+        return Map.of("accessToken", newAccessToken);
+    }
+
+
+    //로그아웃
+    @Transactional
+    public void logout(Long userId) {
+        refreshTokenRepository.deleteByUserId(userId);
+    }
 
 }

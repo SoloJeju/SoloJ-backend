@@ -15,6 +15,9 @@ public enum ErrorStatus implements BaseErrorCode {
     _UNAUTHORIZED(HttpStatus.UNAUTHORIZED,"COMMON401","인증이 필요합니다."),
     _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
     DATABASE_ERROR(HttpStatus.BAD_REQUEST, "COMMON404", "데이터베이스 에러가 발생하였습니다. 다시 시도해주십시오. "),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND,"COMMON405", "해당 Refresh Token을 찾을 수 없습니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST,"COMMON406", "유효하지 않은 Refresh Token입니다."),
+
 
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4001", "사용자가 없습니다."),
     EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER4003", "이메일이 없습니다."),
@@ -23,10 +26,10 @@ public enum ErrorStatus implements BaseErrorCode {
     EMAIL_DUPLICATE(HttpStatus.BAD_REQUEST,"MEMBER4005","이메일이 이미 존재합니다."),
     NICKNAME_DUPLICATE(HttpStatus.BAD_REQUEST,"MEMBER4006","닉네임이 이미 존재합니다."),
     TYPE_NOT_FOUND(HttpStatus.NOT_FOUND,"MEMBER4007", "해당 유형이 존재하지 않습니다."),
-    PHONE_DUPLICATE(HttpStatus.BAD_REQUEST, "MEMBER4008","휴대폰 번호가 이미 존재합니다."),
+    PASSWORD_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4008","비밀번호가 틀립니다."),
 
-    PASSWORD_VALIDATION_FAILED(HttpStatus.BAD_REQUEST,"MEMBER4007","비밀번호는 영어 대/소문자, 숫자 중 2종류 이상을 조합해야 합니다."),
-    EMAIL_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4008","올바르지 않은 이메일 형식입니다."),
+    PASSWORD_VALIDATION_FAILED(HttpStatus.BAD_REQUEST,"MEMBER4009","비밀번호는 영어 대/소문자, 숫자 중 2종류 이상을 조합해야 합니다."),
+    EMAIL_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4010","올바르지 않은 이메일 형식입니다."),
 
     JWT_SIGNATURE_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "JWT 서명이 올바르지 않습니다."),
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH002", "JWT 토큰이 만료되었습니다."),

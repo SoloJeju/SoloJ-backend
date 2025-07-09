@@ -18,5 +18,15 @@ public class AuthResponseDTO {
     }
 
 
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class LoginResponseDTO {
+        private String accessToken;
+        private String refreshToken;
+    }
+
 
 }
