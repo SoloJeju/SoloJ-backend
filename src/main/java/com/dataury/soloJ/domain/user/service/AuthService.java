@@ -105,6 +105,13 @@ public class AuthService {
         }
     }
 
+    // 닉네임 중복 체크
+    public void duplicationCheckNickName(String nickName){
+        if (userProfileRepository.existsByNickName(nickName)) {
+            throw new GeneralException(ErrorStatus.NICKNAME_DUPLICATE);
+        }
+    }
+
     //로그인
     @Transactional
     public AuthResponseDTO.LoginResponseDTO login(AuthRequestDTO.LoginRequestDTO dto) {

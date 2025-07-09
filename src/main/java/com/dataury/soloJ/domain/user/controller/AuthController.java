@@ -105,7 +105,12 @@ public class AuthController {
         return ApiResponse.onSuccess("중복 없음");
     }
 
-
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복확인", description = "중복된 닉네임이 있는지 확인합니다. ")
+    public ApiResponse<String> checNickName(@RequestParam String nickName) {
+        authService.duplicationCheckNickName(nickName);
+        return ApiResponse.onSuccess("중복 없음");
+    }
 
 
 }
