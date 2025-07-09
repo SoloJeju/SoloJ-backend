@@ -7,6 +7,7 @@ import com.dataury.soloJ.domain.user.dto.AuthResponseDTO;
 import com.dataury.soloJ.domain.user.entity.RefreshToken;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.UserProfile;
+import com.dataury.soloJ.domain.user.entity.status.UserType;
 import com.dataury.soloJ.domain.user.repository.RefreshTokenRepository;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -145,5 +147,57 @@ public class AuthService {
     public void logout(Long userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
+
+    @Transactional
+    public AuthResponseDTO.SignResponseDTO setProfile(Long userId, AuthRequestDTO.KakaoRequestDTO dto) {
+
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+            user.updateName(dto.getName());
+
+            Optional<UserProfile> existingByNickName = userProfileRepository.findByNickName(dto.getNickName());
+            if (existingByNickName.isPresent() && !existingByNickName.get().getUser().getId().equals(userId)) {
+                throw new GeneralException(ErrorStatus.NICKNAME_DUPLICATE);
+            }
+
+            Optional<UserProfile> optionalProfile = userProfileRepository.findByUser(user);
+
+            if (optionalProfile.isPresent()) {
+                UserProfile profile = optionalProfile.get();
+                UserType userType = UserType.fromDisplayName(dto.getUserType());
+                profile.updateProfile(dto.getNickName(), dto.getBirthDate(),dto.getGender(), userType);
+            } else {
+                UserType userType = UserType.fromDisplayName(dto.getUserType());
+                UserProfile userProfile = UserProfile.builder()
+                        .user(user)
+                        .nickName(dto.getNickName())
+                        .gender(dto.getGender())
+                        .birthDate(dto.getBirthDate())
+                        .userType(userType)
+                        .build();
+
+                userProfileRepository.save(userProfile);
+            }
+
+            return AuthConverter.toSigninResponseDTO(user);
+
+        } catch (DataIntegrityViolationException e) {
+            String rootMsg = e.getRootCause() != null ? e.getRootCause().getMessage() : e.getMessage();
+
+            if (rootMsg != null) {
+                if (rootMsg.contains("uk_user_email")) {
+                    throw new GeneralException(ErrorStatus.EMAIL_DUPLICATE);
+                } else if (rootMsg.contains("uk_user_nick_name")) {
+                    throw new GeneralException(ErrorStatus.NICKNAME_DUPLICATE);
+                }
+            }
+
+            throw new GeneralException(ErrorStatus.DATABASE_ERROR);
+        }
+    }
+
+
 
 }

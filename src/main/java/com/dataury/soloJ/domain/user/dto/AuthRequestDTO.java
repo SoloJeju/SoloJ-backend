@@ -42,5 +42,16 @@ public class AuthRequestDTO {
         private String refreshToken;
     }
 
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class KakaoRequestDTO {
+        private String name;
+        private Gender gender;
+        private LocalDate birthDate;
+        private String nickName;
+        private String userType;
+    }
 
 }

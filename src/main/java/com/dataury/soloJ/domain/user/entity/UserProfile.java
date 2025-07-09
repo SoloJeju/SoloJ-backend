@@ -2,7 +2,6 @@ package com.dataury.soloJ.domain.user.entity;
 
 import com.dataury.soloJ.domain.user.entity.status.Country;
 import com.dataury.soloJ.domain.user.entity.status.Gender;
-import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.entity.status.UserType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,4 +58,13 @@ public class UserProfile {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public void updateProfile(String nickName, LocalDate birthDate, Gender gender, UserType userType) {
+        this.nickName = nickName;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.userType = userType;
+
+    }
+
 }

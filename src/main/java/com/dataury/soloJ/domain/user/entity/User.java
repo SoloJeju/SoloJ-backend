@@ -48,4 +48,9 @@ public class User extends BaseEntity{
         this.password = password;
     }
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+
 }

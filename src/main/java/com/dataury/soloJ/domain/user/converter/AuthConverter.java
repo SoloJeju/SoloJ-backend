@@ -8,8 +8,6 @@ import com.dataury.soloJ.domain.user.entity.UserProfile;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.entity.status.UserType;
 
-import java.util.Map;
-
 public class AuthConverter {
 
     public static UserRegistrationData toUser(AuthRequestDTO.SignRequestDTO request, Role role){
@@ -48,6 +46,7 @@ public class AuthConverter {
                 .build();
 
     }
+
 
 
 }
