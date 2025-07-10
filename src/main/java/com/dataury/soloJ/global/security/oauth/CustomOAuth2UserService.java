@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -20,6 +21,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -33,12 +35,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         Optional<User> optionalUser = userRepository.findByKakaoId(kakaoId);
 
+        String encodedPassword = passwordEncoder.encode(randomPassword);
+
+
         if (optionalUser.isEmpty()) {
             // User가 없다면 새로 생성 (자동 저장)
             User user = User.builder()
                     .email(email)
-                    .name("소셜사용자") // 이름은 이후 사용자 입력받기
-                    .password(randomPassword) // JWT 발급만 되면 되므로 암호화 안 해도 됨
+                    .name("소셜사용자")
+                    .password(encodedPassword)
                     .kakaoId(kakaoId)
                     .role(Role.USER)
                     .isDeleted(false)
