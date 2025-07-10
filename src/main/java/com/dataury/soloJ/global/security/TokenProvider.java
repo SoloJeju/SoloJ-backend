@@ -41,15 +41,11 @@ public class TokenProvider {
                 .compact();
     }
 
+    @Deprecated
     public Claims parseToken(String token) {
-        String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
-
-        return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
-                .build()
-                .parseClaimsJws(jwtToken)
-                .getBody();
+        return extractClaims(token);
     }
+
 
 
     // 토큰 검증 및 클레임 추출
