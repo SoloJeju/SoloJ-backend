@@ -17,7 +17,6 @@ public class MailService {
     private final JavaMailSender javaMailSender;
     private static final String senderEmail = "financeus77@gmail.com";
 
-    @Autowired
     private final AuthService authService;
 
     // 각 사용자의 인증 번호를 저장하는 맵
