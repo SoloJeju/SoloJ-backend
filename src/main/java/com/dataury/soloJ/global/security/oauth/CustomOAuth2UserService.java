@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -21,7 +22,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+
+    private final @Lazy PasswordEncoder passwordEncoder;
+
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
