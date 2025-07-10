@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.security.TokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +41,16 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
-        String json = String.format(
-                "{\"accessToken\": \"%s\", \"userId\": %d, \"isProfileCompleted\": %b, \"kakaoNickname\": \"%s\"}",
-                token, user.getId(), isProfileCompleted, kakaoNickname
+        LoginResponseDto responseDto = new LoginResponseDto(
+                token,
+                user.getId(),
+                isProfileCompleted,
+                kakaoNickname
         );
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(responseDto);
+
 
         response.getWriter().write(json);
     }
