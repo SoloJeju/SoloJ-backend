@@ -66,7 +66,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/login", "/oauth2/**").permitAll()
                         .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                         .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()  // WebSocket 엔드포인트 허용
-                        .requestMatchers("/favicon.ico", "/favicon.ico/**").permitAll()
+                        .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
