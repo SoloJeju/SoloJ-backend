@@ -36,18 +36,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = parseBearerToken(request);
 
-            if (token != null && !token.equalsIgnoreCase("null")) {
-                Long userId = tokenProvider.extractUserIdFromToken(token);
-                log.info("Authenticated user ID: " + userId);
+            if (token == null || token.equalsIgnoreCase("null")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-                AbstractAuthenticationToken authentication =
+            Long userId = tokenProvider.extractUserIdFromToken(token);
+            log.info("Authenticated user ID: " + userId);
+
+            AbstractAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, AuthorityUtils.NO_AUTHORITIES);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                 securityContext.setAuthentication(authentication);
                 SecurityContextHolder.setContext(securityContext);
-            }
+
 
             filterChain.doFilter(request, response);
         } catch (GeneralException e) {

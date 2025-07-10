@@ -1,5 +1,7 @@
 package com.dataury.soloJ.domain.user.entity.status;
 
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -37,4 +39,12 @@ public enum UserType {
     private final String keywords;
     private final String typicalAnswer;
 
+    public static UserType fromDisplayName(String displayName) {
+        for (UserType type : UserType.values()) {
+            if (type.getDisplayName().equals(displayName)) {
+                return type;
+            }
+        }
+        throw new GeneralException(ErrorStatus.TYPE_NOT_FOUND);
+    }
 }

@@ -10,25 +10,43 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+import com.dataury.soloJ.domain.user.entity.User;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 @Component
 public class TokenProvider {
 
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 단일 토큰용 비밀키
+    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 토큰용 비밀키
 
-    // 토큰 생성
-    public String generateToken(String username, Long userId) {
+    public String generateAccessToken(User user) {
         return Jwts.builder()
-                .setSubject(username)
-                .claim("userId", userId)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1시간 유효
-                .signWith(SECRET_KEY)
+                .setSubject(user.getId().toString())
+                .claim("userId", user.getId())
+                .claim("role", user.getRole().name())
+                .setExpiration(Date.from(Instant.now().plusSeconds(900))) // 15분
+                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getId().toString())
+                .setExpiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    @Deprecated
+    public Claims parseToken(String token) {
+        return extractClaims(token);
+    }
+
+
 
     // 토큰 검증 및 클레임 추출
     public Claims extractClaims(String token) {
@@ -66,6 +84,8 @@ public class TokenProvider {
             throw new GeneralException(ErrorStatus.JWT_MALFORMED);
         }
     }
+
+
 
 
     // 토큰 유효성 확인
