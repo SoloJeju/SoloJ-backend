@@ -1,13 +1,14 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
+import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.respository.TouristSpotRepository;
 import com.dataury.soloJ.domain.touristSpot.respository.TouristSpotReviewTagRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -19,11 +20,12 @@ public class TourSpotService {
     private final TouristSpotReviewTagRepository touristSpotReviewTagRepository;
     private final TourApiService tourApiService; // TourAPI 호출 위임 받음
 
-    public TourSpotResponse.TourSpotListResponse getTourSpotsWithReview(Pageable pageable) {
-        List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable);
+    public TourSpotResponse.TourSpotListResponse getTourSpotsWithReview(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
+        List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable, filterRequest);
         List<TourSpotResponse.TourSpotItemWithReview> enriched = mapToTourSpotItemsWithReview(items);
         return new TourSpotResponse.TourSpotListResponse(enriched);
     }
+
 
 
     public List<TourSpotResponse.TourSpotItemWithReview> mapToTourSpotItemsWithReview(List<TourApiResponse.Item> items) {
