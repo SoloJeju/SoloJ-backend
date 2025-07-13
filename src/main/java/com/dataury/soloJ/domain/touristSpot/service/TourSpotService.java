@@ -32,21 +32,26 @@ public class TourSpotService {
         return items.stream().map(item -> {
             Long contentId = Long.valueOf(item.getContentid());
 
-            // 1. DB 조회
-            TouristSpot spot = touristSpotRepository.findById(contentId).orElseGet(() -> {
-                // 2. 없으면 새로 저장
-                TouristSpot newSpot = TouristSpot.builder()
-                        .contentId(contentId)
-                        .name(item.getTitle())
-                        .contentTypeId(Long.valueOf(item.getContenttypeid()))
-                        .latitude(Double.parseDouble(item.getMapy()))
-                        .longitude(Double.parseDouble(item.getMapx()))
-                        .build();
+            TouristSpot spot = touristSpotRepository.findById(contentId)
+                    .map(existing -> {
+                        // DB에 이미 있으면 최신 정보로 업데이트
+                        existing.updateFromItem(item);
+                        return touristSpotRepository.save(existing);
+                    })
+                    .orElseGet(() -> {
+                        // 없으면 새로 저장
+                        TouristSpot newSpot = TouristSpot.builder()
+                                .contentId(contentId)
+                                .name(item.getTitle())
+                                .contentTypeId(Long.valueOf(item.getContenttypeid()))
+                                .latitude(Double.parseDouble(item.getMapy()))
+                                .longitude(Double.parseDouble(item.getMapx()))
+                                .firstImage(item.getFirstimage())
+                                .build();
+                        return touristSpotRepository.save(newSpot);
+                    });
 
-                return touristSpotRepository.save(newSpot);
-            });
-
-            // 3. 리뷰 태그 가져오기 (nullable 가능)
+            // 리뷰 태그 가져오기 (nullable 가능)
             List<String> tagDescriptions = touristSpotReviewTagRepository.findAllByTouristSpot(spot)
                     .stream()
                     .map(tag -> tag.getReviewTag().getDescription())
@@ -65,6 +70,7 @@ public class TourSpotService {
                     .build();
         }).toList();
     }
+
 
 }
 

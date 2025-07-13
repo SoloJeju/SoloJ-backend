@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.entity;
 
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
+import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,7 +30,19 @@ public class TouristSpot extends BaseEntity {
     @Column(nullable = false)
     private double longitude;
 
+    @Column(nullable = false)
+    private String firstImage;
+
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
+
+    public void updateFromItem(TourApiResponse.Item item) {
+        this.name = item.getTitle();
+        this.contentTypeId = Long.valueOf(item.getContenttypeid());
+        this.latitude = Double.parseDouble(item.getMapy());
+        this.longitude = Double.parseDouble(item.getMapx());
+        this.firstImage = item.getFirstimage(); // 있다면
+    }
+
 }
 
