@@ -1,4 +1,4 @@
-package com.dataury.soloJ.domain.touristSpot.respository;
+package com.dataury.soloJ.domain.touristSpot.repository;
 
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpotReviewTag;
