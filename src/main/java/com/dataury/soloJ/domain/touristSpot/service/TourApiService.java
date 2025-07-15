@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TourApiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -47,7 +49,7 @@ public class TourApiService {
             return parsed.getResponse().getBody().getItems().getItem();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Tour API 호출 중 에러 발생");
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -69,7 +71,7 @@ public class TourApiService {
             return parsed.getResponse().getBody().getItems().getItem();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Tour API 호출 중 에러 발생: contentId={}", contentId, e);
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -101,7 +103,7 @@ public class TourApiService {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Tour API 호출 중 에러 발생: contentId={}, contentTypeId={}", contentId, contentTypeId, e);
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
