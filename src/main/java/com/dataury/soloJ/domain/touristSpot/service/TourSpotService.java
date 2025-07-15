@@ -37,6 +37,7 @@ public class TourSpotService {
                             .latitude(Double.parseDouble(item.getMapy()))
                             .longitude(Double.parseDouble(item.getMapx()))
                             .firstImage(item.getFirstimage())
+                            .activeGroupCount(0)
                             .build()));
 
             List<String> tagDescriptions = tagRepository.findAllByTouristSpot(spot)
@@ -88,10 +89,19 @@ public class TourSpotService {
     public TourSpotResponse.TourSpotDetailWrapper getTourSpotDetailWithIntro(Long contentId, Long contentTypeId) {
         TourSpotResponse.TourSpotDetailDto basic = getTourSpotDetailCommon(contentId, contentTypeId);
         Map<String, Object> intro = tourApiService.fetchDetailIntroAsMap(contentId, contentTypeId);
+        TouristSpot spot = touristSpotRepository.findById(contentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
+
+        List<String> reviewTags = tagRepository.findAllByTouristSpot(spot).stream()
+                .map(t -> t.getReviewTag().getDescription())
+                .toList();
 
         return TourSpotResponse.TourSpotDetailWrapper.builder()
                 .basic(basic)
                 .intro(intro)
+                .reviewTags(reviewTags)
+                .difficulty(spot.getDifficulty())
+                .activeGroupCount(spot.getActiveGroupCount())
                 .build();
     }
 }
