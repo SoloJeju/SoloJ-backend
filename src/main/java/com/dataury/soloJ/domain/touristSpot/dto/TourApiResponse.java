@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TourApiResponse {
+
     private Response response;
 
     @Data
@@ -36,6 +37,7 @@ public class TourApiResponse {
         private List<Item> item;
     }
 
+    // 실제 파싱 대상
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Item {
@@ -43,8 +45,15 @@ public class TourApiResponse {
         private String contenttypeid;
         private String title;
         private String addr1;
+        private String addr2;
         private String firstimage;
         private String mapx;
         private String mapy;
+        private String overview;
+        private String tel;
+        private String homepage;
     }
+
+
 }
+

@@ -36,5 +36,19 @@ public class TourSpotResponse {
     }
 
 
+    @Data
+    @Builder
+    public static class TourSpotDetailDto {
+        private String contentid;
+        private String contenttypeid;
+        private String title;
+        private String overview;
+        private String tel;
+        private String homepage;
+        private String addr1;
+        private String addr2;
+    }
+
+
 
 }

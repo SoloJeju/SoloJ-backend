@@ -13,10 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -39,6 +36,17 @@ public class TourSpotController {
         if (filterRequest.getAreaCode() == null) {
             filterRequest.setAreaCode(39);
         }
-        return ApiResponse.onSuccess(tourSpotService.getTourSpotsWithReview(pageable, filterRequest));
+        return ApiResponse.onSuccess(tourSpotService.getTourSpotsSummary(pageable, filterRequest));
+    }
+
+    @GetMapping("/{contentId}/detail")
+    @Operation(summary = "관광지 상세 정보 조회")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<TourSpotResponse.TourSpotDetailDto> getTouristSpots(@PathVariable Long contentId, @RequestParam Long contentTypeId) {
+
+        return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailCommon(contentId, contentTypeId));
     }
 }
