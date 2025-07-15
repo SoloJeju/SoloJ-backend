@@ -50,6 +50,8 @@ dependencies {
 
 	implementation 'javax.xml.bind:jaxb-api:2.3.1'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	implementation 'org.springframework.boot:spring-boot-starter-logging'
 }
 
 tasks.named('test') {
