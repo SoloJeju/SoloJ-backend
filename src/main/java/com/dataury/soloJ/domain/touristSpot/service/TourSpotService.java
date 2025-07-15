@@ -9,10 +9,11 @@ import com.dataury.soloJ.domain.touristSpot.respository.TouristSpotReviewTagRepo
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -82,5 +83,15 @@ public class TourSpotService {
     private String extractHomepage(String homepageHtml) {
         if (homepageHtml == null) return null;
         return homepageHtml.replaceAll(".*href=\\\"(.*?)\\\".*", "$1");
+    }
+
+    public TourSpotResponse.TourSpotDetailWrapper getTourSpotDetailWithIntro(Long contentId, Long contentTypeId) {
+        TourSpotResponse.TourSpotDetailDto basic = getTourSpotDetailCommon(contentId, contentTypeId);
+        Map<String, Object> intro = tourApiService.fetchDetailIntroAsMap(contentId, contentTypeId);
+
+        return TourSpotResponse.TourSpotDetailWrapper.builder()
+                .basic(basic)
+                .intro(intro)
+                .build();
     }
 }

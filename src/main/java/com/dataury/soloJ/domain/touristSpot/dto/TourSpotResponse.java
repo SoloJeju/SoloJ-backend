@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 public class TourSpotResponse {
 
@@ -48,6 +49,14 @@ public class TourSpotResponse {
         private String addr1;
         private String addr2;
     }
+
+    @Data
+    @Builder
+    public static class TourSpotDetailWrapper {
+        private TourSpotResponse.TourSpotDetailDto basic;
+        private Map<String, Object> intro;
+    }
+
 
 
 

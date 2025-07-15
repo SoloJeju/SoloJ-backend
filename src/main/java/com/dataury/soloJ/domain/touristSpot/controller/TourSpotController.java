@@ -45,8 +45,9 @@ public class TourSpotController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<TourSpotResponse.TourSpotDetailDto> getTouristSpots(@PathVariable Long contentId, @RequestParam Long contentTypeId) {
+    public ApiResponse<TourSpotResponse.TourSpotDetailWrapper> getTouristSpots(@PathVariable Long contentId, @RequestParam Long contentTypeId) {
 
-        return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailCommon(contentId, contentTypeId));
+       // return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailCommon(contentId, contentTypeId));
+        return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailWithIntro(contentId, contentTypeId));
     }
 }

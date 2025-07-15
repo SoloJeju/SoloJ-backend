@@ -2,8 +2,10 @@ package com.dataury.soloJ.domain.touristSpot.service;
 
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
+import com.dataury.soloJ.domain.touristSpot.dto.detailIntro.*;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +71,48 @@ public class TourApiService {
             e.printStackTrace();
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
+    }
+
+    public Map<String, Object> fetchDetailIntroAsMap(Long contentId, Long contentTypeId) {
+        String url = buildDetailIntroUrl(contentId, contentTypeId);
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            JsonNode itemNode = objectMapper.readTree(response.getBody())
+                    .path("response").path("body").path("items").path("item").get(0);
+
+            Object dto = switch (contentTypeId.intValue()) {
+                case 12 -> objectMapper.treeToValue(itemNode, DetailIntroType12Dto.class);
+                case 14 -> objectMapper.treeToValue(itemNode, DetailIntroType14Dto.class);
+                case 15 -> objectMapper.treeToValue(itemNode, DetailIntroType15Dto.class);
+                case 25 -> objectMapper.treeToValue(itemNode, DetailIntroType25Dto.class);
+                case 28 -> objectMapper.treeToValue(itemNode, DetailIntroType28Dto.class);
+                case 32 -> objectMapper.treeToValue(itemNode, DetailIntroType32Dto.class);
+                case 38 -> objectMapper.treeToValue(itemNode, DetailIntroType38Dto.class);
+                case 39 -> objectMapper.treeToValue(itemNode, DetailIntroType39Dto.class);
+                default -> null;
+            };
+
+            if (dto == null) return null;
+
+            Map<String, Object> fullMap = objectMapper.convertValue(dto, new TypeReference<>() {});
+            return fullMap.entrySet().stream()
+                    .filter(e -> e.getValue() != null && !String.valueOf(e.getValue()).isBlank())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
+        }
+    }
+
+    private String buildDetailIntroUrl(Long contentId, Long contentTypeId) {
+        return "https://apis.data.go.kr/B551011/KorService2/detailIntro2"
+                + "?serviceKey=" + serviceKey
+                + "&MobileApp=AppTest"
+                + "&MobileOS=ETC"
+                + "&_type=json"
+                + "&contentId=" + contentId
+                + "&contentTypeId=" + contentTypeId;
     }
 
     private String buildUrl(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
