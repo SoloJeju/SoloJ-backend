@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -92,7 +93,7 @@ public class TourApiService {
                 default -> null;
             };
 
-            if (dto == null) return null;
+            if (dto == null) return Collections.emptyMap();
 
             Map<String, Object> fullMap = objectMapper.convertValue(dto, new TypeReference<>() {});
             return fullMap.entrySet().stream()
