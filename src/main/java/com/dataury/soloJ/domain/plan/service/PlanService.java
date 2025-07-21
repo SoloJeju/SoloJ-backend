@@ -29,6 +29,10 @@ public class PlanService {
     private final UserRepository userRepository;
 
     public PlanResponseDto.planDto createPlan(Long userId, PlanRequestDto.createPlanDto dto) {
+        if (dto.getStartDate().isAfter(dto.getEndDate())) {//날짜 검증
+            throw new GeneralException(ErrorStatus.INVALID_PLAN_DATE);
+        }
+
         Plan plan = PlanConverter.toPlan(dto);
         List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto, plan);
 
@@ -49,7 +53,7 @@ public class PlanService {
             TouristSpot spot = spotMap.get(contentId);
 
             if (spot == null) {
-               throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
             }
 
             locations.get(i).settingTouristSpot(spot);

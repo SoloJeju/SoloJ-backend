@@ -26,7 +26,7 @@ public enum ErrorStatus implements BaseErrorCode {
     EMAIL_DUPLICATE(HttpStatus.BAD_REQUEST,"MEMBER4005","이메일이 이미 존재합니다."),
     NICKNAME_DUPLICATE(HttpStatus.BAD_REQUEST,"MEMBER4006","닉네임이 이미 존재합니다."),
     TYPE_NOT_FOUND(HttpStatus.NOT_FOUND,"MEMBER4007", "해당 유형이 존재하지 않습니다."),
-    PASSWORD_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4008","비밀번호가 틀립니다."),
+    PASSWORD_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4008","계정이 존재하지 않거나 비밀번호가 틀렸습니다."),
 
     PASSWORD_VALIDATION_FAILED(HttpStatus.BAD_REQUEST,"MEMBER4009","비밀번호는 영어 대/소문자, 숫자 중 2종류 이상을 조합해야 하며 8글자에서 12글자 사이의 값이여야 합니다."),
     EMAIL_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4010","올바르지 않은 이메일 형식입니다."),
@@ -37,6 +37,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
     TOUR_API_FAIL(HttpStatus.BAD_REQUEST,"TOUR4001","TOUR API 호출에 실패하였습니다."),
     TOURIST_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND,"TOURAPI4002","해당 관광지를 찾을 수 없습니다."),
+
+    INVALID_PLAN_DATE(HttpStatus.BAD_REQUEST, "PLAN4001", "여행 시작일은 종료일보다 늦을 수 없습니다."),
+
 
 
     PAGE_BOUND_ERROR(HttpStatus.BAD_REQUEST, "PAGE4001", "페이징 번호가 적절하지 않습니다."),
