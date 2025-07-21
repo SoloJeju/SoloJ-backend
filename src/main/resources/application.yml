@@ -53,3 +53,6 @@ spring:
     default-encoding: UTF-8
   tourapi:
     key: ${SERVICE_KEY}
+openai:
+  model: gpt-3.5-turbo
+  secret-key: ${AI_SECRET_KEY}
