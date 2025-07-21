@@ -131,4 +131,8 @@ public class TourSpotService {
                 .activeGroupCount(spot.getActiveGroupCount())
                 .build();
     }
+
+    public List<TouristSpot> findAllByContentIdIn(List<Long> contentIds) {
+        return touristSpotRepository.findAllByContentIdIn(contentIds);
+    }
 }

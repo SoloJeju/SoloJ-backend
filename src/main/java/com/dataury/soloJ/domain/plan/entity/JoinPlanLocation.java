@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter
 @Builder
 public class JoinPlanLocation {
     @Id
@@ -35,5 +34,8 @@ public class JoinPlanLocation {
     @JoinColumn(name = "touristSpot_id")
     private TouristSpot touristSpot;
 
+    public void settingTouristSpot(TouristSpot touristSpot) {
+        this.touristSpot = touristSpot;
+    }
 
 }
