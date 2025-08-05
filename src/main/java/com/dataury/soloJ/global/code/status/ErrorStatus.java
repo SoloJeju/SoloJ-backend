@@ -38,8 +38,10 @@ public enum ErrorStatus implements BaseErrorCode {
     TOUR_API_FAIL(HttpStatus.BAD_REQUEST,"TOUR4001","TOUR API 호출에 실패하였습니다."),
     TOURIST_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND,"TOURAPI4002","해당 관광지를 찾을 수 없습니다."),
 
-    INVALID_PLAN_DATE(HttpStatus.BAD_REQUEST, "PLAN4001", "여행 시작일은 종료일보다 늦을 수 없습니다."),
-
+    // Plan 관련 에러
+    INVALID_PLAN_DATE(HttpStatus.BAD_REQUEST, "PLAN4001", "시작 날짜는 종료 날짜보다 앞서야 합니다."),
+    PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAN4002", "존재하지 않는 계획입니다."),
+    FORBIDDEN_USER(HttpStatus.FORBIDDEN, "PLAN4003", "해당 계획에 대한 권한이 없습니다."),
 
 
     PAGE_BOUND_ERROR(HttpStatus.BAD_REQUEST, "PAGE4001", "페이징 번호가 적절하지 않습니다."),

@@ -28,4 +28,16 @@ public class PlanConverter {
                         .build())
                 .toList();
     }
+
+    public static List<JoinPlanLocation> toJoinPlanLocations(PlanRequestDto.updatePlanDto dto, Plan plan) {
+        return dto.getSpots().stream()
+                .map(spot -> JoinPlanLocation.builder()
+                        .plan(plan)
+                        .arrivalDate(spot.getArrivalDate())
+                        .duringDate(spot.getDuringDate())
+                        .memo(spot.getMemo())
+                        .build())
+                .toList();
+    }
+
 }

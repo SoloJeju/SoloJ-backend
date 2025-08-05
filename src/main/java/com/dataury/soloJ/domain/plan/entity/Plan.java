@@ -41,4 +41,19 @@ public class Plan extends BaseEntity {
         this.user = user;
     }
 
+    public void updatePlanInfo(String title, TransportType transportType, LocalDateTime startDate, LocalDateTime endDate) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (transportType != null) {
+            this.transportType = transportType;
+        }
+        if (startDate != null) {
+            this.startDate = startDate;
+        }
+        if (endDate != null) {
+            this.endDate = endDate;
+        }
+    }
+
 }
