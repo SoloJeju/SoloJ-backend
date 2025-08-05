@@ -34,6 +34,10 @@ public class JoinPlanLocation {
     @JoinColumn(name = "touristSpot_id")
     private TouristSpot touristSpot;
 
+    @Column(nullable = false)
+    private Integer dayIndex; // 1일차, 2일차 등
+
+
     public void settingTouristSpot(TouristSpot touristSpot) {
         this.touristSpot = touristSpot;
     }

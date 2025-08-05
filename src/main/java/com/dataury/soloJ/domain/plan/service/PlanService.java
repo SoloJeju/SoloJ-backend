@@ -29,16 +29,18 @@ public class PlanService {
     private final TourSpotService tourSpotService;
     private final UserRepository userRepository;
 
+    @Transactional
     public PlanResponseDto.planDto createPlan(Long userId, PlanRequestDto.createPlanDto dto) {
-        if (dto.getStartDate().isAfter(dto.getEndDate())) {//날짜 검증
+        if (dto.getStartDate().isAfter(dto.getEndDate())) {
             throw new GeneralException(ErrorStatus.INVALID_PLAN_DATE);
         }
 
         Plan plan = PlanConverter.toPlan(dto);
-        List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto, plan);
+        List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto.getDays(), plan);
 
-        List<Long> contentIds = dto.getSpots().stream()
-                .map(PlanRequestDto.createPlanDto.createSpotDto::getContentId)
+        List<Long> contentIds = dto.getDays().stream()
+                .flatMap(day -> day.getSpots().stream())
+                .map(PlanRequestDto.createSpotDto::getContentId)
                 .toList();
 
         Map<Long, TouristSpot> spotMap = tourSpotService.findAllByContentIdIn(contentIds).stream()
@@ -46,30 +48,27 @@ public class PlanService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
-
         plan.settingUser(user);
 
-        for (int i = 0; i < locations.size(); i++) {
-            Long contentId = dto.getSpots().get(i).getContentId();
-            TouristSpot spot = spotMap.get(contentId);
-
-            if (spot == null) {
-                throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+        int i = 0;
+        for (PlanRequestDto.DayPlanDto day : dto.getDays()) {
+            for (PlanRequestDto.createSpotDto spotDto : day.getSpots()) {
+                TouristSpot spot = spotMap.get(spotDto.getContentId());
+                if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                locations.get(i).settingTouristSpot(spot);
+                i++;
             }
-
-            locations.get(i).settingTouristSpot(spot);
         }
 
         Plan newPlan = planRepository.save(plan);
         joinPlanLocationRepository.saveAll(locations);
 
-        PlanResponseDto.planDto planDto = PlanResponseDto.planDto.builder()
+        return PlanResponseDto.planDto.builder()
                 .PlanId(newPlan.getId())
                 .title(newPlan.getTitle())
                 .build();
-
-        return planDto;
     }
+
 
     @Transactional
     public PlanResponseDto.planDto updatePlan(Long userId, Long planId, PlanRequestDto.updatePlanDto dto) {
@@ -80,30 +79,32 @@ public class PlanService {
             throw new GeneralException(ErrorStatus.FORBIDDEN_USER);
         }
 
-        // 날짜 유효성 검사
         if (dto.getStartDate() != null && dto.getEndDate() != null && dto.getStartDate().isAfter(dto.getEndDate())) {
             throw new GeneralException(ErrorStatus.INVALID_PLAN_DATE);
         }
 
-        // 기본 정보 업데이트
         plan.updatePlanInfo(dto.getTitle(), dto.getTransportType(), dto.getStartDate(), dto.getEndDate());
 
-        // 스팟이 null이 아닌 경우만 업데이트
-        if (dto.getSpots() != null) {
-            joinPlanLocationRepository.deleteByPlan(plan); // 기존 스팟 삭제
+        if (dto.getDays() != null) {
+            joinPlanLocationRepository.deleteByPlan(plan);
 
-            List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto, plan);
-            List<Long> contentIds = dto.getSpots().stream()
-                    .map(PlanRequestDto.createPlanDto.createSpotDto::getContentId)
+            List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto.getDays(), plan);
+            List<Long> contentIds = dto.getDays().stream()
+                    .flatMap(day -> day.getSpots().stream())
+                    .map(PlanRequestDto.createSpotDto::getContentId)
                     .toList();
+
             Map<Long, TouristSpot> spotMap = tourSpotService.findAllByContentIdIn(contentIds).stream()
                     .collect(Collectors.toMap(TouristSpot::getContentId, spot -> spot));
 
-            for (int i = 0; i < locations.size(); i++) {
-                Long contentId = dto.getSpots().get(i).getContentId();
-                TouristSpot spot = spotMap.get(contentId);
-                if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
-                locations.get(i).settingTouristSpot(spot);
+            int i = 0;
+            for (PlanRequestDto.DayPlanDto day : dto.getDays()) {
+                for (PlanRequestDto.createSpotDto spotDto : day.getSpots()) {
+                    TouristSpot spot = spotMap.get(spotDto.getContentId());
+                    if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                    locations.get(i).settingTouristSpot(spot);
+                    i++;
+                }
             }
 
             joinPlanLocationRepository.saveAll(locations);
@@ -114,6 +115,7 @@ public class PlanService {
                 .title(plan.getTitle())
                 .build();
     }
+
 
     @Transactional
     public void deletePlan(Long userId, Long planId) {

@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.plan.dto.PlanRequestDto;
 import com.dataury.soloJ.domain.plan.entity.JoinPlanLocation;
 import com.dataury.soloJ.domain.plan.entity.Plan;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PlanConverter {
@@ -17,27 +18,21 @@ public class PlanConverter {
                 .build();
     }
 
-    public static List<JoinPlanLocation> toJoinPlanLocations(PlanRequestDto.createPlanDto dto, Plan plan) {
-        return dto.getSpots().stream()
-                .map(spot -> JoinPlanLocation.builder()
+    public static List<JoinPlanLocation> toJoinPlanLocations(List<PlanRequestDto.DayPlanDto> days, Plan plan) {
+        List<JoinPlanLocation> locations = new ArrayList<>();
+        for (PlanRequestDto.DayPlanDto day : days) {
+            for (PlanRequestDto.createSpotDto spot : day.getSpots()) {
+                JoinPlanLocation location = JoinPlanLocation.builder()
                         .plan(plan)
                         .arrivalDate(spot.getArrivalDate())
                         .duringDate(spot.getDuringDate())
                         .memo(spot.getMemo())
-                        // TouristSpot은 나중에 set
-                        .build())
-                .toList();
+                        .dayIndex(day.getDayIndex())
+                        .build();
+                locations.add(location);
+            }
+        }
+        return locations;
     }
-
-    public static List<JoinPlanLocation> toJoinPlanLocations(PlanRequestDto.updatePlanDto dto, Plan plan) {
-        return dto.getSpots().stream()
-                .map(spot -> JoinPlanLocation.builder()
-                        .plan(plan)
-                        .arrivalDate(spot.getArrivalDate())
-                        .duringDate(spot.getDuringDate())
-                        .memo(spot.getMemo())
-                        .build())
-                .toList();
-    }
-
 }
+
