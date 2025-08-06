@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class TourApiService {
 
     @Value("${spring.tourapi.key}")
     private String serviceKey;
+    private String appName="혼자옵서예";
 
     public List<TourApiResponse.Item> fetchTouristSpots(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
         String url = buildUrl(pageable, filterRequest);
@@ -78,6 +80,51 @@ public class TourApiService {
         }
     }
 
+    public List<TourApiResponse.Item> searchTouristSpotByKeyword(String keyword) {
+        try {
+            String url = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2"
+                    + "?serviceKey=" + serviceKey
+                    + "&MobileApp=" + appName
+                    + "&MobileOS=ETC"
+                    + "&_type=json"
+                    + "&areaCode=39"
+                    + "&numOfRows=5"
+                    + "&keyword=" + keyword;
+
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+            System.out.println("response: " + response.getBody());
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            String resultCode = root.path("response").path("header").path("resultCode").asText();
+            if (!"0000".equals(resultCode)) return List.of();
+
+            JsonNode itemsNode = root.path("response").path("body").path("items");
+
+            if (itemsNode.isTextual() || itemsNode.isNull() || !itemsNode.has("item")) {
+                return List.of();  // 데이터 없음 처리
+            }
+
+            JsonNode itemArray = itemsNode.path("item");
+            List<TourApiResponse.Item> result = new ArrayList<>();
+            if (itemArray.isArray()) {
+                for (JsonNode node : itemArray) {
+                    result.add(objectMapper.treeToValue(node, TourApiResponse.Item.class));
+                }
+            } else {
+                result.add(objectMapper.treeToValue(itemArray, TourApiResponse.Item.class));
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
+        }
+    }
+
+
+
+
     public Map<String, Object> fetchDetailIntroAsMap(Long contentId, Long contentTypeId) {
         String url = buildDetailIntroUrl(contentId, contentTypeId);
         System.out.println(url);
@@ -111,10 +158,11 @@ public class TourApiService {
         }
     }
 
+
     private String buildDetailIntroUrl(Long contentId, Long contentTypeId) {
         return "https://apis.data.go.kr/B551011/KorService2/detailIntro2"
                 + "?serviceKey=" + serviceKey
-                + "&MobileApp=AppTest"
+                + "&MobileApp=" + appName
                 + "&MobileOS=ETC"
                 + "&_type=json"
                 + "&contentId=" + contentId
@@ -127,7 +175,7 @@ public class TourApiService {
 
         StringBuilder sb = new StringBuilder("https://apis.data.go.kr/B551011/KorService2/areaBasedList2");
         sb.append("?serviceKey=").append(serviceKey);
-        sb.append("&MobileApp=AppTest");
+        sb.append("&MobileApp=").append(appName);
         sb.append("&MobileOS=ETC");
         sb.append("&_type=json");
         sb.append("&arrange=A");
@@ -147,7 +195,7 @@ public class TourApiService {
     private String buildDetailUrl(Long contentId) {
         return "https://apis.data.go.kr/B551011/KorService2/detailCommon2"
                 + "?serviceKey=" + serviceKey
-                + "&MobileApp=AppTest"
+                + "&MobileApp="+appName
                 + "&MobileOS=ETC"
                 + "&_type=json"
                 + "&contentId=" + contentId;

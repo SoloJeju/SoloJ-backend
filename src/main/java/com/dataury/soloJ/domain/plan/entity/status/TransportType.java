@@ -4,7 +4,7 @@ public enum TransportType {
     CAR,
     BUS,
     TRAIN,
-    SUBWAY,
+    TAXI,
     BICYCLE,
     WALK
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -135,4 +136,37 @@ public class TourSpotService {
     public List<TouristSpot> findAllByContentIdIn(List<Long> contentIds) {
         return touristSpotRepository.findAllByContentIdIn(contentIds);
     }
+
+
+    public Long resolveOrRegisterSpotByTitle(String title) {
+        // 1DB에서 title로 탐색
+        Optional<TouristSpot> existing = touristSpotRepository.findByName(title);
+        if (existing.isPresent()) {
+            return existing.get().getContentId();
+        }
+
+        //  TourAPI에서 title로 검색
+        List<TourApiResponse.Item> items = tourApiService.searchTouristSpotByKeyword(title);
+        if (items.isEmpty()) {
+            throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND); // 필요시 새 에러 만들기
+        }
+
+        TourApiResponse.Item item = items.get(0); // 가장 유사한 첫 결과만 사용
+
+        // 저장
+        TouristSpot spot = TouristSpot.builder()
+                .contentId(Long.valueOf(item.getContentid()))
+                .name(item.getTitle())
+                .contentTypeId(Long.valueOf(item.getContenttypeid()))
+                .latitude(Double.parseDouble(item.getMapy()))
+                .longitude(Double.parseDouble(item.getMapx()))
+                .firstImage(item.getFirstimage())
+                .activeGroupCount(0)
+                .build();
+
+        touristSpotRepository.save(spot);
+
+        return spot.getContentId();
+    }
+
 }
