@@ -18,6 +18,9 @@ public class JoinPlanLocation {
     private Long id;
 
     @Column
+    private String title;
+
+    @Column
     private LocalDateTime arrivalDate;
 
     @Column

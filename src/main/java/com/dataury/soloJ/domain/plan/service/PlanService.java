@@ -1,8 +1,8 @@
 package com.dataury.soloJ.domain.plan.service;
 
+import com.dataury.soloJ.domain.ai.service.AiPlanService;
 import com.dataury.soloJ.domain.plan.converter.PlanConverter;
-import com.dataury.soloJ.domain.plan.dto.PlanRequestDto;
-import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
+import com.dataury.soloJ.domain.plan.dto.*;
 import com.dataury.soloJ.domain.plan.entity.JoinPlanLocation;
 import com.dataury.soloJ.domain.plan.entity.Plan;
 import com.dataury.soloJ.domain.plan.repository.JoinPlanLocationRepository;
@@ -28,9 +28,11 @@ public class PlanService {
     private final JoinPlanLocationRepository joinPlanLocationRepository;
     private final TourSpotService tourSpotService;
     private final UserRepository userRepository;
+    private final AiPlanService aiPlanService;
+
 
     @Transactional
-    public PlanResponseDto.planDto createPlan(Long userId, PlanRequestDto.createPlanDto dto) {
+    public PlanResponseDto.planDto createPlan(Long userId, CreatePlanDto dto) {
         if (dto.getStartDate().isAfter(dto.getEndDate())) {
             throw new GeneralException(ErrorStatus.INVALID_PLAN_DATE);
         }
@@ -40,7 +42,7 @@ public class PlanService {
 
         List<Long> contentIds = dto.getDays().stream()
                 .flatMap(day -> day.getSpots().stream())
-                .map(PlanRequestDto.createSpotDto::getContentId)
+                .map(CreateSpotDto::getContentId)
                 .toList();
 
         Map<Long, TouristSpot> spotMap = tourSpotService.findAllByContentIdIn(contentIds).stream()
@@ -51,8 +53,8 @@ public class PlanService {
         plan.settingUser(user);
 
         int i = 0;
-        for (PlanRequestDto.DayPlanDto day : dto.getDays()) {
-            for (PlanRequestDto.createSpotDto spotDto : day.getSpots()) {
+        for (DayPlanDto day : dto.getDays()) {
+            for (CreateSpotDto spotDto : day.getSpots()) {
                 TouristSpot spot = spotMap.get(spotDto.getContentId());
                 if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
                 locations.get(i).settingTouristSpot(spot);
@@ -71,7 +73,7 @@ public class PlanService {
 
 
     @Transactional
-    public PlanResponseDto.planDto updatePlan(Long userId, Long planId, PlanRequestDto.updatePlanDto dto) {
+    public PlanResponseDto.planDto updatePlan(Long userId, Long planId, CreatePlanDto dto) {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.PLAN_NOT_FOUND));
 
@@ -91,15 +93,15 @@ public class PlanService {
             List<JoinPlanLocation> locations = PlanConverter.toJoinPlanLocations(dto.getDays(), plan);
             List<Long> contentIds = dto.getDays().stream()
                     .flatMap(day -> day.getSpots().stream())
-                    .map(PlanRequestDto.createSpotDto::getContentId)
+                    .map(CreateSpotDto::getContentId)
                     .toList();
 
             Map<Long, TouristSpot> spotMap = tourSpotService.findAllByContentIdIn(contentIds).stream()
                     .collect(Collectors.toMap(TouristSpot::getContentId, spot -> spot));
 
             int i = 0;
-            for (PlanRequestDto.DayPlanDto day : dto.getDays()) {
-                for (PlanRequestDto.createSpotDto spotDto : day.getSpots()) {
+            for (DayPlanDto day : dto.getDays()) {
+                for (CreateSpotDto spotDto : day.getSpots()) {
                     TouristSpot spot = spotMap.get(spotDto.getContentId());
                     if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
                     locations.get(i).settingTouristSpot(spot);
@@ -129,5 +131,22 @@ public class PlanService {
         joinPlanLocationRepository.deleteByPlan(plan);
         planRepository.delete(plan);
     }
+
+    public CreatePlanDto generatePlanFromAI(CreatePlanAIDto requestDto) {
+        List<DayPlanDto> days = aiPlanService.generate(requestDto);
+
+        return CreatePlanDto.builder()
+                .title(requestDto.getTitle())
+                .transportType(requestDto.getTransportType())
+                .startDate(requestDto.getStartDate())
+                .endDate(requestDto.getEndDate())
+                .days(days)
+                .build();
+    }
+
+
+
+
+
 
 }

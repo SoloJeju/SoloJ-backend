@@ -36,7 +36,6 @@ public class TourApiService {
 
     public List<TourApiResponse.Item> fetchTouristSpots(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
         String url = buildUrl(pageable, filterRequest);
-        System.out.println(url);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -59,7 +58,6 @@ public class TourApiService {
 
     public List<TourApiResponse.Item> fetchTouristSpotDetailCommon(Long contentId) {
         String url = buildDetailUrl(contentId);
-        System.out.println(url);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -93,8 +91,6 @@ public class TourApiService {
 
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-            System.out.println("response: " + response.getBody());
-
             JsonNode root = objectMapper.readTree(response.getBody());
             String resultCode = root.path("response").path("header").path("resultCode").asText();
             if (!"0000".equals(resultCode)) return List.of();
@@ -127,7 +123,7 @@ public class TourApiService {
 
     public Map<String, Object> fetchDetailIntroAsMap(Long contentId, Long contentTypeId) {
         String url = buildDetailIntroUrl(contentId, contentTypeId);
-        System.out.println(url);
+
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             JsonNode itemNode = objectMapper.readTree(response.getBody())
