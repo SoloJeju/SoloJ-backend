@@ -10,13 +10,15 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter
 @Builder
 public class JoinPlanLocation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "plan_location_id", unique = true, nullable = false)
     private Long id;
+
+    @Column
+    private String title;
 
     @Column
     private LocalDateTime arrivalDate;
@@ -35,5 +37,12 @@ public class JoinPlanLocation {
     @JoinColumn(name = "touristSpot_id")
     private TouristSpot touristSpot;
 
+    @Column(nullable = false)
+    private Integer dayIndex; // 1일차, 2일차 등
+
+
+    public void settingTouristSpot(TouristSpot touristSpot) {
+        this.touristSpot = touristSpot;
+    }
 
 }

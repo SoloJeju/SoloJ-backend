@@ -13,13 +13,15 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter
 @Builder
 public class Plan extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "plan_id", unique = true, nullable = false)
     private Long id;
+
+    @Column(nullable = false)
+    private String title;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -34,5 +36,24 @@ public class Plan extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public void settingUser(User user) {
+        this.user = user;
+    }
+
+    public void updatePlanInfo(String title, TransportType transportType, LocalDateTime startDate, LocalDateTime endDate) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (transportType != null) {
+            this.transportType = transportType;
+        }
+        if (startDate != null) {
+            this.startDate = startDate;
+        }
+        if (endDate != null) {
+            this.endDate = endDate;
+        }
+    }
 
 }
