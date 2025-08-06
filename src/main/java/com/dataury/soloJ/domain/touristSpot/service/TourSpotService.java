@@ -10,6 +10,7 @@ import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotReviewTagRepos
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TourSpotService {
 
     private final TourApiService tourApiService;
@@ -144,35 +146,29 @@ public class TourSpotService {
     }
 
     public Long resolveOrRegisterSpotByTitle(String originalTitle) {
-        System.out.println("🔍 [1] 입력된 장소명: " + originalTitle);
 
         // Step 1. 전처리 후보군 생성
         List<String> nameCandidates = generateCandidateNames(originalTitle);
-        System.out.println("📌 [2] 생성된 후보군: " + nameCandidates);
 
         // Step 2. DB 검색
         for (String candidate : nameCandidates) {
             Optional<TouristSpot> existing = touristSpotRepository.findByName(candidate);
-            System.out.println("🔎 [DB] '" + candidate + "' → " + (existing.isPresent() ? "✅ 매핑됨" : "❌ 없음"));
             if (existing.isPresent()) {
-                System.out.println("🎯 [DB 매핑 성공] contentId = " + existing.get().getContentId());
                 return existing.get().getContentId();
             }
         }
 
         // Step 3. TourAPI 검색
         for (String candidate : nameCandidates) {
-            System.out.println("🌐 [TourAPI] '" + candidate + "' 검색 시도");
             List<TourApiResponse.Item> items = tourApiService.searchTouristSpotByKeyword(candidate);
 
             if (items.isEmpty()) {
-                System.out.println("🚨 [TourAPI] 결과 없음 for: " + candidate);
+                log.debug("🚨 [TourAPI] 결과 없음 for: " + candidate);
                 continue;
             }
 
-            System.out.println("📋 [TourAPI] 검색 결과 개수: " + items.size());
             for (TourApiResponse.Item item : items) {
-                System.out.println("     • 결과: " + item.getTitle() + " (contentId=" + item.getContentid() + ")");
+                log.debug("     • 결과: " + item.getTitle() + " (contentId=" + item.getContentid() + ")");
             }
 
             TourApiResponse.Item bestMatch = getMostSimilarItem(originalTitle, items);

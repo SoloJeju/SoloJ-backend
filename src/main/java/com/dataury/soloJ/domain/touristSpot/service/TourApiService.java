@@ -32,7 +32,9 @@ public class TourApiService {
 
     @Value("${spring.tourapi.key}")
     private String serviceKey;
-    private String appName="혼자옵서예";
+    @Value("${spring.tourapi.app-name}")
+    private String appName;
+
 
     public List<TourApiResponse.Item> fetchTouristSpots(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
         String url = buildUrl(pageable, filterRequest);

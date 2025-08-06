@@ -19,7 +19,8 @@ public class ChatGPTService {
 
     private final RestTemplate restTemplate;
 
-    private static final String MODEL = "gpt-4";
+    @Value("${openai.model}")
+    private String model;
 
     public String generate(String prompt) {
         try {
@@ -58,7 +59,7 @@ public class ChatGPTService {
         ObjectMapper mapper = new ObjectMapper();
 
         Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", MODEL);
+        requestMap.put("model", model);
         requestMap.put("temperature", 0.7);
 
         List<Map<String, String>> messages = new ArrayList<>();

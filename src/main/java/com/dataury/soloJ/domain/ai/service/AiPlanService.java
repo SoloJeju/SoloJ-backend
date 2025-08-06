@@ -6,18 +6,21 @@ import com.dataury.soloJ.domain.plan.dto.DayPlanDto;
 import com.dataury.soloJ.domain.plan.entity.status.TransportType;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AiPlanService {
 
     private final ChatGPTService chatGPTService;
@@ -108,7 +111,8 @@ public class AiPlanService {
                     CreateSpotDto spot = new CreateSpotDto(arrivalDate, duringDate, contentId, title, memo);
                     days.get(currentDayIndex).getSpots().add(spot);
                 } else {
-                    System.out.println("🚨 잘못된 currentDayIndex: " + currentDayIndex + ", days.size() = " + days.size());
+                    log.warn("🚨 잘못된 currentDayIndex: {}, days.size() = {}", currentDayIndex, days.size());
+
                 }
             }
         }

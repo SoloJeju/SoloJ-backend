@@ -60,7 +60,7 @@ public class PlanController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공")
     })
-    private ApiResponse<CreatePlanDto> newPlanByAI (@RequestBody CreatePlanAIDto planRequestDto){
+    public ApiResponse<CreatePlanDto> newPlanByAI (@RequestBody CreatePlanAIDto planRequestDto){
         return ApiResponse.onSuccess(planService.generatePlanFromAI(planRequestDto));
     }
 }
