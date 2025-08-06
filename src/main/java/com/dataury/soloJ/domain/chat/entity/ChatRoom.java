@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.chat.entity;
 
 
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -20,6 +22,12 @@ public class ChatRoom extends BaseEntity {
     private Long id;
 
     @Column
+    private String chatRoomName;
+
+    @Column
+    private String chatRoomDescription;
+
+    @Column
     private Boolean isCompleted;
 
     @Column
@@ -27,5 +35,9 @@ public class ChatRoom extends BaseEntity {
 
     @Column
     private int numberOfMembers;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tourist_spot_id")
+    private TouristSpot touristSpot;
 
 }

@@ -43,6 +43,13 @@ public enum ErrorStatus implements BaseErrorCode {
     PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAN4002", "존재하지 않는 계획입니다."),
     FORBIDDEN_USER(HttpStatus.FORBIDDEN, "PLAN4003", "해당 계획에 대한 권한이 없습니다."),
 
+    // Chat Error
+    CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND,"CHAT4001","채팅방을 찾을 수 없습니다."),
+    JOINCHAT_ALREADY_EXIST(HttpStatus.BAD_REQUEST,"CHAT4002","이미 채팅방에 추가된 사용자입니다."),
+    JOINCHAT_NOT_FOUND(HttpStatus.NOT_FOUND,"CHAT4003","해당 채팅방의 사용자를 찾을 수 없습니다."),
+    ALREADY_JOINED_CHATROOM(HttpStatus.BAD_REQUEST,"CHAT4004","이미 참가한 채팅방입니다."),
+    CHATROOM_FULL(HttpStatus.BAD_REQUEST,"CHAT4005","채팅방 최대 인원수에 도달했습니다."),
+
 
     PAGE_BOUND_ERROR(HttpStatus.BAD_REQUEST, "PAGE4001", "페이징 번호가 적절하지 않습니다."),
 

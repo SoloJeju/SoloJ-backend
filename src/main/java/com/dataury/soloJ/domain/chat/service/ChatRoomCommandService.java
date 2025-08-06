@@ -1,18 +1,29 @@
 package com.dataury.soloJ.domain.chat.service;
 
-import com.dataury.soloJ.domain.chat.dto.ChatRoomDto;
+import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
+import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
+import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.user.entity.User;
+import com.dataury.soloJ.domain.user.entity.UserProfile;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,169 +32,15 @@ public class ChatRoomCommandService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
-    private final MongoMessageRepository mongoMessageRepository;
     private final JoinChatRepository joinChatRepository;
     private final UserRepository userRepository;
-    private final UserTeamRepository userTeamRepository;
-    private final TeamChatRoomRepository teamChatRoomRepository;
-    private final HiRepository hiRepository;
-    private final ChatRoomQueryService chatRoomQueryService;
+    private final UserProfileRepository userProfileRepository;
+    // private final ChatRoomQueryService chatRoomQueryService;
+    private final TouristSpotRepository touristSpotRepository;
 
     private static final String CHAT_ROOMS_KEY = "chatrooms";
     private static final String CHAT_ROOM_ACTIVITY_KEY = "chatroom:activity";
-    private final HiCommandServiceImpl hiCommandService;
-    private final TeamRepository teamRepository;
 
-    //레디스 초기화 : 랜덤채팅 최신id 저장
-    @PostConstruct
-    public void initRandomChatIdRedis() {
-        String key = "chat:randomChatId";
-        if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
-            Long max = chatRoomRepository.findMaxRandomChatId().orElse(0L);
-            redisTemplate.opsForValue().set(key, max);
-        }
-    }
-
-
-    // 채팅방 삭제
-    @Transactional
-    public void deleteChatRoom(Long chatRoomId) {
-        // 채팅방 존재 여부 확인
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new BusinessException(Code.CHATROOM_NOT_FOUND));
-
-        int batchSize = 500;
-        Pageable pageable = PageRequest.of(0, batchSize);
-
-        while (true) {
-            List<Message> messages = mongoMessageRepository.findByChatRoomId(String.valueOf(chatRoomId), pageable);
-            if (messages.isEmpty()) {
-                break; // 더 이상 삭제할 메시지가 없으면 종료
-            }
-            mongoMessageRepository.deleteAll(messages);
-        }
-
-        // 연관된 JoinChat 삭제
-        List<JoinChat> joinChats = joinChatRepository.findByChatRoomId(chatRoomId);
-        if (!joinChats.isEmpty()) {
-            joinChats.forEach(joinChat -> {
-                String joinChatsKey = "user:" + joinChat.getUser().getId() + ":chatrooms";
-                redisTemplate.opsForSet().remove(joinChatsKey, chatRoomId);
-            });
-            joinChatRepository.deleteAll(joinChats);
-        }
-
-        // Redis에서 채팅방 삭제
-        redisTemplate.opsForHash().delete(CHAT_ROOMS_KEY, chatRoomId.toString());
-
-        // Redis의 활동 시간 데이터 삭제
-        redisTemplate.opsForZSet().remove(CHAT_ROOM_ACTIVITY_KEY, chatRoomId.toString());
-
-        // 채팅방 삭제
-        chatRoomRepository.deleteById(chatRoomId);
-
-    }
-
-    // 팀으로 채팅방 추가
-    @Transactional
-    public ChatRoomDto.resultChatRoomDto addTeamJoinChat(ChatRoomDto.hiDto hiDto) {
-        List<Long> teamIds = Arrays.asList(hiDto.getFromId(), hiDto.getToId());
-
-        // 공통 메서드 호출하여 from, to 팀 할당
-        Map<String, Team> teams = hiCommandService.assignEntities(
-                teamRepository.findByIdIn(teamIds),
-                hiDto.getFromId(),
-                Team::getId
-        );
-
-        Team from = teams.get("from");
-        Team to = teams.get("to");
-
-        Hi hi = hiRepository.findByFromIdAndToIdAndHiStatus(from.getId(), to.getId(), HiStatus.NONE);
-        if (hi == null) throw new BusinessException(Code.HI_NOT_FOUND);
-        hi.setChangeStatus(HiStatus.ACCEPT);
-        hiRepository.save(hi);
-
-        //채팅방 생성
-        ChatRoom chatRoom = ChatRoom.builder()
-                .chatType(ChatType.TEAM)
-                .build();
-        chatRoom = chatRoomRepository.save(chatRoom);
-
-        addTeamToChatRoom(chatRoom, from, to.getName());
-        addTeamToChatRoom(chatRoom, to, from.getName());
-
-        return ChatRoomDto.resultChatRoomDto.builder()
-                .chatRoomid(chatRoom.getId())
-                .build();
-    }
-
-    // 사용자 채팅방 추가
-    @Transactional
-    public ChatRoomDto.resultChatRoomDto addUserJoinChat(ChatRoomDto.hiDto hiDto) {
-        List<Long> userIds = Arrays.asList(hiDto.getFromId(), hiDto.getToId());
-
-        // 공통 메서드 호출하여 from, to 팀 할당
-        Map<String, User> users = hiCommandService.assignEntities(
-                userRepository.findByIdIn(userIds),
-                hiDto.getFromId(),
-                User::getId
-        );
-        User from = users.get("from");
-        User to = users.get("to");
-
-        Hi hi = hiRepository.findByFromIdAndToIdAndHiStatus(from.getId(), to.getId(), HiStatus.NONE);
-        if (hi == null) throw new BusinessException(Code.HI_NOT_FOUND);
-        hi.setChangeStatus(HiStatus.ACCEPT);
-        hiRepository.save(hi);
-
-        //채팅방 생성
-        ChatRoom chatRoom = ChatRoom.builder()
-                .chatType(ChatType.USER)
-                .build();
-        chatRoom = chatRoomRepository.save(chatRoom);
-
-        List<User> userList = users.values().stream().collect(Collectors.toList());
-        addUserToChatRoom(chatRoom, userList);
-
-        return ChatRoomDto.resultChatRoomDto.builder()
-                .chatRoomid(chatRoom.getId())
-                .build();
-    }
-
-    private Long getNewRandomChatId() {
-        String key = "chat:randomChatId";
-
-        if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
-            redisTemplate.opsForValue().set(key, 0);
-        }
-
-        return redisTemplate.opsForValue().increment(key);
-    }
-
-    public ChatRoomDto.resultChatRoomDto addRandomUserJoinChat(List<Long> userIds){
-        if(userIds.size() != 4)
-            throw new BusinessException(Code.RANDOM_MEETING_USER_COUNT);
-
-        // Redis에서 auto-increment된 randomChatId 가져오기
-        Long newRandomChatId = getNewRandomChatId();
-
-        //채팅방 생성
-        ChatRoom chatRoom = ChatRoom.builder()
-                .chatType(ChatType.RANDOM)
-                .randomChatId(newRandomChatId)
-                .build();
-        chatRoom = chatRoomRepository.save(chatRoom);
-
-        List<User> users = userRepository.findAllById(userIds);
-        if(users.size() < userIds.size())//저장 안된 경우 에러처리
-            throw new BusinessException(Code.RANDOM_MEETING_USER_COUNT);
-        addUserToChatRoom(chatRoom, users);
-
-        return ChatRoomDto.resultChatRoomDto.builder()
-                .chatRoomid(chatRoom.getId())
-                .build();
-    }
 
     // 사용자 채팅방 추가
     @Transactional
@@ -219,25 +76,10 @@ public class ChatRoomCommandService {
         }
     }
 
+    // 채팅방 나가기
     @Transactional
-    public void addTeamToChatRoom(ChatRoom chatRoom, Team team, String teamName){
-
-        List<UserTeam> userTeams = userTeamRepository.findByTeamId(team.getId());
-        List<User> users = userTeams.stream()
-                .map(UserTeam::getUser)
-                .collect(Collectors.toList());
-
-        // 팀정보 DB 저장
-        TeamChatRoom teamChatRoom = TeamChatRoom.builder()
-                .team(team)
-                .chatRoom(chatRoom)
-                .name(teamName)
-                .build();
-
-        teamChatRoomRepository.save(teamChatRoom);
-
-        // 사용자 저장
-        addUserToChatRoom(chatRoom, users);
+    public void leaveChatRoom(Long chatRoomId, Long userId) {
+        removeUserFromChatRoom(chatRoomId, userId);
     }
 
     // 사용자 제거
@@ -245,14 +87,20 @@ public class ChatRoomCommandService {
     public void removeUserFromChatRoom(Long chatRoomId, Long userId) {
 
         // DB에서 제거
-        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(Code.MEMBER_NOT_FOUND));
-        ChatRoom chatRoom = chatRoomQueryService.getChatRoomById(chatRoomId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
 
         JoinChat joinChat = joinChatRepository.findByUserAndChatRoom(user, chatRoom)
-                .orElseThrow(() ->  new BusinessException(Code.JOINCHAT_NOT_FOUND));
+                .orElseThrow(() ->  new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND));
+
+        if(joinChat.getStatus() != JoinChatStatus.ACTIVE){
+            throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
+        }
 
         joinChat.leaveChat();
         joinChatRepository.save(joinChat);
+
 
 
         String joinChatsKey = "user:" + userId + ":chatrooms";
@@ -270,39 +118,141 @@ public class ChatRoomCommandService {
 
     }
 
-    //사용자의 모든 채팅방 나가기
+    // 관광지 기반 채팅방 생성
     @Transactional
-    public void removeUser(Long userId) {
-        // DB에서 사용자 상태를 INACTIVE로 변경
-        joinChatRepository.deleteJoinChatWithUser(userId);
+    public ChatRoomResponseDto.CreateChatRoomResponse createChatRoom(ChatRoomRequestDto.CreateChatRoomDto request, Long userId) {
+        // 관광지 조회
+        TouristSpot touristSpot = touristSpotRepository.findById(request.getContentId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
-        // Redis에서 해당 사용자가 속한 모든 채팅방과 관련된 데이터를 한 번에 삭제
-        String joinChatsKey = "user:" + userId + ":chatrooms";
-        Set<Object> chatRoomIdsSet = redisTemplate.opsForSet().members(joinChatsKey);
+        // 채팅방 생성
+        ChatRoom chatRoom = ChatRoom.builder()
+                .chatRoomName(request.getTitle())
+                .chatRoomDescription(request.getDescription())
+                .touristSpot(touristSpot)
+                .joinDate(request.getJoinDate())
+                .numberOfMembers(request.getMaxMembers())
+                .isCompleted(false)
+                .build();
+        
+        chatRoom = chatRoomRepository.save(chatRoom);
 
-        if (chatRoomIdsSet != null && !chatRoomIdsSet.isEmpty()) {
-            Set<String> chatRoomIds = chatRoomIdsSet.stream()
-                    .map(Object::toString)
-                    .collect(Collectors.toSet());
-            // 여러 채팅방에 대한 사용자 정보 삭제
-            for (String chatRoomId : chatRoomIds) {
-                String chatRoomUsersKey = "chatroom:" + chatRoomId + ":users";
+        // 방장을 채팅방에 추가
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        
+        List<User> initialUsers = Collections.singletonList(creator);
+        addUserToChatRoom(chatRoom, initialUsers);
 
-                // Redis에서 사용자와 채팅방 간 매핑 데이터 제거
-                redisTemplate.opsForSet().remove(joinChatsKey, chatRoomId);
-                redisTemplate.opsForSet().remove(chatRoomUsersKey, String.valueOf(userId));
+        return ChatRoomResponseDto.CreateChatRoomResponse.builder()
+                .chatRoomId(chatRoom.getId())
+                .title(chatRoom.getChatRoomName())
+                .description(chatRoom.getChatRoomDescription())
+                .touristSpotName(touristSpot.getName())
+                .contentId(touristSpot.getContentId())
+                .joinDate(chatRoom.getJoinDate())
+                .maxMembers(chatRoom.getNumberOfMembers())
+                .currentMembers(1)
+                .createdAt(chatRoom.getCreatedAt())
+                .build();
+    }
 
-                // 채팅방에 남은 사용자가 없다면 해당 채팅방 삭제
-                Long remainingUsers = redisTemplate.opsForSet().size(chatRoomUsersKey);
-                if (remainingUsers != null && remainingUsers == 0) {
-                    redisTemplate.opsForHash().delete(CHAT_ROOMS_KEY, chatRoomId);
-                    redisTemplate.opsForZSet().remove(CHAT_ROOM_ACTIVITY_KEY, chatRoomId);
-                }
-            }
+    // 채팅방 참가
+    @Transactional
+    public ChatRoomResponseDto.JoinChatRoomResponse joinChatRoom(Long chatRoomId, Long userId) {
+        // 채팅방 조회
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 이미 참가했는지 확인
+        boolean alreadyJoined = joinChatRepository.findByUserAndChatRoom(user, chatRoom).isPresent();
+        if (alreadyJoined) {
+            throw new GeneralException(ErrorStatus.ALREADY_JOINED_CHATROOM);
         }
 
-        // Redis에서 사용자 채팅방 목록 삭제
-        redisTemplate.delete(joinChatsKey);
+        // 최대 인원 확인
+        List<JoinChat> currentMembers = joinChatRepository.findByChatRoomIdAndStatus(chatRoomId, JoinChatStatus.ACTIVE);
+        if (currentMembers.size() >= chatRoom.getNumberOfMembers()) {
+            throw new GeneralException(ErrorStatus.CHATROOM_FULL);
+        }
+
+        // 사용자 추가
+        addUserToChatRoom(chatRoom, Collections.singletonList(user));
+
+        return ChatRoomResponseDto.JoinChatRoomResponse.builder()
+                .chatRoomId(chatRoomId)
+                .message("채팅방에 성공적으로 참가했습니다.")
+                .currentMembers(currentMembers.size() + 1)
+                .maxMembers(chatRoom.getNumberOfMembers())
+                .build();
     }
+
+    // 채팅방 참가자 목록 조회
+    @Transactional(readOnly = true)
+    public ChatRoomResponseDto.ChatRoomUsersResponse getChatRoomUsers(Long chatRoomId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+
+        List<JoinChat> joinChats = joinChatRepository.findByChatRoomIdAndStatus(chatRoomId, JoinChatStatus.ACTIVE);
+        
+        List<ChatRoomResponseDto.ChatRoomUsersResponse.UserInfo> userInfos = joinChats.stream()
+                .map(joinChat -> {
+                    User user = joinChat.getUser();
+                    UserProfile userProfile = userProfileRepository.findByUser(user).orElse(null);
+                    
+                    return ChatRoomResponseDto.ChatRoomUsersResponse.UserInfo.builder()
+                            .userId(user.getId())
+                            .username(user.getName())
+                            .profileImage(userProfile != null ? userProfile.getImage() : null)
+                            .joinedAt(joinChat.getCreatedAt())
+                            .isActive(joinChat.getStatus() == JoinChatStatus.ACTIVE)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return ChatRoomResponseDto.ChatRoomUsersResponse.builder()
+                .chatRoomId(chatRoomId)
+                .totalMembers(userInfos.size())
+                .users(userInfos)
+                .build();
+    }
+
+    // 관광지별 채팅방 목록 조회
+    @Transactional(readOnly = true)
+    public List<ChatRoomResponseDto.ChatRoomListItem> getChatRoomsByTouristSpot(Long contentId) {
+        TouristSpot touristSpot = touristSpotRepository.findById(contentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
+
+        List<ChatRoom> chatRooms = chatRoomRepository.findByTouristSpotAndIsCompletedFalse(touristSpot);
+        
+        return chatRooms.stream()
+                .map(chatRoom -> {
+                    List<JoinChat> activeMembers = joinChatRepository.findByChatRoomIdAndStatus(
+                            chatRoom.getId(), JoinChatStatus.ACTIVE);
+                    
+                    // 방장 찾기 (첫 번째 참가자)
+                    String creatorName = activeMembers.isEmpty() ? "Unknown" : 
+                            activeMembers.get(0).getUser().getName();
+                    
+                    return ChatRoomResponseDto.ChatRoomListItem.builder()
+                            .chatRoomId(chatRoom.getId())
+                            .title(chatRoom.getChatRoomName())
+                            .description(chatRoom.getChatRoomDescription())
+                            .joinDate(chatRoom.getJoinDate())
+                            .currentMembers(activeMembers.size())
+                            .maxMembers(chatRoom.getNumberOfMembers())
+                            .isCompleted(chatRoom.getIsCompleted())
+                            .creatorName(creatorName)
+                            .createdAt(chatRoom.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
 
 }
