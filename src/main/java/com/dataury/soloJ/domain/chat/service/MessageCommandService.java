@@ -61,11 +61,18 @@ public class MessageCommandService {
             
             Message mongoMessage = Message.builder()
                     .messageId(message.getMessageId())
+                    .type(message.getType())
+                    .roomId(message.getRoomId())
+                    .senderId(message.getSenderId())
+                    .senderName(message.getSenderName())
+                    .content(message.getContent())
+                    .emoji(message.getEmoji())
+                    .sendAt(message.getSendAt())
                     .chatRoomId(message.getRoomId().toString())
                     .userId(message.getSenderId().toString())
-                    .content(message.getContent())
                     .createdAt(message.getSendAt())
                     .updatedAt(LocalDateTime.now())
+                    .isRead(false)
                     .build();
             
             mongoMessageRepository.save(mongoMessage);
@@ -74,7 +81,8 @@ public class MessageCommandService {
         } catch (DuplicateKeyException e) {
             log.warn("MongoDB 중복 메시지 저장 시도 - messageId: {}", message.getMessageId());
         } catch (Exception e) {
-            log.error("MongoDB 저장 실패 - messageId: {}, error: {}", message.getMessageId(), e.getMessage());
+            log.error("MongoDB 저장 실패 - messageId: {}, error: {}", message.getMessageId(), e.getMessage(), e);
+            throw new GeneralException(ErrorStatus.DATABASE_ERROR);
         }
     }
     

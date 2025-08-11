@@ -89,9 +89,15 @@ public class ChatWebSocketController {
             
             log.info("메시지 전송 완료 - roomId: {}, senderId: {}, type: {}", roomId, senderId, messageRequest.getType());
             
+        } catch (GeneralException e) {
+            log.error("메시지 전송 중 GeneralException 발생 - roomId: {}, error: {}", roomId, e.getErrorReason().getMessage(), e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            log.error("메시지 전송 중 잘못된 인자 - roomId: {}, error: {}", roomId, e.getMessage(), e);
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
         } catch (Exception e) {
-            log.error("메시지 전송 중 오류 발생 - roomId: {}, error: {}", roomId, e.getMessage(), e);
-            throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
+            log.error("메시지 전송 중 예상치 못한 오류 발생 - roomId: {}, error: {}", roomId, e.getMessage(), e);
+            throw new GeneralException(ErrorStatus._INTERNAL_SERVER_ERROR);
         }
     }
 }
