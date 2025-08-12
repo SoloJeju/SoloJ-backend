@@ -56,9 +56,9 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                         .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
-                        //.requestMatchers("/api/user/**", "/api/booths/**", "/api/**").permitAll()   // /api 이하 경로 접근 허용\
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/tourist-spots").permitAll()
                         .requestMatchers("/login", "/oauth2/**").permitAll()
+                        .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                         .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()  // WebSocket 엔드포인트 허용
                         .requestMatchers("/favicon.ico").permitAll()

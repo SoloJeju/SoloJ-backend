@@ -1,6 +1,5 @@
 package com.dataury.soloJ.domain.user.service;
 
-
 import com.dataury.soloJ.domain.user.converter.AuthConverter;
 import com.dataury.soloJ.domain.user.dto.AuthRequestDTO;
 import com.dataury.soloJ.domain.user.dto.AuthResponseDTO;
@@ -13,6 +12,7 @@ import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import com.dataury.soloJ.global.security.TokenProvider;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -158,12 +158,14 @@ public class AuthService {
 
     //로그아웃
     @Transactional
-    public void logout(Long userId) {
+    public void logout() {
+        Long userId = SecurityUtils.getCurrentUserId();
         refreshTokenRepository.deleteByUserId(userId);
     }
 
     @Transactional
-    public AuthResponseDTO.SignResponseDTO setProfile(Long userId, AuthRequestDTO.KakaoRequestDTO dto) {
+    public AuthResponseDTO.SignResponseDTO setProfile(AuthRequestDTO.KakaoRequestDTO dto) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         try {
             User user = userRepository.findById(userId)

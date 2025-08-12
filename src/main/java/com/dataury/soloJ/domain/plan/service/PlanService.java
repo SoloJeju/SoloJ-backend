@@ -13,6 +13,7 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,9 @@ public class PlanService {
 
 
     @Transactional
-    public PlanResponseDto.planDto createPlan(Long userId, CreatePlanDto dto) {
+    public PlanResponseDto.planDto createPlan(CreatePlanDto dto) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
         if (dto.getStartDate().isAfter(dto.getEndDate())) {
             throw new GeneralException(ErrorStatus.INVALID_PLAN_DATE);
         }
@@ -73,7 +76,9 @@ public class PlanService {
 
 
     @Transactional
-    public PlanResponseDto.planDto updatePlan(Long userId, Long planId, CreatePlanDto dto) {
+    public PlanResponseDto.planDto updatePlan( Long planId, CreatePlanDto dto) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.PLAN_NOT_FOUND));
 
@@ -120,7 +125,9 @@ public class PlanService {
 
 
     @Transactional
-    public void deletePlan(Long userId, Long planId) {
+    public void deletePlan(Long planId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.PLAN_NOT_FOUND));
 
