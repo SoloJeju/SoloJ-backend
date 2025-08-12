@@ -15,8 +15,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -38,52 +36,46 @@ public class WebSecurityConfig {
         this.objectMapper = objectMapper;
     }
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
     @Bean
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService,
-                                                          OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CustomOAuth2UserService customOAuth2UserService,
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler
+    ) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.httpBasic(basic -> basic.disable());
-        http.headers(headers -> headers.frameOptions(frame -> frame.disable()).disable());
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-//        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+        http.headers(h -> h.frameOptions(f -> f.disable()).disable());
+        http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-
-        // Swagger 경로 인증 비활성화
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
-                        .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger 허용
-                        .requestMatchers("/api/auth/**","/api/tourist-spots").permitAll()
-                        .requestMatchers("/login", "/oauth2/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
-                        .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()  // WebSocket 엔드포인트 허용
-                        .requestMatchers("/favicon.ico").permitAll()
-                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
+                .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/login", "/oauth2/**").permitAll()
+                .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
+                .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()
+                .anyRequest().authenticated()
+        );
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.exceptionHandling(except -> {
-            // 인증 실패 (401)
-            except.authenticationEntryPoint((request, response, authException) -> {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write(objectMapper.writeValueAsString(Map.of(
+            except.authenticationEntryPoint((req, res, ex) -> {
+                res.setContentType("application/json");
+                res.setCharacterEncoding("UTF-8");
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.getWriter().write(objectMapper.writeValueAsString(Map.of(
                         "status", ErrorStatus._UNAUTHORIZED.getCode(),
                         "message", ErrorStatus._UNAUTHORIZED.getMessage()
                 )));
             });
-
-            // 인가 실패 (403)
-            except.accessDeniedHandler((request, response, accessDeniedException) -> {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write(objectMapper.writeValueAsString(Map.of(
+            except.accessDeniedHandler((req, res, ex) -> {
+                res.setContentType("application/json");
+                res.setCharacterEncoding("UTF-8");
+                res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                res.getWriter().write(objectMapper.writeValueAsString(Map.of(
                         "status", ErrorStatus._FORBIDDEN.getCode(),
                         "message", ErrorStatus._FORBIDDEN.getMessage()
                 )));
@@ -91,13 +83,13 @@ public class WebSecurityConfig {
         });
 
         http.oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                 .successHandler(oAuth2LoginSuccessHandler)
         );
 
-
         return http.build();
     }
+
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -108,11 +100,7 @@ public class WebSecurityConfig {
                 "http://localhost:8080",
                 "http://localhost:5173",
                 "ws://localhost:8080",
-                "http://13.209.210.46:8080",
-                "ws://13.209.210.46:8080",
-                "http://localhost:3000",
-                "https://financeus.netlify.app",
-                "https://financeusapi.shop"
+                "http://localhost:3000"
         );
 
         config.setAllowedOrigins(allowedOrigins);
@@ -124,9 +112,5 @@ public class WebSecurityConfig {
         return source;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
 }
