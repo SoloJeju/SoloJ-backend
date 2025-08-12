@@ -35,4 +35,8 @@ public class JoinChat extends BaseEntity {
     public void leaveChat() {
         this.status = JoinChatStatus.INACTIVE;
     }
+
+    public void joinChat() {
+        this.status = JoinChatStatus.ACTIVE;
+    }
 }
