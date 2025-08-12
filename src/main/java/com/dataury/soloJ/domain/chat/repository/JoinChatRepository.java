@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.chat.repository;
 
+import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
@@ -34,5 +35,54 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
 
     // 채팅방 ID와 상태로 JoinChat 조회
     List<JoinChat> findByChatRoomIdAndStatus(Long chatRoomId, JoinChatStatus status);
+
+
+    @Query("""
+    select new com.dataury.soloJ.domain.chat.dto.ChatRoomListItem(
+        r.id,
+        r.chatRoomName,
+        r.chatRoomDescription,
+        r.joinDate,
+        count(jcActive),
+        r.numberOfMembers,  
+        r.isCompleted
+    )
+    from JoinChat jcUser
+        join jcUser.chatRoom r
+        left join JoinChat jcActive
+               on jcActive.chatRoom = r
+              and jcActive.status = :active
+    where jcUser.user.id = :userId
+      and jcUser.status = :active
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    order by r.createdAt desc
+    """)
+    List<ChatRoomListItem> findMyChatRoomsAsDto(
+            @Param("userId") Long userId,
+            @Param("active") JoinChatStatus active
+    );
+
+    @Query("""
+    select new com.dataury.soloJ.domain.chat.dto.ChatRoomListItem(
+        r.id,
+        r.chatRoomName,
+        r.chatRoomDescription,
+        r.joinDate,
+        count(jcActive),
+        r.numberOfMembers,  
+        r.isCompleted
+    )
+    from ChatRoom r
+        left join JoinChat jcActive
+               on jcActive.chatRoom = r
+              and jcActive.status = :active
+    where r.touristSpot.id = :contentId
+      and r.isCompleted = false
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    order by r.createdAt desc
+    """)
+    List<ChatRoomListItem> findRoomsByTouristSpotAsDto(@Param("contentId") Long contentId,
+                                                         @Param("active") com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus active);
+
 
 }

@@ -41,7 +41,7 @@ public class ChatService {
                 .senderName(user.getName())
                 .content(user.getName() + " 님이 입장하셨습니다.")
                 .sendAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
-                .emoji(null) // 입장/퇴장 메시지는 이모지 필요 없음
+                .image(null) // 입장/퇴장 메시지는 이모지 필요 없음
                 .build();
 
         handleMessage(message);
@@ -62,7 +62,7 @@ public class ChatService {
                 .senderName(senderName)
                 .content(senderName + " 님이 채팅방을 나갔습니다.")
                 .sendAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
-                .emoji(null) // 입장/퇴장 메시지는 이모지 필요 없음
+                .image(null) // 입장/퇴장 메시지는 이모지 필요 없음
                 .build();
         handleMessage(message);
         log.info("사용자 퇴장 메시지 처리 완료 - roomId: {}, userId: {}", roomId, senderId);

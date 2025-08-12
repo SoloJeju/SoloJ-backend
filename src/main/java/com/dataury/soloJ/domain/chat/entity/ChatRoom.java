@@ -34,7 +34,7 @@ public class ChatRoom extends BaseEntity {
     private LocalDateTime joinDate;
 
     @Column
-    private int numberOfMembers;
+    private Long numberOfMembers;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tourist_spot_id")

@@ -64,7 +64,7 @@ public class ChatWebSocketController {
                             .senderId(senderId)
                             .senderName(user.getName())
                             .content(messageRequest.getContent())
-                            .emoji(userProfile != null ? userProfile.getImage() : null)
+                            .image(userProfile != null ? userProfile.getImage() : null)
                             .sendAt(sendAt)
                             .build();
                     chatService.handleTalkMessage(talkMessage);
@@ -81,7 +81,7 @@ public class ChatWebSocketController {
                             .senderId(senderId)
                             .senderName(user.getName())
                             .content(messageRequest.getContent())
-                            .emoji(userProfile != null ? userProfile.getImage() : null)
+                            .image(userProfile != null ? userProfile.getImage() : null)
                             .sendAt(sendAt)
                             .build();
                     chatService.handleTalkMessage(defaultMessage);

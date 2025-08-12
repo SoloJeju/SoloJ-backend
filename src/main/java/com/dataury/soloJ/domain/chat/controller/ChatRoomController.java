@@ -63,13 +63,6 @@ public class ChatRoomController {
         return ApiResponse.onSuccess(chatRoomCommandService.getChatRoomUsers(roomId));
     }
 
-    @Operation(summary = "관광지별 채팅방 목록 조회", description = "특정 관광지의 채팅방 목록을 조회합니다.")
-    @GetMapping("/tourist-spot/{contentId}")
-    public ApiResponse<List<ChatRoomResponseDto.ChatRoomListItem>> getChatRoomsByTouristSpot(
-            @PathVariable Long contentId) {
-        return ApiResponse.onSuccess(chatRoomCommandService.getChatRoomsByTouristSpot(contentId));
-    }
-
     private final MessageQueryService messageQueryService;
 
     @Operation(summary = "채팅방 메시지 조회", description = "특정 채팅방의 메시지 목록을 조회합니다. Redis와 MongoDB에서 순차적으로 조회합니다.")
@@ -90,7 +83,7 @@ public class ChatRoomController {
                         .roomId(message.getRoomId())
                         .senderName(message.getSenderName())
                         .content(message.getContent())
-                        .emoji(message.getEmoji())
+                        .image(message.getImage())
                         .sendAt(message.getSendAt())
                         .build())
                 .collect(Collectors.toList());

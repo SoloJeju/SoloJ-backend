@@ -26,7 +26,7 @@ public class ChatRoomResponseDto {
         private String touristSpotName;
         private Long contentId;
         private LocalDateTime joinDate;
-        private int maxMembers;
+        private Long maxMembers;
         private int currentMembers;
         private LocalDateTime createdAt;
     }
@@ -66,7 +66,7 @@ public class ChatRoomResponseDto {
         private Long chatRoomId;
         private String message;
         private int currentMembers;
-        private int maxMembers;
+        private Long maxMembers;
     }
 
     @Data
@@ -89,19 +89,5 @@ public class ChatRoomResponseDto {
         }
     }
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class ChatRoomListItem {
-        private Long chatRoomId;
-        private String title;
-        private String description;
-        private LocalDateTime joinDate;
-        private int currentMembers;
-        private int maxMembers;
-        private boolean isCompleted;
-        private String creatorName;
-        private LocalDateTime createdAt;
-    }
 
 }

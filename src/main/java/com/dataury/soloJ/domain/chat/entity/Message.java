@@ -38,14 +38,13 @@ public class Message {
     @Field("content")
     private String content;
 
-    @Field("emoji")
-    private String emoji;         // 이모지 (null 가능)
+    @Field("image")
+    private String image;         // 이모지 (null 가능)
 
     @Field("sendAt")
     private LocalDateTime sendAt;
 
     private Boolean isRead;
-    private String userId;
     private String chatRoomId;
 
     @Field("createdAt")

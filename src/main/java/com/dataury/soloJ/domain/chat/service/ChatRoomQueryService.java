@@ -1,0 +1,50 @@
+package com.dataury.soloJ.domain.chat.service;
+
+import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
+import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ChatRoomQueryService {
+
+    private final JoinChatRepository joinChatRepository;
+
+    // 내 채팅방 목록
+    public List<ChatRoomListItem> getMyChatRooms(Long userId) {
+        return joinChatRepository.findMyChatRoomsAsDto(userId, JoinChatStatus.ACTIVE)
+                .stream()
+                .map(r -> ChatRoomListItem.builder()
+                        .chatRoomId(r.getChatRoomId())
+                        .title(r.getTitle())
+                        .description(r.getDescription())
+                        .joinDate(r.getJoinDate())
+                        .currentMembers(r.getCurrentMembers())   // Long 통일
+                        .maxMembers(r.getMaxMembers())
+                        .isCompleted(r.getIsCompleted())
+                        .build())
+                .toList();
+    }
+
+    // 관광지별 채팅방 목록
+    public List<ChatRoomListItem> getChatRoomsByTouristSpot(Long contentId) {
+        return joinChatRepository.findRoomsByTouristSpotAsDto(contentId, JoinChatStatus.ACTIVE)
+                .stream()
+                .map(r -> ChatRoomListItem.builder()
+                        .chatRoomId(r.getChatRoomId())
+                        .title(r.getTitle())
+                        .description(r.getDescription())
+                        .joinDate(r.getJoinDate())
+                        .currentMembers(r.getCurrentMembers())
+                        .maxMembers(r.getMaxMembers())
+                        .isCompleted(r.getIsCompleted())
+                        .build())
+                .toList();
+    }
+}

@@ -1,8 +1,9 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
+import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
-import com.dataury.soloJ.domain.touristSpot.service.TourApiService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,14 +16,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/tourist-spots")
 @RequiredArgsConstructor
 @Tag(name = "Tour API", description = "관광지 관련 API")
 public class TourSpotController {
-    private final TourApiService tourApiService;
+
     private final TourSpotService tourSpotService;
+    private final ChatRoomQueryService chatRoomQueryService;
 
     @GetMapping("")
     @Operation(summary = "관광지 정보 조회")
@@ -49,5 +53,11 @@ public class TourSpotController {
 
        // return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailCommon(contentId, contentTypeId));
         return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailWithIntro(contentId, contentTypeId));
+    }
+
+    @Operation(summary = "관광지별 채팅방 목록 조회")
+    @GetMapping("/{contentId}/groups")
+    public ApiResponse<List<ChatRoomListItem>> getChatRoomsByTouristSpot(@PathVariable Long contentId) {
+        return ApiResponse.onSuccess(chatRoomQueryService.getChatRoomsByTouristSpot(contentId));
     }
 }

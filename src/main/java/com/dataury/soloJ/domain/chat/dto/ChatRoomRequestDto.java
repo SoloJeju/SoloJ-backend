@@ -15,7 +15,7 @@ public class ChatRoomRequestDto {
         private String description;
         private Long contentId; // TouristSpot의 contentId
         private LocalDateTime joinDate;
-        private int maxMembers; // 최대 인원수
+        private Long maxMembers; // 최대 인원수
     }
 
     @Data

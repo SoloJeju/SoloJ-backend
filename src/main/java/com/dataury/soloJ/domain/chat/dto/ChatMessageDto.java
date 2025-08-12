@@ -29,7 +29,7 @@ public class ChatMessageDto {
         private Long roomId;
         private String senderName;
         private String content;
-        private String emoji;        // 이모지 (null 가능)
+        private String image;        // 이미지
         private LocalDateTime sendAt;
     }
 }
