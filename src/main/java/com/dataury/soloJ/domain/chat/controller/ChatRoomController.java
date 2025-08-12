@@ -34,25 +34,22 @@ public class ChatRoomController {
     @Operation(summary = "관광지 기반 채팅방 생성", description = "관광지 기반 동행 채팅방을 생성합니다. 생성한 사용자가 자동으로 방장이 됩니다.")
     @PostMapping("/create")
     public ApiResponse<ChatRoomResponseDto.CreateChatRoomResponse> createChatRoom(
-            @Parameter(hidden = true) @AuthUser Long userId,
             @RequestBody ChatRoomRequestDto.CreateChatRoomDto request) {
-        return ApiResponse.onSuccess(chatRoomCommandService.createChatRoom(request, userId));
+        return ApiResponse.onSuccess(chatRoomCommandService.createChatRoom(request));
     }
 
     @Operation(summary = "채팅방 참가", description = "사용자가 채팅방에 참가합니다.")
     @PostMapping("/{roomId}/join")
     public ApiResponse<ChatRoomResponseDto.JoinChatRoomResponse> joinChatRoom(
-            @Parameter(hidden = true) @AuthUser Long userId,
             @PathVariable Long roomId) {
-        return ApiResponse.onSuccess(chatRoomCommandService.joinChatRoom(roomId, userId));
+        return ApiResponse.onSuccess(chatRoomCommandService.joinChatRoom(roomId));
     }
 
     @Operation(summary = "채팅방 나가기", description = "사용자가 채팅방에서 나갑니다.")
     @DeleteMapping("/{roomId}/leave")
     public ApiResponse<String> leaveChatRoom(
-            @Parameter(hidden = true) @AuthUser Long userId,
             @PathVariable Long roomId) {
-        chatRoomCommandService.leaveChatRoom(roomId, userId);
+        chatRoomCommandService.leaveChatRoom(roomId);
         return ApiResponse.onSuccess("채팅방에서 성공적으로 나갔습니다.");
     }
 

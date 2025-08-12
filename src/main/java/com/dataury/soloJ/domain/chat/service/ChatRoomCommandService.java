@@ -15,6 +15,7 @@ import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +62,8 @@ public class ChatRoomCommandService {
 
     // 채팅방 나가기
     @Transactional
-    public void leaveChatRoom(Long chatRoomId, Long userId) {
+    public void leaveChatRoom(Long chatRoomId) {
+        Long userId = SecurityUtils.getCurrentUserId();
         removeUserFromChatRoom(chatRoomId, userId);
     }
 
@@ -88,7 +90,9 @@ public class ChatRoomCommandService {
 
     // 관광지 기반 채팅방 생성
     @Transactional
-    public ChatRoomResponseDto.CreateChatRoomResponse createChatRoom(ChatRoomRequestDto.CreateChatRoomDto request, Long userId) {
+    public ChatRoomResponseDto.CreateChatRoomResponse createChatRoom(ChatRoomRequestDto.CreateChatRoomDto request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
         // 관광지 조회
         TouristSpot touristSpot = touristSpotRepository.findById(request.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
@@ -123,7 +127,9 @@ public class ChatRoomCommandService {
 
     // 채팅방 참가
     @Transactional
-    public ChatRoomResponseDto.JoinChatRoomResponse joinChatRoom(Long chatRoomId, Long userId) {
+    public ChatRoomResponseDto.JoinChatRoomResponse joinChatRoom(Long chatRoomId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
         // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));

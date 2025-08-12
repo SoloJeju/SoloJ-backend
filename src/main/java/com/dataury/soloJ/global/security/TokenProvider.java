@@ -2,6 +2,7 @@
 package com.dataury.soloJ.global.security;
 
 
+import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import io.jsonwebtoken.Claims;
@@ -9,14 +10,12 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.dataury.soloJ.domain.user.entity.User;
-import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 @Component
@@ -80,10 +79,11 @@ public class TokenProvider {
         }
     }
 
-    // 사용자명 추출
-    public String extractUsernameFromToken(String token) {
-        return extractClaims(token).getSubject(); // JWT의 subject에서 사용자명 추출
+    public String extractUserRoleFromToken(String token) {
+        return extractClaims(token).get("role", String.class);
     }
+
+
 
     // 사용자 ID 추출
     public Long extractUserIdFromToken(String token) {

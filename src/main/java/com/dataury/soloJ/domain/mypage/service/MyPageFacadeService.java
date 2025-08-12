@@ -2,6 +2,7 @@ package com.dataury.soloJ.domain.mypage.service;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +17,13 @@ public class MyPageFacadeService {
     // private final ArticleQueryService articleQueryService;
     // private final CommentQueryService commentQueryService;
 
-    public List<ChatRoomListItem> getMyChatRooms(Long userId) {
+    public List<ChatRoomListItem> getMyChatRooms() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        System.out.println("User id: " + userId);
         return chatRoomQueryService.getMyChatRooms(userId);
     }
 
     // 앞으로 확장:
-    // public List<MyArticleDto> getMyArticles(Long userId, Pageable pageable) { ... }
-    // public List<MyCommentDto> getMyComments(Long userId, Pageable pageable) { ... }
+    // public List<MyArticleDto> getMyArticles( Pageable pageable) { ... }
+    // public List<MyCommentDto> getMyComments( Pageable pageable) { ... }
 }

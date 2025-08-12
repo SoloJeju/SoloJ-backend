@@ -31,27 +31,27 @@ public class PlanController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "AUTH004", description = "access 토큰 만료", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "AUTH006", description = "access 토큰 모양이 이상함", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    private ApiResponse<PlanResponseDto.planDto> newPlan (@Parameter(hidden = true) @AuthUser Long userId, @RequestBody CreatePlanDto planRequestDto){
-        return ApiResponse.onSuccess(planService.createPlan(userId, planRequestDto));
+    private ApiResponse<PlanResponseDto.planDto> newPlan (@RequestBody CreatePlanDto planRequestDto){
+        return ApiResponse.onSuccess(planService.createPlan(planRequestDto));
     }
 
     @PatchMapping("/{planId}")
     @Operation(summary = "계획 수정", description = "계획 정보를 수정합니다. 토큰 필요.")
     public ApiResponse<PlanResponseDto.planDto> updatePlan(
-            @Parameter(hidden = true) @AuthUser Long userId,
+            
             @PathVariable Long planId,
             @RequestBody CreatePlanDto dto
     ) {
-        return ApiResponse.onSuccess(planService.updatePlan(userId, planId, dto));
+        return ApiResponse.onSuccess(planService.updatePlan(planId, dto));
     }
 
     @DeleteMapping("/{planId}")
     @Operation(summary = "계획 삭제", description = "계획 정보를 삭제합니다. 토큰 필요.")
     public ApiResponse<Void> deletePlan(
-            @Parameter(hidden = true) @AuthUser Long userId,
+            
             @PathVariable Long planId
     ) {
-        planService.deletePlan(userId, planId);
+        planService.deletePlan(planId);
         return ApiResponse.onSuccess(null);  // 성공 응답만 반환
     }
 
