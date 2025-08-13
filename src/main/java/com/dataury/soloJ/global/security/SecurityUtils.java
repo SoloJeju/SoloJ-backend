@@ -1,6 +1,7 @@
 package com.dataury.soloJ.global.security;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public class SecurityUtils {
@@ -9,11 +10,6 @@ public class SecurityUtils {
 
     public static Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        System.out.println(">> SecurityUtils authentication = " + authentication);
-        if (authentication != null) {
-            System.out.println(">> SecurityUtils principal = " + authentication.getPrincipal());
-        }
 
         if (authentication == null || authentication.getPrincipal() == null) {
             return null;
@@ -34,6 +30,24 @@ public class SecurityUtils {
         }
 
         return null;
+    }
+
+    public static boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || authentication.getAuthorities() == null) {
+            System.out.println(">> SecurityUtils.isAdmin: No authentication or authorities");
+            return false;
+        }
+        
+        System.out.println(">> SecurityUtils.isAdmin: Authorities = " + authentication.getAuthorities());
+        
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+        
+        System.out.println(">> SecurityUtils.isAdmin: Result = " + isAdmin);
+        return isAdmin;
     }
 
 }

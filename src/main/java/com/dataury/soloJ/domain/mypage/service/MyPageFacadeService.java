@@ -14,7 +14,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class MyPageFacadeService {
     private final ChatRoomQueryService chatRoomQueryService;
-    // private final ArticleQueryService articleQueryService;
+
     // private final CommentQueryService commentQueryService;
 
     public List<ChatRoomListItem> getMyChatRooms() {
