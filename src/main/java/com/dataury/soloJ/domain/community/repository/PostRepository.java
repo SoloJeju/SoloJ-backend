@@ -21,4 +21,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     
     @Query("SELECT p FROM Post p WHERE p.title LIKE %:keyword% OR p.content LIKE %:keyword%")
     Page<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("""
+        select p
+        from Comment c
+        join c.post p
+        where c.user.id = :userId
+        group by p
+        order by max(c.createdAt) desc
+    """)
+    Page<Post> findCommentedPostsOrderByLatestMyComment(@Param("userId") Long userId,
+                                                        Pageable pageable);
+
 }

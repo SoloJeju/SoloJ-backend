@@ -177,6 +177,16 @@ public class PostService {
         return posts.map(this::convertToListItemDto);
     }
 
+    public Page<PostResponseDto.PostListItemDto> getMyPosts(Long userId, Pageable pageable) {
+        Page<Post> posts = postRepository.findByUserId(userId, pageable);
+        return posts.map(this::convertToListItemDto);
+    }
+
+    public Page<PostResponseDto.PostListItemDto> getPostsWithMyComments(Long userId, Pageable pageable) {
+        Page<Post> posts = postRepository.findCommentedPostsOrderByLatestMyComment(userId, pageable);
+        return posts.map(this::convertToListItemDto);
+    }
+
     private PostResponseDto.PostListItemDto convertToListItemDto(Post post) {
         UserProfile authorProfile = userProfileRepository.findByUser(post.getUser())
                 .orElse(null);

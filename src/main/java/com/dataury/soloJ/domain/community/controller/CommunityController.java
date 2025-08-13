@@ -103,13 +103,4 @@ public class CommunityController {
         return ApiResponse.onSuccess(scrapService.toggleScrap(postId));
     }
 
-    @GetMapping("/scraps")
-    @Operation(summary = "내 스크랩 목록", description = "내가 스크랩한 게시글 목록을 조회합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> getMyScrapList(
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
-        
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.onSuccess(scrapService.getMyScrapList(pageable));
-    }
 }

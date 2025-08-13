@@ -57,9 +57,7 @@ public class ScrapService {
         }
     }
 
-    public Page<PostResponseDto.PostListItemDto> getMyScrapList(Pageable pageable) {
-        Long userId = SecurityUtils.getCurrentUserId();
-        
+    public Page<PostResponseDto.PostListItemDto> getMyScrapList(Long userId, Pageable pageable) {
         Page<Scrap> scraps = scrapRepository.findByUserIdWithPost(userId, pageable);
         
         return scraps.map(scrap -> {

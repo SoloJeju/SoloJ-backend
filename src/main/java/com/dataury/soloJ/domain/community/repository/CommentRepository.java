@@ -1,6 +1,8 @@
 package com.dataury.soloJ.domain.community.repository;
 
 import com.dataury.soloJ.domain.community.entity.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +21,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Integer countByPostId(Long postId);
     
     void deleteByPostId(Long postId);
+    
+    @Query("SELECT DISTINCT c.post FROM Comment c WHERE c.user.id = :userId ORDER BY c.createdAt DESC")
+    Page<com.dataury.soloJ.domain.community.entity.Post> findPostsByUserId(@Param("userId") Long userId, Pageable pageable);
 }
