@@ -5,6 +5,8 @@ import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -60,6 +62,38 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
     List<ChatRoomListItem> findMyChatRoomsAsDto(
             @Param("userId") Long userId,
             @Param("active") JoinChatStatus active
+    );
+
+    @Query(value = """
+    select new com.dataury.soloJ.domain.chat.dto.ChatRoomListItem(
+        r.id,
+        r.chatRoomName,
+        r.chatRoomDescription,
+        r.joinDate,
+        count(jcActive),
+        r.numberOfMembers,  
+        r.isCompleted
+    )
+    from JoinChat jcUser
+        join jcUser.chatRoom r
+        left join JoinChat jcActive
+               on jcActive.chatRoom = r
+              and jcActive.status = :active
+    where jcUser.user.id = :userId
+      and jcUser.status = :active
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    """,
+    countQuery = """
+    select count(distinct r)
+    from JoinChat jcUser
+        join jcUser.chatRoom r
+    where jcUser.user.id = :userId
+      and jcUser.status = :active
+    """)
+    Page<ChatRoomListItem> findMyChatRoomsAsDtoPageable(
+            @Param("userId") Long userId,
+            @Param("active") JoinChatStatus active,
+            Pageable pageable
     );
 
     @Query("""

@@ -4,6 +4,8 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +19,8 @@ public class ChatRoomQueryService {
     private final JoinChatRepository joinChatRepository;
 
     // 내 채팅방 목록
-    public List<ChatRoomListItem> getMyChatRooms(Long userId) {
-        return joinChatRepository.findMyChatRoomsAsDto(userId, JoinChatStatus.ACTIVE)
-                .stream()
+    public Page<ChatRoomListItem> getMyChatRooms(Long userId, Pageable pageable) {
+        return joinChatRepository.findMyChatRoomsAsDtoPageable(userId, JoinChatStatus.ACTIVE, pageable)
                 .map(r -> ChatRoomListItem.builder()
                         .chatRoomId(r.getChatRoomId())
                         .title(r.getTitle())
@@ -28,8 +29,7 @@ public class ChatRoomQueryService {
                         .currentMembers(r.getCurrentMembers())   // Long 통일
                         .maxMembers(r.getMaxMembers())
                         .isCompleted(r.getIsCompleted())
-                        .build())
-                .toList();
+                        .build());
     }
 
     // 관광지별 채팅방 목록
