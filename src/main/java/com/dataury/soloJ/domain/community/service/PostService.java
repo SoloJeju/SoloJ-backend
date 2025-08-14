@@ -87,32 +87,22 @@ public class PostService {
 
     @Transactional
     public void deletePost(Long postId) {
-        System.out.println("===== deletePost 시작 =====");
-        System.out.println("삭제 요청 게시글 ID: " + postId);
         
         Long userId = SecurityUtils.getCurrentUserId();
-        System.out.println("현재 사용자 ID: " + userId);
         
         boolean isAdmin = SecurityUtils.isAdmin();
-        System.out.println("관리자 여부: " + isAdmin);
         
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
 
-        System.out.println("게시글 작성자 ID: " + post.getUser().getId());
-        System.out.println("본인 게시글 여부: " + post.getUser().getId().equals(userId));
-        
         // 작성자 본인이거나 관리자인 경우에만 삭제 가능
         if (!post.getUser().getId().equals(userId) && !isAdmin) {
-            System.out.println("삭제 권한 없음 - FORBIDDEN 발생");
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
         commentRepository.deleteByPostId(postId);
         scrapRepository.deleteByPostId(postId);
         postRepository.delete(post);
-        System.out.println("게시글 삭제 완료");
-        System.out.println("===== deletePost 종료 =====");
     }
 
     public Page<PostResponseDto.PostListItemDto> getPostList(PostCategory category, Pageable pageable) {
