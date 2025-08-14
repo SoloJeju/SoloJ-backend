@@ -31,7 +31,7 @@ public class MyPageController {
             @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.onSuccess(myPageFacadeService.getMyChatRooms(pageable));
     }
 

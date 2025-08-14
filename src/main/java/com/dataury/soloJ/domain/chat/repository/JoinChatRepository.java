@@ -75,26 +75,29 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.isCompleted
     )
     from JoinChat jcUser
-        join jcUser.chatRoom r
-        left join JoinChat jcActive
-               on jcActive.chatRoom = r
-              and jcActive.status = :active
+      join jcUser.chatRoom r
+      left join JoinChat jcActive
+             on jcActive.chatRoom = r
+            and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
     group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    order by MAX(jcUser.createdAt) desc
     """,
-    countQuery = """
+                countQuery = """
     select count(distinct r)
     from JoinChat jcUser
-        join jcUser.chatRoom r
+      join jcUser.chatRoom r
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    """)
+    """
+    )
     Page<ChatRoomListItem> findMyChatRoomsAsDtoPageable(
             @Param("userId") Long userId,
             @Param("active") JoinChatStatus active,
             Pageable pageable
     );
+
 
     @Query("""
     select new com.dataury.soloJ.domain.chat.dto.ChatRoomListItem(

@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ChatMessageDto {
 
@@ -31,5 +32,15 @@ public class ChatMessageDto {
         private String content;
         private String image;        // 이미지
         private LocalDateTime sendAt;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class PageResponse {
+        private List<Response> messages;
+        private boolean hasNext;
     }
 }

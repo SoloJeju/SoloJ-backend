@@ -62,18 +62,18 @@ public class ChatRoomController {
 
     private final MessageQueryService messageQueryService;
 
-    @Operation(summary = "채팅방 메시지 조회", description = "특정 채팅방의 메시지 목록을 조회합니다. Redis와 MongoDB에서 순차적으로 조회합니다.")
+    @Operation(summary = "채팅방 메시지 조회", description = "특정 채팅방의 메시지 목록을 조회합니다. 무한 스크롤을 지원하며, 최신 메시지가 마지막에 표시됩니다.")
     @GetMapping("/{roomId}/messages")
-    public ApiResponse<List<ChatMessageDto.Response>> getChatRoomMessages(
+    public ApiResponse<ChatMessageDto.PageResponse> getChatRoomMessages(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @Parameter(description = "마지막 메시지 시간 (이전 메시지 조회용)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastMessageTime,
             @Parameter(description = "조회할 메시지 개수") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "현재 사용자 정보", hidden = true) @AuthUser Long userId) {
 
-        List<Message> messages = messageQueryService.getMessagesByChatRoom(roomId, userId, lastMessageTime, size);
+        MessageQueryService.MessagePageResponse pageResponse = messageQueryService.getMessagesByChatRoom(roomId, userId, lastMessageTime, size);
 
-        List<ChatMessageDto.Response> responses = messages.stream()
+        List<ChatMessageDto.Response> responses = pageResponse.getMessages().stream()
                 .map(message -> ChatMessageDto.Response.builder()
                         .id(message.getMessageId())
                         .type(message.getType())
@@ -85,9 +85,15 @@ public class ChatRoomController {
                         .build())
                 .collect(Collectors.toList());
 
-        log.info("채팅방 메시지 조회 완료 - roomId: {}, userId: {}, 조회된 메시지 수: {}", roomId, userId, responses.size());
+        ChatMessageDto.PageResponse response = ChatMessageDto.PageResponse.builder()
+                .messages(responses)
+                .hasNext(pageResponse.isHasNext())
+                .build();
 
-        return ApiResponse.onSuccess(responses);
+        log.info("채팅방 메시지 조회 완료 - roomId: {}, userId: {}, 조회된 메시지 수: {}, hasNext: {}", 
+                roomId, userId, responses.size(), pageResponse.isHasNext());
+
+        return ApiResponse.onSuccess(response);
     }
 
 }
