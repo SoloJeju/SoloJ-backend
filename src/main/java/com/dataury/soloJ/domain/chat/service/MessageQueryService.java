@@ -8,6 +8,8 @@ import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MessageQueryService {
 
+    @Getter
+    @AllArgsConstructor
+    public static class MessagePageResponse {
+        private final List<Message> messages;
+        private final boolean hasNext;
+    }
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final MongoMessageRepository mongoMessageRepository;
     private final JoinChatRepository joinChatRepository;
@@ -33,57 +42,75 @@ public class MessageQueryService {
 
     private static final String CHAT_ROOM_MESSAGES_KEY = "chatroom:%s:messages";
 
-    public List<Message> getMessagesByChatRoom(Long chatRoomId, Long userId, LocalDateTime lastMessageTime, int size) {
+    public MessagePageResponse getMessagesByChatRoom(Long chatRoomId, Long userId, LocalDateTime lastMessageTime, int size) {
         if (!joinChatRepository.existsByUserIdAndChatRoomIdAndStatusActive(userId, chatRoomId)) {
             throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
         }
-        if (lastMessageTime == null) lastMessageTime = LocalDateTime.now();
 
+        // 무한 스크롤: lastMessageTime 이전의 메시지를 size+1개 조회 (hasNext 판단용)
         List<Message> result = new ArrayList<>();
-
-        // 1) Redis
-        List<Message> redisMessages = getMessagesFromRedis(chatRoomId, lastMessageTime, size);
+        List<Message> redisMessages = getMessagesFromRedis(chatRoomId, lastMessageTime, size + 1);
         result.addAll(redisMessages);
 
-        // 2) Mongo (부족분만)
-        if (result.size() < size) {
-            int remaining = size - result.size();
-            LocalDateTime searchBefore = lastMessageTime;
-            if (!redisMessages.isEmpty()) {
-                searchBefore = redisMessages.stream()
-                        .map(Message::getSendAt)
-                        .min(LocalDateTime::compareTo)
-                        .orElse(lastMessageTime);
+        if (result.size() < size + 1) {
+            int remaining = size + 1 - result.size();
+
+            // Redis에서 일부라도 얻었으면 그 중 가장 오래된 sendAt 이전으로 Mongo 조회
+            LocalDateTime searchBefore = (lastMessageTime == null)
+                    ? redisMessages.stream().map(Message::getSendAt).min(LocalDateTime::compareTo).orElse(null)
+                    : lastMessageTime;
+
+            if (searchBefore == null && lastMessageTime == null) {
+                // 최초 조회: 최신 메시지부터
+                Pageable pageable = PageRequest.of(0, remaining, Sort.by(Sort.Direction.DESC, "sendAt"));
+                result.addAll(mongoMessageRepository.findByRoomId(chatRoomId, pageable));
+            } else {
+                // 이전 메시지 조회
+                LocalDateTime beforeTime = searchBefore != null ? searchBefore : lastMessageTime;
+                Pageable pageable = PageRequest.of(0, remaining, Sort.by(Sort.Direction.DESC, "sendAt"));
+                Set<String> excludeIds = getRedisMessageIds(redisMessages);
+                result.addAll(
+                        mongoMessageRepository
+                                .findByRoomIdAndSendAtBefore(chatRoomId, beforeTime, pageable)
+                                .stream()
+                                .filter(m -> m.getMessageId() != null && !excludeIds.contains(m.getMessageId()))
+                                .toList()
+                );
             }
-
-            Set<String> excludeIds = getRedisMessageIds(redisMessages);
-            Pageable pageable = PageRequest.of(0, remaining, Sort.by(Sort.Direction.DESC, "sendAt"));
-            List<Message> mongoMessages = mongoMessageRepository
-                    .findByRoomIdAndSendAtBefore(chatRoomId, searchBefore, pageable)
-                    .stream()
-                    .filter(m -> m.getMessageId() != null && !excludeIds.contains(m.getMessageId()))
-                    .collect(Collectors.toList());
-
-            result.addAll(mongoMessages);
         }
 
-        // 최신순 정렬 후 size만큼
-        return result.stream()
+        // 정렬 및 페이징 처리
+        List<Message> sortedMessages = result.stream()
                 .filter(m -> m.getSendAt() != null)
-                .sorted(Comparator.comparing(Message::getSendAt).reversed())
-                .limit(size)
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(Message::getSendAt).reversed()) // 내림차순으로 정렬 (최신이 먼저)
+                .limit(size + 1)
+                .toList();
+
+        // hasNext 판단
+        boolean hasNext = sortedMessages.size() > size;
+        List<Message> messages = hasNext 
+                ? sortedMessages.subList(0, size) 
+                : sortedMessages;
+
+        // 최종적으로 오름차순으로 변경 (최신 메시지가 마지막에)
+        messages = messages.stream()
+                .sorted(Comparator.comparing(Message::getSendAt))
+                .toList();
+
+        return new MessagePageResponse(messages, hasNext);
     }
+
 
     private List<Message> getMessagesFromRedis(Long chatRoomId, LocalDateTime before, int size) {
         String redisKey = String.format(CHAT_ROOM_MESSAGES_KEY, chatRoomId);
+
+        // Redis에서 전체 메시지를 가져와서 필터링
         List<Object> raw = redisTemplate.opsForList().range(redisKey, 0, -1);
         if (raw == null || raw.isEmpty()) return Collections.emptyList();
 
         List<Message> messages = raw.stream()
                 .map(obj -> {
                     try {
-                        // Redis Value Serializer가 JSON이면 LinkedHashMap으로 올 수 있어 convertValue 필요
                         return objectMapper.convertValue(obj, Message.class);
                     } catch (Exception e) {
                         log.warn("Redis 메시지 변환 실패: {}", e.getMessage());
@@ -91,14 +118,16 @@ public class MessageQueryService {
                     }
                 })
                 .filter(Objects::nonNull)
-                .filter(m -> m.getSendAt() != null && m.getSendAt().isBefore(before))
+                // before가 있으면 그 이전 메시지만 필터
+                .filter(m -> before == null || m.getSendAt().isBefore(before))
                 .sorted(Comparator.comparing(Message::getSendAt).reversed())
                 .limit(size)
-                .collect(Collectors.toList());
+                .toList();
 
-        log.info("Redis에서 조회된 메시지 수: {} (요청: {})", messages.size(), size);
+        log.info("Redis에서 조회된 메시지 수: {} (요청: {}), key={}", messages.size(), size, redisKey);
         return messages;
     }
+
 
     private Set<String> getRedisMessageIds(List<Message> redisMessages) {
         return redisMessages.stream()

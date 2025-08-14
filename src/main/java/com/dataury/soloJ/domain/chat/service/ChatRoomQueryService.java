@@ -5,6 +5,7 @@ import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,12 @@ public class ChatRoomQueryService {
 
     // 내 채팅방 목록
     public Page<ChatRoomListItem> getMyChatRooms(Long userId, Pageable pageable) {
-        return joinChatRepository.findMyChatRoomsAsDtoPageable(userId, JoinChatStatus.ACTIVE, pageable)
-                .map(r -> ChatRoomListItem.builder()
-                        .chatRoomId(r.getChatRoomId())
-                        .title(r.getTitle())
-                        .description(r.getDescription())
-                        .joinDate(r.getJoinDate())
-                        .currentMembers(r.getCurrentMembers())   // Long 통일
-                        .maxMembers(r.getMaxMembers())
-                        .isCompleted(r.getIsCompleted())
-                        .build());
+        Pageable pageNoSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return joinChatRepository.findMyChatRoomsAsDtoPageable(
+                userId,
+                JoinChatStatus.ACTIVE,
+                pageNoSort
+        );
     }
 
     // 관광지별 채팅방 목록

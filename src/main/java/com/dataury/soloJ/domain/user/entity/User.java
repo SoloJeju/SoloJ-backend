@@ -44,6 +44,11 @@ public class User extends BaseEntity{
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
 
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private UserProfile userProfile;
+
+
+
     public void changePassword(String password){
         this.password = password;
     }

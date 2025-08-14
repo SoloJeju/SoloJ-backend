@@ -15,7 +15,9 @@ public interface MongoMessageRepository extends MongoRepository<Message, String>
     List<Message> findByChatRoomId(String chatRoomId, Pageable pageable);
     // MessageId 중복 확인용
     List<Message> findByMessageIdIn(Set<String> messageIds);
-    
+
+    List<Message> findByRoomId(Long roomId, Pageable pageable);
+
     // 시간 범위로 메시지 조회
     List<Message> findByChatRoomIdAndCreatedAtBefore(String chatRoomId, Date createdAtBefore, Pageable pageable);
     List<Message> findByRoomIdAndSendAtBefore(Long roomId, LocalDateTime before, Pageable pageable);
