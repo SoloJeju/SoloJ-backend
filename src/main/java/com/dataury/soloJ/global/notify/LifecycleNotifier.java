@@ -14,11 +14,11 @@ public class LifecycleNotifier {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStarted() {
-        webhook.sendLifecycle("✅ **SoloJ** 서버 기동 완료 (ApplicationReady)");
+        webhook.sendLifecycle("✅ **혼자옵서예** 서버 기동 완료 (ApplicationReady)");
     }
 
     @PreDestroy
     public void onStopping() {
-        webhook.sendLifecycle("🛑 **SoloJ** 서버 종료 요청 감지 (SIGTERM/정상 종료)");
+        webhook.sendLifecycle("🛑 **혼자옵서예** 서버 종료 요청 감지 (SIGTERM/정상 종료)");
     }
 }
