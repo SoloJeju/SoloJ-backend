@@ -72,3 +72,16 @@ jwt:
 openai:
   model: gpt-4
   secret-key: ${AI_SECRET_KEY}
+
+
+discord:
+  webhooks:
+    error: ${DISCORD_WEBHOOK_ERROR:}
+    lifecycle: ${DISCORD_WEBHOOK_LIFECYCLE:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+

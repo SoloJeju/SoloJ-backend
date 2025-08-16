@@ -34,7 +34,9 @@ public class TouristSpot extends BaseEntity {
     private String firstImage;
 
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty;
+    @Column(nullable = false)
+    @Builder.Default
+    private Difficulty difficulty = Difficulty.NONE;
 
     @Column(nullable = false)
     @Builder.Default
