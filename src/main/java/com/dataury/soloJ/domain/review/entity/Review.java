@@ -5,9 +5,12 @@ import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter
 @Builder
 public class Review extends BaseEntity {
     @Id
@@ -24,7 +26,7 @@ public class Review extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDateTime visitDate;
+    private LocalDate visitDate;
 
     @Column
     private String reviewText;
@@ -32,6 +34,10 @@ public class Review extends BaseEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
+
+    @Column
+    @Builder.Default
+    private Boolean receipt=false;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewTag> reviewTags = new ArrayList<>();
@@ -43,4 +49,28 @@ public class Review extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "touristSpot_id")
     private TouristSpot touristSpot;
+
+    // 리뷰 정보 업데이트 (부분 수정 가능)
+    public void updateReview(String reviewText, Difficulty difficulty, LocalDate visitDate) {
+        if (reviewText != null) {
+            this.reviewText = reviewText;
+        }
+        if (difficulty != null) {
+            this.difficulty = difficulty;
+        }
+        if (visitDate != null) {
+            this.visitDate = visitDate;
+        }
+    }
+
+    // 리뷰 태그 업데이트
+    public void updateReviewTags(List<ReviewTag> newReviewTags) {
+        this.reviewTags.clear();
+        this.reviewTags.addAll(newReviewTags);
+    }
+
+    // 리뷰 태그 설정 (생성 시 사용)
+    public void setReviewTags(List<ReviewTag> reviewTags) {
+        this.reviewTags = reviewTags;
+    }
 }

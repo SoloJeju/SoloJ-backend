@@ -39,4 +39,25 @@ public class ReviewController {
         return ApiResponse.onSuccess(reviewService.createReview(reviewCreateDto));
     }
 
+    @PatchMapping("/{reviewId}")
+    @Operation(summary = "리뷰 수정", description = "리뷰를 수정합니다. 토큰 필요.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<ReviewResponseDto.ReviewDto> updateReview(
+            @PathVariable Long reviewId,
+            @RequestBody ReviewRequestDto.ReviewUpdateDto reviewUpdateDto){
+        return ApiResponse.onSuccess(reviewService.updateReview(reviewId, reviewUpdateDto));
+    }
+
+    @DeleteMapping("/{reviewId}")
+    @Operation(summary = "리뷰 삭제", description = "리뷰를 삭제합니다. 토큰 필요.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<String> deleteReview(@PathVariable Long reviewId){
+        reviewService.deleteReview(reviewId);
+        return ApiResponse.onSuccess("리뷰가 삭제되었습니다.");
+    }
+
 }
