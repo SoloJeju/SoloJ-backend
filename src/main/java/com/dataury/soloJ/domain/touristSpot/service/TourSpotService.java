@@ -65,11 +65,10 @@ public class TourSpotService {
                         .latitude(Double.parseDouble(item.getMapy()))
                         .longitude(Double.parseDouble(item.getMapx()))
                         .firstImage(item.getFirstimage())
-                        .activeGroupCount(0)
+                        .hasCompanionRoom(false)
                         .build());
             }
 
-            List<String> tagDescriptions = tagMap.getOrDefault(contentId, List.of());
 
             return TourSpotResponse.TourSpotItemWithReview.builder()
                     .contentid(item.getContentid())
@@ -80,7 +79,8 @@ public class TourSpotService {
                     .mapx(item.getMapx())
                     .mapy(item.getMapy())
                     .difficulty(spot.getDifficulty())
-                    .reviewTags(tagDescriptions)
+                    .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
+                    .hasCompanionRoom(spot.isHasCompanionRoom())
                     .build();
         }).toList();
 
@@ -129,7 +129,7 @@ public class TourSpotService {
                 .intro(intro)
                 .reviewTags(reviewTags)
                 .difficulty(spot.getDifficulty())
-                .activeGroupCount(spot.getActiveGroupCount())
+                .hasCompanionRoom(spot.isHasCompanionRoom())
                 .build();
     }
 

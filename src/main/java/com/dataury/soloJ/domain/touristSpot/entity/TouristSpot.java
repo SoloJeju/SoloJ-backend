@@ -1,7 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.entity;
 
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
-import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
+import com.dataury.soloJ.domain.review.entity.status.ReviewTags;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,28 +38,18 @@ public class TouristSpot extends BaseEntity {
     @Builder.Default
     private Difficulty difficulty = Difficulty.NONE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private ReviewTags reviewTag;
+
     @Column(nullable = false)
     @Builder.Default
-    private int activeGroupCount=0;
+    private boolean hasCompanionRoom = false;
 
-    // 동행방 생성 시
-    public void incrementGroupCount() {
-        this.activeGroupCount++;
-    }
 
-    // 동행방 종료 시
-    public void decrementGroupCount() {
-        if (this.activeGroupCount > 0) {
-            this.activeGroupCount--;
-        }
-    }
-
-    public void updateFromItem(TourApiResponse.Item item) {
-        this.name = item.getTitle();
-        this.contentTypeId = Long.valueOf(item.getContenttypeid());
-        this.latitude = Double.parseDouble(item.getMapy());
-        this.longitude = Double.parseDouble(item.getMapx());
-        this.firstImage = item.getFirstimage(); // 있다면
+    public void updateMainStats(Difficulty difficulty, ReviewTags tag) {
+        this.difficulty = difficulty != null ? difficulty : Difficulty.NONE;
+        this.reviewTag = tag;
     }
 
 }

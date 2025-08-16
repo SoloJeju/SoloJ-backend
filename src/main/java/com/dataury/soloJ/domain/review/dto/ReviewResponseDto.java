@@ -11,4 +11,11 @@ public class ReviewResponseDto {
         private int code;
         private String description;
     }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ReviewDto{
+        private Long id;
+        private String content;
+    }
 }
