@@ -1,9 +1,9 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
-import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
+import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +26,7 @@ import java.util.List;
 public class TourSpotController {
 
     private final TourSpotService tourSpotService;
-    private final ChatRoomQueryService chatRoomQueryService;
+    private final TourSpotFacadeService tourSpotFacadeService;
 
     @GetMapping("")
     @Operation(summary = "관광지 정보 조회")
@@ -58,6 +58,6 @@ public class TourSpotController {
     @Operation(summary = "관광지별 채팅방 목록 조회")
     @GetMapping("/{contentId}/groups")
     public ApiResponse<List<ChatRoomListItem>> getChatRoomsByTouristSpot(@PathVariable Long contentId) {
-        return ApiResponse.onSuccess(chatRoomQueryService.getChatRoomsByTouristSpot(contentId));
+        return ApiResponse.onSuccess(tourSpotFacadeService.getChatRoomsByTouristSpot(contentId));
     }
 }
