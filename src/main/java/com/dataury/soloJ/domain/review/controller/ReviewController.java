@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -67,6 +68,15 @@ public class ReviewController {
     })
     public ApiResponse<ReviewResponseDto.ReviewDetailDto> getReview(@PathVariable Long reviewId){
         return ApiResponse.onSuccess(reviewService.getDetailReview(reviewId));
+    }
+
+    @GetMapping(value = "/{contentId}/receipt", consumes = "multipart/form-data")
+    @Operation(summary = "영수증 인증 여부 조회", description = "영수증 인증 여부를 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<Boolean> verifyReceipt (@PathVariable Long contentId, @RequestParam("file") MultipartFile file){
+        return ApiResponse.onSuccess(reviewService.verifyReceipt(contentId, file));
     }
 
 

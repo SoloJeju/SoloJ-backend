@@ -18,6 +18,7 @@ import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final TouristSpotRepository touristSpotRepository;
     private final ReviewTagRepository reviewTagRepository;
+    private final GoogleOcrService googleOcrService;
 
     // contentTypeId로 리뷰 태그 목록 조회
     public List<ReviewResponseDto.ReviewTagResponseDto> getTagsByContentTypeId(int contentTypeId) {
@@ -211,6 +213,10 @@ public class ReviewService {
                 .build();
     }
 
+    public Boolean verifyReceipt(Long contentId, MultipartFile file) {
+        return googleOcrService.verifyReceipt(contentId, file);
+
+    }
 
 
 
