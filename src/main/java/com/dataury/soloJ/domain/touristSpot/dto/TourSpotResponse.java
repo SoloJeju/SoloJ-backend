@@ -31,9 +31,10 @@ public class TourSpotResponse {
         private String firstimage;
         private String mapx;
         private String mapy;
+        private boolean hasCompanionRoom;
 
         private Difficulty difficulty;
-        private List<String> reviewTags;
+        private String reviewTags;
     }
 
 
@@ -57,7 +58,7 @@ public class TourSpotResponse {
         private Map<String, Object> intro;
         private List<String> reviewTags;
         private Difficulty difficulty;
-        private int activeGroupCount;
+        private boolean hasCompanionRoom;
     }
 
 

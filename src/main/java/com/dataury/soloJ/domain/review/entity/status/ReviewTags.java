@@ -3,33 +3,38 @@ package com.dataury.soloJ.domain.review.entity.status;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @AllArgsConstructor
 @Getter
 public enum ReviewTags {
 
-    // 관광지(14) - 100번대
-    TOUR_PHOTO(101, "혼자 사진 찍기 좋았어요", 14),
-    TOUR_RELAX(102, "한적하고 여유로웠어요", 14),
-    TOUR_GUIDE_KIND(103, "혼자여도 직원/가이드가 친절했어요", 14),
-    TOUR_EASY_PATH(104, "길 찾기 쉽고 표지판이 잘 되어 있었어요", 14),
-    TOUR_PHOTOZONE(105, "포토존이 많았어요", 14),
-    TOUR_SEAT(106, "의자가 곳곳에 있어 쉬기 좋았어요", 14),
-    TOUR_LIGHTING(107, "조명이 예뻐서 혼자 사진 찍기 좋았어요", 14),
-    TOUR_DESCRIPTION(108, "안내문/설명이 혼자 읽기 쉽게 잘 되어 있었어요", 14),
-    TOUR_ACCESS(109, "주차/대중교통 접근성이 좋아요", 14),
-    TOUR_SCALE(110, "혼자 둘러보기 적당한 규모였어요", 14),
+    // 관광지(12) - 100번대
+    TOUR_PHOTO(101, "혼자 사진 찍기 좋았어요", 12),
+    TOUR_RELAX(102, "한적하고 여유로웠어요", 12),
+    TOUR_GUIDE_KIND(103, "혼자여도 직원/가이드가 친절했어요", 12),
+    TOUR_EASY_PATH(104, "길 찾기 쉽고 표지판이 잘 되어 있었어요", 12),
+    TOUR_PHOTOZONE(105, "포토존이 많았어요", 12),
+    TOUR_SEAT(106, "의자가 곳곳에 있어 쉬기 좋았어요", 12),
+    TOUR_LIGHTING(107, "조명이 예뻐서 혼자 사진 찍기 좋았어요", 12),
+    TOUR_DESCRIPTION(108, "안내문/설명이 혼자 읽기 쉽게 잘 되어 있었어요", 12),
+    TOUR_ACCESS(109, "주차/대중교통 접근성이 좋아요", 12),
+    TOUR_SCALE(110, "혼자 둘러보기 적당한 규모였어요", 12),
 
-    // 문화시설(16) - 200번대
-    CULTURE_QUIET(201, "조용하고 집중하기 좋았어요", 16),
-    CULTURE_EASY_VIEW(202, "혼자 관람하기 부담 없었어요", 16),
-    CULTURE_KIND_STAFF(203, "직원/해설사가 친절했어요", 16),
-    CULTURE_TIME(204, "전시/체험 시간이 적당했어요", 16),
-    CULTURE_LONG_STAY(205, "혼자 오래 머물러도 좋았어요", 16),
-    CULTURE_SIMPLE_ROUTE(206, "내부 동선이 간단해서 혼자 다니기 편했어요", 16),
-    CULTURE_EASY_RESERVE(207, "예약/티켓팅이 간단했어요", 16),
-    CULTURE_CLEAN_FACILITY(208, "화장실/편의시설이 깨끗하고 가까웠어요", 16),
-    CULTURE_EASY_INFO(209, "설명/자료가 혼자 이해하기 좋았어요", 16),
-    CULTURE_NOT_NOISY(210, "관람객이 많아도 시끄럽지 않았어요", 16),
+    // 문화시설(14) - 200번대
+    CULTURE_QUIET(201, "조용하고 집중하기 좋았어요", 14),
+    CULTURE_EASY_VIEW(202, "혼자 관람하기 부담 없었어요", 14),
+    CULTURE_KIND_STAFF(203, "직원/해설사가 친절했어요", 14),
+    CULTURE_TIME(204, "전시/체험 시간이 적당했어요", 14),
+    CULTURE_LONG_STAY(205, "혼자 오래 머물러도 좋았어요", 14),
+    CULTURE_SIMPLE_ROUTE(206, "내부 동선이 간단해서 혼자 다니기 편했어요", 14),
+    CULTURE_EASY_RESERVE(207, "예약/티켓팅이 간단했어요", 14),
+    CULTURE_CLEAN_FACILITY(208, "화장실/편의시설이 깨끗하고 가까웠어요", 14),
+    CULTURE_EASY_INFO(209, "설명/자료가 혼자 이해하기 좋았어요", 14),
+    CULTURE_NOT_NOISY(210, "관람객이 많아도 시끄럽지 않았어요", 14),
 
     // 행사/공연/축제(15) - 300번대
     EVENT_COMFY_SEAT(301, "혼자 관람석에서 편안했어요", 15),
@@ -107,12 +112,22 @@ public enum ReviewTags {
     private final String description;
     private final int contentTypeId;
 
+
+    private static final Map<Integer, List<ReviewTags>> BY_CONTENT =
+            Arrays.stream(values())
+                    .collect(Collectors.groupingBy(ReviewTags::getContentTypeId, Collectors.toUnmodifiableList()));
+
+    private static final Map<Integer, ReviewTags> BY_CODE =
+            Arrays.stream(values())
+                    .collect(Collectors.toUnmodifiableMap(ReviewTags::getCode, e -> e));
+
+    public static List<ReviewTags> byContentType(int contentTypeId) {
+        return BY_CONTENT.getOrDefault(contentTypeId, List.of());
+    }
+
     public static ReviewTags fromCode(int code) {
-        for (ReviewTags tag : values()) {
-            if (tag.code == code) {
-                return tag;
-            }
-        }
-        throw new IllegalArgumentException("Invalid ReviewTag code: " + code);
+        ReviewTags tag = BY_CODE.get(code);
+        if (tag == null) throw new IllegalArgumentException("Invalid ReviewTag code: " + code);
+        return tag;
     }
 }
