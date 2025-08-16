@@ -39,6 +39,7 @@ public class Review extends BaseEntity {
     @Builder.Default
     private Boolean receipt=false;
 
+    @Builder.Default
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewTag> reviewTags = new ArrayList<>();
 
@@ -65,12 +66,15 @@ public class Review extends BaseEntity {
 
     // 리뷰 태그 업데이트
     public void updateReviewTags(List<ReviewTag> newReviewTags) {
+        if (this.reviewTags == null) this.reviewTags = new ArrayList<>();           // ✅ 방어
         this.reviewTags.clear();
-        this.reviewTags.addAll(newReviewTags);
+        if (newReviewTags == null) return;                                          // ✅ null 들어와도 안전
+        for (ReviewTag t : newReviewTags) {
+            t.setReview(this);                                                      // 역방향 보장
+            this.reviewTags.add(t);
+        }
     }
 
-    // 리뷰 태그 설정 (생성 시 사용)
-    public void setReviewTags(List<ReviewTag> reviewTags) {
-        this.reviewTags = reviewTags;
-    }
+
+
 }

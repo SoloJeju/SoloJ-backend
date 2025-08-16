@@ -61,7 +61,7 @@ public class TourSpotService {
                 spot = touristSpotRepository.save(TouristSpot.builder()
                         .contentId(contentId)
                         .name(item.getTitle())
-                        .contentTypeId(Long.valueOf(item.getContenttypeid()))
+                        .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .latitude(Double.parseDouble(item.getMapy()))
                         .longitude(Double.parseDouble(item.getMapx()))
                         .firstImage(item.getFirstimage())

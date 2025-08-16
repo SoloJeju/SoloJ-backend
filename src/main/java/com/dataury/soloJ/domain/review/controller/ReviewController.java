@@ -60,4 +60,14 @@ public class ReviewController {
         return ApiResponse.onSuccess("리뷰가 삭제되었습니다.");
     }
 
+    @GetMapping("/{reviewId}/detail")
+    @Operation(summary = "리뷰 단일 상세 조회", description = "리뷰를 상세조회합니다. 토큰 필요.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<ReviewResponseDto.ReviewDetailDto> getReview(@PathVariable Long reviewId){
+        return ApiResponse.onSuccess(reviewService.getDetailReview(reviewId));
+    }
+
+
 }

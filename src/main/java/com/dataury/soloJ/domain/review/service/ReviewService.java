@@ -19,8 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,7 +61,8 @@ public class ReviewService {
                 .build();
 
         // 태그 저장 (최대 3개)
-        List<ReviewTag> reviewTagList = reviewCreateDto.getTagCodes().stream()
+        List<ReviewTag> reviewTags = Optional.ofNullable(reviewCreateDto.getTagCodes()).orElse(List.of())
+                .stream()
                 .limit(3)
                 .map(code -> ReviewTag.builder()
                         .review(review)
@@ -70,7 +70,7 @@ public class ReviewService {
                         .build())
                 .collect(Collectors.toList());
 
-        review.setReviewTags(reviewTagList);
+        review.updateReviewTags(reviewTags);
 
         Review savedReview = reviewRepository.save(review);
 
@@ -178,6 +178,41 @@ public class ReviewService {
         touristSpot.updateMainStats(mainDiff, mainTag);
         touristSpotRepository.save(touristSpot);
     }
+
+    @Transactional(readOnly = true)
+    public ReviewResponseDto.ReviewDetailDto getDetailReview(Long reviewId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // ✅ 권한 포함 + fetch join
+        Review review = reviewRepository.findDetailByIdAndUser(reviewId, userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.REVIEW_NOT_FOUND));
+
+        Set<Integer> selectedCodes = review.getReviewTags().stream()
+                .map(rt -> rt.getTag().getCode())
+                .collect(Collectors.toSet());
+
+        int contentTypeId = review.getTouristSpot().getContentTypeId(); // int로 사용
+        List<ReviewResponseDto.TagItem> tags = ReviewTags.byContentType(contentTypeId).stream()
+                .map(t -> new ReviewResponseDto.TagItem(t.getCode(), t.getDescription(), selectedCodes.contains(t.getCode())))
+                .collect(Collectors.toList());
+
+        return ReviewResponseDto.ReviewDetailDto.builder()
+                .id(review.getId())
+                .contentId(review.getTouristSpot().getContentId())
+                .content(review.getTouristSpot().getName())
+                .text(review.getReviewText())
+                .difficulty(review.getDifficulty())
+                .visitDate(review.getVisitDate())
+                .receipt(review.getReceipt())
+                .tags(tags)
+                .selectedTagCodes(new ArrayList<>(selectedCodes)) // 옵션
+                .build();
+    }
+
+
+
 
 
 }

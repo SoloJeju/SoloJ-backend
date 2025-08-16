@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review,Long> {
     @Query("SELECT r.difficulty " +
@@ -15,5 +16,16 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
             "GROUP BY r.difficulty " +
             "ORDER BY COUNT(r) DESC")
     List<Difficulty> findDifficultiesByPopularity(@Param("spotId") Long spotId);
+
+    // ReviewRepository
+    @Query("""
+        select distinct r
+        from Review r
+        join fetch r.touristSpot s
+        left join fetch r.reviewTags t
+        where r.id = :reviewId and r.user.id = :userId
+    """)
+    Optional<Review> findDetailByIdAndUser(@Param("reviewId") Long reviewId,
+                                           @Param("userId") Long userId);
 
 }

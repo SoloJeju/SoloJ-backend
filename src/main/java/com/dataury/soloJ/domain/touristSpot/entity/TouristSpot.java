@@ -22,7 +22,7 @@ public class TouristSpot extends BaseEntity {
     private String name;
 
     @Column(nullable = false)
-    private Long contentTypeId;
+    private int contentTypeId;
 
     @Column(nullable = false)
     private double latitude;
