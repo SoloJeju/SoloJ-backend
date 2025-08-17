@@ -74,7 +74,7 @@ public class ScrapService {
                     .postCategory(post.getPostCategory())
                     .authorNickname(authorProfile != null ? authorProfile.getNickName() : "익명")
                     .authorId(post.getUser().getId())
-                    .authorProfileImage(authorProfile != null ? authorProfile.getImage() : null)
+                    .authorProfileImage(authorProfile != null ? authorProfile.getImageUrl() : null)
                     .commentCount(commentRepository.countByPostId(post.getId()))
                     .scrapCount(scrapRepository.countByPostId(post.getId()))
                     .createdAt(post.getCreatedAt())

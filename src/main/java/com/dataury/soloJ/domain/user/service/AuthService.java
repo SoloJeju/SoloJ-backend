@@ -90,6 +90,14 @@ public class AuthService {
         }
     }
 
+    public void changePassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_NOT_FOUND));
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.changePassword(encodedPassword);
+        userRepository.save(user);
+
+    }
+
     // 이메일 형식 검증
     public void validateEmail(String email) {
         String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
@@ -116,7 +124,7 @@ public class AuthService {
     @Transactional
     public AuthResponseDTO.LoginResponseDTO login(AuthRequestDTO.LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.PASSWORD_FAILED));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new GeneralException(ErrorStatus.PASSWORD_FAILED);
@@ -183,7 +191,7 @@ public class AuthService {
             if (optionalProfile.isPresent()) {
                 UserProfile profile = optionalProfile.get();
                 UserType userType = UserType.fromDisplayName(dto.getUserType());
-                profile.updateProfile(dto.getNickName(), dto.getBirthDate(),dto.getGender(), userType);
+                profile.updateProfile(dto.getNickName(), dto.getBirthDate(),dto.getGender(), userType, dto.getImageName(), dto.getImageUrl());
             } else {
                 UserType userType = UserType.fromDisplayName(dto.getUserType());
                 UserProfile userProfile = UserProfile.builder()

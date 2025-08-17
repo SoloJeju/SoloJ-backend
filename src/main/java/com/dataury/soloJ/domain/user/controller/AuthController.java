@@ -7,11 +7,9 @@ import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.service.AuthService;
 import com.dataury.soloJ.domain.user.service.MailService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.auth.AuthUser;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -145,10 +143,17 @@ public class AuthController {
     }
 
     @GetMapping("/validate-password")
-    @Operation(summary = "비밀번호 유효성 체크", description = "중복된 닉네임이 있는지 확인합니다. ")
+    @Operation(summary = "비밀번호 유효성 체크", description = "비밀번호 유효성을 체크합니다. ")
     public ApiResponse<String> validatePassword(@RequestParam String password) {
         authService.validatePassword(password);
         return ApiResponse.onSuccess("비밀번호가 유효합니다");
+    }
+
+    @PatchMapping("/change-password")
+    @Operation(summary = "비밀번호 변경", description = "비밀번호를 변경합니다. 사용자 이메일과 비밀번호를 주세요.")
+    public ApiResponse<String> changePassword(@RequestParam String email, String password) {
+        authService.changePassword(email,password);
+        return ApiResponse.onSuccess("비밀번호가 변경되었습니다.");
     }
 
 }

@@ -177,7 +177,7 @@ public class ChatRoomCommandService {
                     return ChatRoomResponseDto.ChatRoomUsersResponse.UserInfo.builder()
                             .userId(user.getId())
                             .username(user.getName())
-                            .profileImage(userProfile != null ? userProfile.getImage() : null)
+                            .profileImage(userProfile != null ? userProfile.getImageUrl() : null)
                             .joinedAt(joinChat.getCreatedAt())
                             .isActive(joinChat.getStatus() == JoinChatStatus.ACTIVE)
                             .build();
