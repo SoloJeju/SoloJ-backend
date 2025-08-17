@@ -83,8 +83,6 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
-        System.out.println(mainDiff);
-        System.out.println(mainTag);
 
         touristSpot.updateMainStats(mainDiff, mainTag);
         touristSpotRepository.save(touristSpot);

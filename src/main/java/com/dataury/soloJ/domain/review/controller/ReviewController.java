@@ -27,7 +27,7 @@ public class ReviewController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
     })
-    private ApiResponse<List<ReviewResponseDto.ReviewTagResponseDto>> getReviewTags(@PathVariable int contentTypeId) {
+    public ApiResponse<List<ReviewResponseDto.ReviewTagResponseDto>> getReviewTags(@PathVariable int contentTypeId) {
         return ApiResponse.onSuccess(reviewService.getTagsByContentTypeId(contentTypeId));
     }
 
@@ -70,7 +70,7 @@ public class ReviewController {
         return ApiResponse.onSuccess(reviewService.getDetailReview(reviewId));
     }
 
-    @GetMapping(value = "/{contentId}/receipt", consumes = "multipart/form-data")
+    @PostMapping(value = "/{contentId}/receipt", consumes = "multipart/form-data")
     @Operation(summary = "영수증 인증 여부 조회", description = "영수증 인증 여부를 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
