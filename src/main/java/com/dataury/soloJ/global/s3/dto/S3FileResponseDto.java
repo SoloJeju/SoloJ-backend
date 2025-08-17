@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class S3FileResponseDto {
-    private String fileName;
-    private String url;
+    private String imageName;
+    private String imageUrl;
 }

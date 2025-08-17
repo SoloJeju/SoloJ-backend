@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public class S3DeleteRequestDto {
-    private String fileName;
+    private String ImageName;
 }

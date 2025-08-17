@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.community.dto.CommentResponseDto;
 import com.dataury.soloJ.domain.community.dto.PostRequestDto;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.entity.Post;
+import com.dataury.soloJ.domain.community.entity.PostImage;
 import com.dataury.soloJ.domain.community.entity.status.PostCategory;
 import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,14 +43,38 @@ public class PostService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
+        // 썸네일 설정 (첫 번째 이미지)
+        String thumbnailUrl = null;
+        String thumbnailName = null;
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            thumbnailUrl = request.getImageUrls().get(0);
+            thumbnailName = request.getImageNames() != null && !request.getImageNames().isEmpty() 
+                    ? request.getImageNames().get(0) : null;
+        }
+
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .postCategory(request.getPostCategory())
-                .imageUrl(request.getImageUrl())
-                .imageName(request.getImageName())
+                .thumbnailUrl(thumbnailUrl)
+                .thumbnailName(thumbnailName)
                 .user(user)
                 .build();
+
+        // 이미지 리스트 생성
+        List<PostImage> images = new ArrayList<>();
+        if (request.getImageUrls() != null && request.getImageNames() != null) {
+            int size = Math.min(request.getImageUrls().size(), request.getImageNames().size());
+            for (int i = 0; i < size; i++) {
+                PostImage image = PostImage.builder()
+                        .imageUrl(request.getImageUrls().get(i))
+                        .imageName(request.getImageNames().get(i))
+                        .post(post)
+                        .build();
+                images.add(image);
+            }
+        }
+        post.updateImages(images);
 
         Post savedPost = postRepository.save(post);
 
@@ -61,7 +87,7 @@ public class PostService {
     @Transactional
     public PostResponseDto.PostCreateResponseDto updatePost(Long postId, PostRequestDto.UpdatePostDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
-        
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
 
@@ -69,14 +95,39 @@ public class PostService {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
-        post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
-        if (request.getPostCategory() != null) {
-            post.setPostCategory(request.getPostCategory());
+        post.updatePost(request.getTitle(), request.getContent(), request.getPostCategory());
+
+        // 삭제 요청 처리
+        if (request.getDeleteImageNames() != null && !request.getDeleteImageNames().isEmpty()) {
+            List<PostImage> remainImages = post.getImages().stream()
+                    .filter(img -> !request.getDeleteImageNames().contains(img.getImageName()))
+                    .collect(Collectors.toList());
+            post.updateImages(remainImages);
         }
-        if (request.getImageUrl() != null) {
-            post.setImageUrl(request.getImageUrl());
-            post.setImageName(request.getImageName());
+
+        // 교체(전체 새로 보냄) 로직
+        if (request.getNewImageUrls() != null) {
+            List<PostImage> newImages = new ArrayList<>();
+            if (request.getNewImageNames() != null) {
+                int size = Math.min(request.getNewImageUrls().size(), request.getNewImageNames().size());
+                for (int i = 0; i < size; i++) {
+                    PostImage image = PostImage.builder()
+                            .imageUrl(request.getNewImageUrls().get(i))
+                            .imageName(request.getNewImageNames().get(i))
+                            .post(post)
+                            .build();
+                    newImages.add(image);
+                }
+            }
+            post.updateImages(newImages);
+        }
+
+        // 썸네일 갱신
+        if (post.getImages() != null && !post.getImages().isEmpty()) {
+            PostImage first = post.getImages().get(0);
+            post.updateThumbnail(first.getImageUrl(), first.getImageName());
+        } else {
+            post.updateThumbnail(null, null);
         }
 
         return PostResponseDto.PostCreateResponseDto.builder()
@@ -155,8 +206,14 @@ public class PostService {
                 .isMine(currentUserId != null && post.getUser().getId().equals(currentUserId))
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .imageUrl(post.getImageUrl())
-                .imageName(post.getImageName())
+                .thumbnailUrl(post.getThumbnailUrl())
+                .thumbnailName(post.getThumbnailName())
+                .images(post.getImages() != null ? post.getImages().stream()
+                        .map(img -> PostResponseDto.ImageDto.builder()
+                                .imageUrl(img.getImageUrl())
+                                .imageName(img.getImageName())
+                                .build())
+                        .collect(Collectors.toList()) : new ArrayList<>())
                 .comments(comments)
                 .build();
     }
@@ -194,7 +251,7 @@ public class PostService {
                 .commentCount(commentRepository.countByPostId(post.getId()))
                 .scrapCount(scrapRepository.countByPostId(post.getId()))
                 .createdAt(post.getCreatedAt())
-                .imageUrl(post.getImageUrl())
+                .thumbnailUrl(post.getThumbnailUrl())
                 .build();
     }
 }

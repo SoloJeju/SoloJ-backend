@@ -6,11 +6,29 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.tags.Tag;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+
+import java.util.Comparator;
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
+
+    @Bean
+    public OpenApiCustomizer sortTags() {
+        return openApi -> {
+            if (openApi.getTags() != null) {
+                List<Tag> sortedTags = openApi.getTags().stream()
+                        .sorted(Comparator.comparing(Tag::getName))
+                        .toList();
+                openApi.setTags(sortedTags);
+            }
+        };
+    }
+
 
     @Bean
     public OpenAPI soloJAPI() {

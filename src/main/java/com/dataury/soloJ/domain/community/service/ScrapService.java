@@ -78,7 +78,7 @@ public class ScrapService {
                     .commentCount(commentRepository.countByPostId(post.getId()))
                     .scrapCount(scrapRepository.countByPostId(post.getId()))
                     .createdAt(post.getCreatedAt())
-                    .imageUrl(post.getImageUrl())
+                    .thumbnailUrl(post.getThumbnailUrl())
                     .build();
         });
     }

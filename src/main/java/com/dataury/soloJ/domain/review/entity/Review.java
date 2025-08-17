@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Review extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,9 +39,19 @@ public class Review extends BaseEntity {
     @Builder.Default
     private Boolean receipt=false;
 
+    @Column
+    private String thumbnailUrl;
+
+    @Column
+    private String thumbnailName;
+
     @Builder.Default
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewTag> reviewTags = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewImage> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -64,6 +74,12 @@ public class Review extends BaseEntity {
         }
     }
 
+    // 썸네일 업데이트
+    public void updateThumbnail(String thumbnailUrl, String thumbnailName) {
+        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailName = thumbnailName;
+    }
+
     // 리뷰 태그 업데이트
     public void updateReviewTags(List<ReviewTag> newReviewTags) {
         if (this.reviewTags == null) this.reviewTags = new ArrayList<>();           // ✅ 방어
@@ -75,6 +91,14 @@ public class Review extends BaseEntity {
         }
     }
 
-
-
+    // 리뷰 이미지 업데이트
+    public void updateImages(List<ReviewImage> newImages) {
+        if (this.images == null) this.images = new ArrayList<>();
+        this.images.clear();
+        if (newImages == null) return;
+        for (ReviewImage image : newImages) {
+            image.setReview(this);
+            this.images.add(image);
+        }
+    }
 }

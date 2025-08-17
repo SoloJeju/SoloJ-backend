@@ -52,16 +52,6 @@ public class AuthController {
         return ApiResponse.onSuccess(authService.signUp(user));
     }
 
-    @PostMapping("/login")
-    @Operation(summary = "사용자 로그인 API", description = "사용자가 이메일과 비밀번호를 사용하여 로그인합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<AuthResponseDTO.LoginResponseDTO> login(@RequestBody AuthRequestDTO.LoginRequestDTO loginRequestDTO) {
-        return ApiResponse.onSuccess(authService.login(loginRequestDTO));
-    }
-
     @PostMapping("/reissue")
     @Operation(summary = "Access 토큰 재발급 API", description = "만료된 access 토큰을 새로 발급합니다.")
     @ApiResponses({
@@ -74,18 +64,6 @@ public class AuthController {
         return ApiResponse.onSuccess(authService.reissueAccessToken(request.getRefreshToken()));
     }
 
-    @PostMapping("/logout")
-    @Operation(summary = "로그아웃 API", description = "사용자의 refresh 토큰을 삭제합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "AUTH003", description = "access 토큰을 주세요!", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "AUTH004", description = "access 토큰 만료", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "AUTH006", description = "access 토큰 모양이 이상함", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<String> logout() {
-        authService.logout();
-        return ApiResponse.onSuccess("로그아웃 완료");
-    }
 
     @PostMapping("/kakao/profile")
     @Operation(summary = "카카오 회원가입", description = "카카오 로그인의 사용자의 프로필을 설정합니다.")

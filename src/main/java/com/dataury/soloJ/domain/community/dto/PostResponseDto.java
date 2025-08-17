@@ -13,6 +13,15 @@ public class PostResponseDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ImageDto {
+        private String imageUrl;
+        private String imageName;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PostListItemDto {
         private Long postId;
         private String title;
@@ -25,7 +34,7 @@ public class PostResponseDto {
         private Integer scrapCount;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createdAt;
-        private String imageUrl;
+        private String thumbnailUrl;
     }
 
     @Getter
@@ -48,8 +57,9 @@ public class PostResponseDto {
         private LocalDateTime createdAt;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updatedAt;
-        private String imageUrl;
-        private String imageName;
+        private String thumbnailUrl;
+        private String thumbnailName;
+        private List<ImageDto> images;
         private List<CommentResponseDto.CommentDto> comments;
     }
 

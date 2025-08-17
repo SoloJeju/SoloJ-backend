@@ -14,7 +14,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/image")
 @RequiredArgsConstructor
-@Tag(name = "image S3 API", description = "image 업로드 API")
+@Tag(name = "Image S3 API", description = "image 업로드 API")
 public class S3Controller {
 
     private final S3Service s3Service;
@@ -32,7 +32,7 @@ public class S3Controller {
      */
     @DeleteMapping("/delete")
     public ApiResponse<String> deleteFile(@RequestBody S3DeleteRequestDto request) {
-        s3Service.deleteFile(request.getFileName());
-        return ApiResponse.onSuccess("Deleted: " + request.getFileName());
+        s3Service.deleteFile(request.getImageName());
+        return ApiResponse.onSuccess("Deleted: " + request.getImageName());
     }
 }
