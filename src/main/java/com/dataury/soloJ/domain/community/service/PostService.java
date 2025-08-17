@@ -173,6 +173,17 @@ public class PostService {
         List<CommentResponseDto.CommentDto> comments = commentRepository.findByPostIdWithUser(postId)
                 .stream()
                 .map(comment -> {
+                    // 삭제된 댓글인 경우
+                    if (comment.isDeleted()) {
+                        return CommentResponseDto.CommentDto.builder()
+                                .commentId(comment.getId())
+                                .content("삭제된 댓글입니다.")
+                                .isDeleted(true)
+                                .createdAt(comment.getCreatedAt())
+                                .build();
+                    }
+                    
+                    // 삭제되지 않은 댓글인 경우
                     UserProfile profile = userProfileRepository.findByUser(comment.getUser())
                             .orElse(null);
                     
@@ -183,7 +194,7 @@ public class PostService {
                             .authorId(comment.getUser().getId())
                             .authorProfileImage(profile != null ? profile.getImageUrl() : null)
                             .isMine(currentUserId != null && comment.getUser().getId().equals(currentUserId))
-                            .isDeleted(comment.isDeleted())
+                            .isDeleted(false)
                             .createdAt(comment.getCreatedAt())
                             .build();
                 })
