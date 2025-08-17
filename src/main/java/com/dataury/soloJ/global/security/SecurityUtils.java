@@ -36,17 +36,13 @@ public class SecurityUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || authentication.getAuthorities() == null) {
-            System.out.println(">> SecurityUtils.isAdmin: No authentication or authorities");
             return false;
         }
-        
-        System.out.println(">> SecurityUtils.isAdmin: Authorities = " + authentication.getAuthorities());
         
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
-        
-        System.out.println(">> SecurityUtils.isAdmin: Result = " + isAdmin);
+
         return isAdmin;
     }
 
