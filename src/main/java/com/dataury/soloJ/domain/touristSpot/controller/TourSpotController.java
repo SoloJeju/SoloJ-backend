@@ -3,6 +3,7 @@ package com.dataury.soloJ.domain.touristSpot.controller;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
+import com.dataury.soloJ.domain.touristSpot.dto.TourSpotReviewResponse;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
@@ -59,5 +60,25 @@ public class TourSpotController {
     @GetMapping("/{contentId}/groups")
     public ApiResponse<List<ChatRoomListItem>> getChatRoomsByTouristSpot(@PathVariable Long contentId) {
         return ApiResponse.onSuccess(tourSpotFacadeService.getChatRoomsByTouristSpot(contentId));
+    }
+
+    @Operation(summary = "관광지별 리뷰 목록 조회")
+    @GetMapping("/{contentId}/reviews")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<TourSpotReviewResponse.ReviewListResponse> getReviewsByTouristSpot(@PathVariable Long contentId) {
+        return ApiResponse.onSuccess(tourSpotFacadeService.getReviewsByTouristSpot(contentId));
+    }
+
+    @Operation(summary = "관광지별 사진 목록 조회 (Tour API + 리뷰 이미지)")
+    @GetMapping("/{contentId}/images")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<TourSpotReviewResponse.ImageListResponse> getImagesByTouristSpot(@PathVariable Long contentId) {
+        return ApiResponse.onSuccess(tourSpotFacadeService.getImagesByTouristSpot(contentId));
     }
 }

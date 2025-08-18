@@ -49,6 +49,9 @@ public class TourSpotResponse {
         private String homepage;
         private String addr1;
         private String addr2;
+
+        private String firstimage;   // 대표 이미지
+        private String firstimage2;  // 보조 이미지
     }
 
     @Data

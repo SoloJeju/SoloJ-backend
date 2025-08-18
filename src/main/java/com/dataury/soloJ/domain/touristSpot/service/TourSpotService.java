@@ -114,6 +114,8 @@ public class TourSpotService {
                 .homepage(extractHomepage(item.getHomepage()))
                 .addr1(item.getAddr1())
                 .addr2(item.getAddr2())
+                .firstimage(item.getFirstimage())
+                .firstimage2(item.getFirstimage2())
                 .build();
     }
 

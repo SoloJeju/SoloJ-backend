@@ -28,4 +28,24 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     Optional<Review> findDetailByIdAndUser(@Param("reviewId") Long reviewId,
                                            @Param("userId") Long userId);
 
+    // 관광지별 리뷰 조회 (태그만 fetch)
+    @Query("""
+        select distinct r
+        from Review r
+        join fetch r.user u
+        left join fetch r.reviewTags rt
+        where r.touristSpot.contentId = :contentId
+        order by r.createdAt desc
+    """)
+    List<Review> findByTouristSpotContentId(@Param("contentId") Long contentId);
+
+    // 관광지별 리뷰 이미지 조회
+    @Query("""
+        select distinct r
+        from Review r
+        join fetch r.images ri
+        where r.touristSpot.contentId = :contentId
+        and size(r.images) > 0
+    """)
+    List<Review> findReviewsWithImagesByContentId(@Param("contentId") Long contentId);
 }
