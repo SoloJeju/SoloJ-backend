@@ -22,6 +22,8 @@ public class ReviewRequestDto {
         private List<Integer> tagCodes;
         private LocalDate visitDate;
         private Boolean receipt;
+        private List<String> imageUrls;
+        private List<String> imageNames;
     }
 
     @Getter
@@ -33,5 +35,8 @@ public class ReviewRequestDto {
         private Difficulty difficulty;
         private List<Integer> tagCodes;
         private LocalDate visitDate;
+        private List<String> newImageUrls;       // 새로 추가할 이미지 URL
+        private List<String> newImageNames;
+        private List<String> deleteImageNames;   // 삭제할 이미지 이름
     }
 }

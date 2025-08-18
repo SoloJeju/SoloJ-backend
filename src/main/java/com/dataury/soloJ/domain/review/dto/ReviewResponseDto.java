@@ -24,6 +24,14 @@ public class ReviewResponseDto {
         private String content;
     }
 
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class ImageDto {
+        private String imageUrl;
+        private String imageName;
+    }
+
     // ReviewResponseDto.java
     @Getter @Builder
     public static class ReviewDetailDto {
@@ -34,6 +42,9 @@ public class ReviewResponseDto {
         private Difficulty difficulty;
         private LocalDate visitDate; // 엔티티에 맞춰 LocalDate 또는 LocalDateTime
         private Boolean receipt;
+        private String thumbnailUrl;
+        private String thumbnailName;
+        private List<ImageDto> images;
         private List<TagItem> tags;          // 전체 목록 + selected
         private List<Integer> selectedTagCodes; // (옵션) 선택 코드만
     }

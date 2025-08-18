@@ -6,9 +6,11 @@ import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,11 +30,42 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private PostCategory postCategory;
 
-    private String imageUrl;
-    private String imageName;
+    @Column
+    private String thumbnailUrl;
+
+    @Column
+    private String thumbnailName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images = new ArrayList<>();
+
+    public void updateImages(List<PostImage> newImages) {
+        if (this.images == null) this.images = new ArrayList<>();
+        this.images.clear();
+        if (newImages == null) return;
+        for (PostImage image : newImages) {
+            image.setPost(this);
+            this.images.add(image);
+        }
+    }
+
+    // 게시글 정보 업데이트
+    public void updatePost(String title, String content, PostCategory postCategory) {
+        this.title = title;
+        this.content = content;
+        if (postCategory != null) {
+            this.postCategory = postCategory;
+        }
+    }
+
+    // 썸네일 업데이트
+    public void updateThumbnail(String thumbnailUrl, String thumbnailName) {
+        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailName = thumbnailName;
+    }
 }

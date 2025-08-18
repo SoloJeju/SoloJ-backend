@@ -22,6 +22,8 @@ public class AuthRequestDTO {
         private LocalDate birthDate;
         private String nickName;
         private String userType;
+        private String imageName;
+        private String imageUrl;
 
     }
 
@@ -52,6 +54,8 @@ public class AuthRequestDTO {
         private LocalDate birthDate;
         private String nickName;
         private String userType;
+        private String imageName;
+        private String imageUrl;
     }
 
 }

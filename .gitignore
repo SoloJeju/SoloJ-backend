@@ -40,7 +40,11 @@ out/
 ### large file ###
 *.tar
 
+### Environment Variables ###
 .env
+.env.local
+.env.production
+.env.staging
 
 
 ### Google Cloud Credential 파일 ###

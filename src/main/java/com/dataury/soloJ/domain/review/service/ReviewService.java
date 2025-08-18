@@ -3,6 +3,7 @@ package com.dataury.soloJ.domain.review.service;
 import com.dataury.soloJ.domain.review.dto.ReviewRequestDto;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.domain.review.entity.Review;
+import com.dataury.soloJ.domain.review.entity.ReviewImage;
 import com.dataury.soloJ.domain.review.entity.ReviewTag;
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
 import com.dataury.soloJ.domain.review.entity.status.ReviewTags;
@@ -52,6 +53,15 @@ public class ReviewService {
         TouristSpot touristSpot = touristSpotRepository.findById(reviewCreateDto.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
+        // 썸네일 설정 (첫 번째 이미지)
+        String thumbnailUrl = null;
+        String thumbnailName = null;
+        if (reviewCreateDto.getImageUrls() != null && !reviewCreateDto.getImageUrls().isEmpty()) {
+            thumbnailUrl = reviewCreateDto.getImageUrls().get(0);
+            thumbnailName = reviewCreateDto.getImageNames() != null && !reviewCreateDto.getImageNames().isEmpty() 
+                    ? reviewCreateDto.getImageNames().get(0) : null;
+        }
+
         // 리뷰 생성
         Review review = Review.builder()
                 .user(user)
@@ -60,7 +70,24 @@ public class ReviewService {
                 .difficulty(reviewCreateDto.getDifficulty())
                 .visitDate(reviewCreateDto.getVisitDate())
                 .receipt(reviewCreateDto.getReceipt())
+                .thumbnailUrl(thumbnailUrl)
+                .thumbnailName(thumbnailName)
                 .build();
+
+        // 이미지 리스트 생성
+        List<ReviewImage> images = new ArrayList<>();
+        if (reviewCreateDto.getImageUrls() != null && reviewCreateDto.getImageNames() != null) {
+            int size = Math.min(reviewCreateDto.getImageUrls().size(), reviewCreateDto.getImageNames().size());
+            for (int i = 0; i < size; i++) {
+                ReviewImage image = ReviewImage.builder()
+                        .imageUrl(reviewCreateDto.getImageUrls().get(i))
+                        .imageName(reviewCreateDto.getImageNames().get(i))
+                        .review(review)
+                        .build();
+                images.add(image);
+            }
+        }
+        review.updateImages(images);
 
         // 태그 저장 (최대 3개)
         List<ReviewTag> reviewTags = Optional.ofNullable(reviewCreateDto.getTagCodes()).orElse(List.of())
@@ -95,31 +122,59 @@ public class ReviewService {
 
     // 리뷰 수정
     @Transactional
-    public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto reviewUpdateDto) {
-        // 로그인한 사용자 찾기
+    public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
-        // 리뷰 찾기
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.REVIEW_NOT_FOUND));
 
-        // 작성자 확인
         if (!review.getUser().getId().equals(userId)) {
             throw new GeneralException(ErrorStatus.REVIEW_ACCESS_DENIED);
         }
 
-        // 리뷰 정보 업데이트 (부분 수정 지원)
+        // 리뷰 기본 정보 수정
         review.updateReview(
-                reviewUpdateDto.getText(),
-                reviewUpdateDto.getDifficulty(),
-                reviewUpdateDto.getVisitDate()
+                request.getText(),
+                request.getDifficulty(),
+                request.getVisitDate()
         );
 
-        // 태그가 제공된 경우에만 업데이트
-        if (reviewUpdateDto.getTagCodes() != null) {
-            List<ReviewTag> newReviewTags = reviewUpdateDto.getTagCodes().stream()
+        // (1) 삭제할 이미지 반영
+        if (request.getDeleteImageNames() != null && !request.getDeleteImageNames().isEmpty()) {
+            List<ReviewImage> remainImages = review.getImages().stream()
+                    .filter(img -> !request.getDeleteImageNames().contains(img.getImageName()))
+                    .collect(Collectors.toList());
+            review.updateImages(remainImages);
+        }
+
+        // (2) 새 이미지 추가
+        if (request.getNewImageUrls() != null && request.getNewImageNames() != null) {
+            int size = Math.min(request.getNewImageUrls().size(), request.getNewImageNames().size());
+            List<ReviewImage> newImages = new ArrayList<>();
+            for (int i = 0; i < size; i++) {
+                ReviewImage image = ReviewImage.builder()
+                        .imageUrl(request.getNewImageUrls().get(i))
+                        .imageName(request.getNewImageNames().get(i))
+                        .review(review)
+                        .build();
+                newImages.add(image);
+            }
+            review.getImages().addAll(newImages); // 기존 유지 + 추가
+        }
+
+        // (3) 썸네일 갱신
+        if (review.getImages() != null && !review.getImages().isEmpty()) {
+            ReviewImage first = review.getImages().get(0);
+            review.updateThumbnail(first.getImageUrl(), first.getImageName());
+        } else {
+            review.updateThumbnail(null, null);
+        }
+
+        // (4) 태그 갱신
+        if (request.getTagCodes() != null) {
+            List<ReviewTag> newReviewTags = request.getTagCodes().stream()
                     .limit(3)
                     .map(code -> ReviewTag.builder()
                             .review(review)
@@ -131,7 +186,7 @@ public class ReviewService {
 
         Review updatedReview = reviewRepository.save(review);
 
-        // 관광지 대표 난이도 / 태그 갱신
+        // 관광지 대표 난이도/태그 갱신
         TouristSpot touristSpot = review.getTouristSpot();
         Difficulty mainDiff = reviewRepository.findDifficultiesByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(Difficulty.NONE);
@@ -146,6 +201,7 @@ public class ReviewService {
                 updatedReview.getReviewText()
         );
     }
+
 
     // 리뷰 삭제
     @Transactional
@@ -206,6 +262,14 @@ public class ReviewService {
                 .difficulty(review.getDifficulty())
                 .visitDate(review.getVisitDate())
                 .receipt(review.getReceipt())
+                .thumbnailUrl(review.getThumbnailUrl())
+                .thumbnailName(review.getThumbnailName())
+                .images(review.getImages() != null ? review.getImages().stream()
+                        .map(img -> ReviewResponseDto.ImageDto.builder()
+                                .imageUrl(img.getImageUrl())
+                                .imageName(img.getImageName())
+                                .build())
+                        .collect(Collectors.toList()) : new ArrayList<>())
                 .tags(tags)
                 .selectedTagCodes(new ArrayList<>(selectedCodes)) // 옵션
                 .build();
