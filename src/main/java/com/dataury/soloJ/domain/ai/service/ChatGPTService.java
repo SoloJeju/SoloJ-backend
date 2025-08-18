@@ -31,8 +31,6 @@ public class ChatGPTService {
             headers.setBearerAuth(apiKey);
 
             String requestBody = buildChatRequestBody(prompt);
-            System.out.println("[DEBUG] OpenAI 요청 JSON ↓↓↓↓↓");
-            System.out.println(requestBody);
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
             ResponseEntity<String> response = restTemplate.postForEntity(endpoint, request, String.class);
@@ -42,8 +40,6 @@ public class ChatGPTService {
                 JsonNode root = mapper.readTree(response.getBody());
                 String result = root.path("choices").get(0).path("message").path("content").asText();
 
-                System.out.println("[DEBUG] OpenAI 응답 ↓↓↓↓↓");
-                System.out.println(result);
 
                 return result.trim();
             } else {

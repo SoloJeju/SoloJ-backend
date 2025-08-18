@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.List;
+
 public class PostRequestDto {
 
     @Getter
@@ -23,8 +25,8 @@ public class PostRequestDto {
         @NotNull(message = "카테고리는 필수입니다.")
         private PostCategory postCategory;
 
-        private String imageUrl;
-        private String imageName;
+        private List<String> imageUrls;
+        private List<String> imageNames;
     }
 
     @Getter
@@ -40,7 +42,9 @@ public class PostRequestDto {
         private String content;
 
         private PostCategory postCategory;
-        private String imageUrl;
-        private String imageName;
+        private List<String> newImageUrls;
+        private List<String> newImageNames;
+
+        private List<String> deleteImageNames; // 삭제할 이미지 이름 목록
     }
 }

@@ -21,7 +21,9 @@ public class AuthConverter {
         UserProfile.UserProfileBuilder profileBuilder = UserProfile.builder()
                 .nickName(request.getNickName())
                 .birthDate(request.getBirthDate())
-                .gender(request.getGender());
+                .gender(request.getGender())
+                .imageUrl(request.getImageUrl())
+                .imageName(request.getImageName());
 
         if (role == Role.USER) {
             UserType userType = UserType.fromDisplayName(request.getUserType());

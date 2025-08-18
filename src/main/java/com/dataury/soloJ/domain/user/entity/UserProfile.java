@@ -44,7 +44,9 @@ public class UserProfile {
     @Column(nullable = false)
     private Gender gender;
 
-    private String image;
+    private String imageName;
+
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -59,11 +61,13 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public void updateProfile(String nickName, LocalDate birthDate, Gender gender, UserType userType) {
+    public void updateProfile(String nickName, LocalDate birthDate, Gender gender, UserType userType, String imageName, String imageUrl) {
         this.nickName = nickName;
         this.birthDate = birthDate;
         this.gender = gender;
         this.userType = userType;
+        this.imageName = imageName;
+        this.imageUrl = imageUrl;
 
     }
 
