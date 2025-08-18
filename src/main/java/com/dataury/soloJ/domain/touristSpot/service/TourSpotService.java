@@ -82,7 +82,15 @@ public class TourSpotService {
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .hasCompanionRoom(spot.isHasCompanionRoom())
                     .build();
-        }).toList();
+        })
+        // 난이도 필터링 적용
+        .filter(item -> {
+            if (filter.getDifficulty() == null) {
+                return true; // 필터가 없으면 모두 조회
+            }
+            return item.getDifficulty() == filter.getDifficulty();
+        })
+        .toList();
 
         return new TourSpotResponse.TourSpotListResponse(result);
     }
