@@ -2,6 +2,7 @@ package com.dataury.soloJ.domain.review.repository;
 
 import com.dataury.soloJ.domain.review.entity.Review;
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -62,4 +63,14 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
 
     @Query("select count(r) from Review r where r.touristSpot.contentId = :spotId")
     long countBySpot(@Param("spotId") Long spotId);
+    
+    // 최신 리뷰 3개 조회 (홈화면용)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("select r from Review r order by r.createdAt desc")
+    List<Review> findTop3ByOrderByCreatedAtDesc(Pageable pageable);
+    
+    // 편의 메서드
+    default List<Review> findTop3ByOrderByCreatedAtDesc() {
+        return findTop3ByOrderByCreatedAtDesc(PageRequest.of(0, 3));
+    }
 }
