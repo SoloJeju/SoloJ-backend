@@ -50,3 +50,5 @@ out/
 ### Google Cloud Credential 파일 ###
 google-credential.json
 src/main/resources/google-credential.json
+
+app.jar

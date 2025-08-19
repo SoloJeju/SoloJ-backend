@@ -41,6 +41,8 @@ public class ChatRoomQueryService {
                         .currentMembers(r.getCurrentMembers())
                         .maxMembers(r.getMaxMembers())
                         .isCompleted(r.getIsCompleted())
+                        .hasUnreadMessages(r.getHasUnreadMessages())
+                        .genderRestriction(r.getGenderRestriction())
                         .build())
                 .toList();
     }

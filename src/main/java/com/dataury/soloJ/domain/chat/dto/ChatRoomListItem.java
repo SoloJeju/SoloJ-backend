@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.chat.dto;
 
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +20,6 @@ public class ChatRoomListItem {
     private final Long currentMembers;  // count() → Long
     private final Long maxMembers;   // 정원
     private final Boolean isCompleted;
+    private final Boolean hasUnreadMessages; // 읽지 않은 메시지 여부
+    private final Gender genderRestriction; // 채팅방 성별 제한
 }

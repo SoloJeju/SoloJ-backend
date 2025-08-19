@@ -47,7 +47,9 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.joinDate,
         count(jcActive),
         r.numberOfMembers,  
-        r.isCompleted
+        r.isCompleted,
+        false,
+        r.genderRestriction
     )
     from JoinChat jcUser
         join jcUser.chatRoom r
@@ -56,7 +58,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
               and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findMyChatRoomsAsDto(
@@ -72,7 +74,9 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.joinDate,
         count(jcActive),
         r.numberOfMembers,  
-        r.isCompleted
+        r.isCompleted,
+        false,
+        r.genderRestriction
     )
     from JoinChat jcUser
       join jcUser.chatRoom r
@@ -81,7 +85,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
             and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
     order by MAX(jcUser.createdAt) desc
     """,
                 countQuery = """
@@ -107,15 +111,17 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.joinDate,
         count(jcActive),
         r.numberOfMembers,  
-        r.isCompleted
+        r.isCompleted,
+        false,
+        r.genderRestriction
     )
     from ChatRoom r
         left join JoinChat jcActive
                on jcActive.chatRoom = r
               and jcActive.status = :active
-    where r.touristSpot.id = :contentId
+    where r.touristSpot.contentId = :contentId
       and r.isCompleted = false
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findRoomsByTouristSpotAsDto(@Param("contentId") Long contentId,

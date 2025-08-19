@@ -2,6 +2,7 @@ package com.dataury.soloJ.domain.chat.entity;
 
 
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import com.dataury.soloJ.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,5 +40,9 @@ public class ChatRoom extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tourist_spot_id")
     private TouristSpot touristSpot;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender_restriction")
+    private Gender genderRestriction;
 
 }

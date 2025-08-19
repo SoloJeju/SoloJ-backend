@@ -7,6 +7,11 @@ import com.dataury.soloJ.domain.review.entity.Review;
 import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
+import com.dataury.soloJ.domain.user.entity.User;
+import com.dataury.soloJ.domain.user.entity.UserProfile;
+import com.dataury.soloJ.domain.user.entity.status.Gender;
+import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
+import com.dataury.soloJ.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,8 @@ public class HomeService {
     private final TouristSpotRepository touristSpotRepository;
     private final ReviewRepository reviewRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final HomeCacheService cacheService;
     
     public HomeResponse.HomeMainResponse getHomeData(Long userId) {
@@ -113,9 +120,25 @@ public class HomeService {
             return Collections.emptyList();
         }
         
-        // 토큰이 있는 경우 - 사용자별 캐시 및 개인화 추천
+        // 로그인한 사용자인 경우 성별 필터링 적용
         if (userId != null) {
-            // 캐시에서 먼저 조회
+            try {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null) {
+                    UserProfile userProfile = userProfileRepository.findByUser(user).orElse(null);
+                    if (userProfile != null) {
+                        Gender userGender = userProfile.getGender();
+                        // 사용자가 참여할 수 있는 채팅방만 필터링
+                        openRooms = openRooms.stream()
+                                .filter(room -> canUserJoinRoom(userGender, room.getGenderRestriction()))
+                                .collect(Collectors.toList());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("사용자 성별 정보 조회 중 오류 발생, 필터링 없이 진행: {}", e.getMessage());
+            }
+            
+            // 캐시에서 먼저 조회 (성별 필터링 이후)
             List<HomeResponse.OpenChatRoomDto> cachedRooms = cacheService.getUserRecommendedRooms(userId);
             if (cachedRooms != null && !cachedRooms.isEmpty()) {
                 log.info("사용자 {} 추천 동행방 캐시에서 조회: {} rooms", userId, cachedRooms.size());
@@ -146,6 +169,7 @@ public class HomeService {
                         .maxParticipants(10) // 기본값 (실제로는 설정값 사용)
                         .scheduledDate(room.getJoinDate())
                         .hostNickname("익명") // 현재 host 정보가 없으므로 기본값
+                        .genderRestriction(room.getGenderRestriction()) // 성별 제한 정보 추가
                         .build())
                 .collect(Collectors.toList());
         
@@ -158,5 +182,15 @@ public class HomeService {
         }
         
         return roomDtos;
+    }
+    
+    // 사용자가 채팅방에 참여할 수 있는지 확인
+    private boolean canUserJoinRoom(Gender userGender, Gender roomGenderRestriction) {
+        // 채팅방에 성별 제한이 없거나 혼성인 경우 모든 사용자 참여 가능
+        if (roomGenderRestriction == null || roomGenderRestriction == Gender.MIXED) {
+            return true;
+        }
+        // 사용자 성별과 채팅방 성별 제한이 일치하는 경우 참여 가능
+        return userGender == roomGenderRestriction;
     }
 }
