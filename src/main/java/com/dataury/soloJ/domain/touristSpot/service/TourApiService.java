@@ -40,8 +40,7 @@ public class TourApiService {
     private String serviceKey;
     @Value("${spring.tourapi.app-name}")
     private String appName;
-    
-    private static final String BASE_URL = "https://apis.data.go.kr/B551011/KorService1";
+
     private static final String BASE_URL_V2 = "https://apis.data.go.kr/B551011/KorService2";
 
 
@@ -319,6 +318,111 @@ public class TourApiService {
         image.setSerialno(item.path("serialnum").asText(null));
         image.setCpyrhtDivCd(item.path("cpyrhtDivCd").asText(null));
         return image;
+    }
+    
+    // 키워드 기반 관광지 검색
+    public List<TourApiResponse.Item> searchSpotsByKeyword(String keyword, Integer areaCode, Integer contentTypeId, Integer page, Integer size) {
+        try {
+            // URL 인코딩 처리
+            String encodedKeyword = java.net.URLEncoder.encode(keyword, "UTF-8");
+            
+            StringBuilder urlBuilder = new StringBuilder(BASE_URL_V2 + "/searchKeyword2");
+            urlBuilder.append("?serviceKey=").append(serviceKey);
+            urlBuilder.append("&MobileOS=ETC");
+            urlBuilder.append("&MobileApp=").append(appName);
+            urlBuilder.append("&_type=json");
+            urlBuilder.append("&keyword=").append(encodedKeyword);
+            urlBuilder.append("&numOfRows=").append(size != null ? size : 20);
+            urlBuilder.append("&pageNo=").append(page != null ? page + 1 : 1); // TourAPI는 1부터 시작
+            urlBuilder.append("&arrange=A"); // 제목순 정렬
+            urlBuilder.append("&areaCode=").append(areaCode != null ? areaCode : 39); // 기본값 제주도
+            
+            // contentTypeId 필터가 있으면 추가
+            if (contentTypeId != null) {
+                urlBuilder.append("&contentTypeId=").append(contentTypeId);
+            }
+            
+            String url = urlBuilder.toString();
+            log.info("[TourAPI] 키워드 검색 URL: {}", url);
+            
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            String responseBody = response.getBody();
+            
+            log.debug("[TourAPI] 응답 내용: {}", responseBody);
+            
+            // XML인지 JSON인지 확인
+            if (responseBody.trim().startsWith("<")) {
+                log.warn("[TourAPI] XML 응답 받음, XML 파싱으로 전환");
+                return parseXmlSearchResponse(responseBody);
+            } else {
+                // JSON 파싱
+                JsonNode root = objectMapper.readTree(responseBody);
+                JsonNode items = root.path("response").path("body").path("items").path("item");
+                
+                List<TourApiResponse.Item> result = new ArrayList<>();
+                
+                if (items.isArray()) {
+                    // 배열인 경우
+                    for (JsonNode item : items) {
+                        TourApiResponse.Item tourItem = createTourItemFromJson(item);
+                        result.add(tourItem);
+                    }
+                } else if (!items.isMissingNode()) {
+                    // 단일 객체인 경우
+                    TourApiResponse.Item tourItem = createTourItemFromJson(items);
+                    result.add(tourItem);
+                }
+                
+                return result;
+            }
+        } catch (Exception e) {
+            log.error("[TourAPI] 키워드 검색 실패: {}", e.getMessage());
+            return Collections.emptyList(); // 예외 발생 시 빈 리스트 반환 (DB 결과는 유지)
+        }
+    }
+    
+    // JSON에서 TourItem 생성 헬퍼 메서드
+    private TourApiResponse.Item createTourItemFromJson(JsonNode item) {
+        TourApiResponse.Item tourItem = new TourApiResponse.Item();
+        tourItem.setContentid(item.path("contentid").asText());
+        tourItem.setContenttypeid(item.path("contenttypeid").asText());
+        tourItem.setTitle(item.path("title").asText());
+        tourItem.setAddr1(item.path("addr1").asText());
+        tourItem.setFirstimage(item.path("firstimage").asText());
+        
+        log.debug("[TourAPI] 파싱된 아이템 - 제목: {}, 주소: {}", 
+                tourItem.getTitle(), tourItem.getAddr1());
+        
+        return tourItem;
+    }
+    
+    // XML 응답 파싱 메서드
+    private List<TourApiResponse.Item> parseXmlSearchResponse(String xmlResponse) {
+        try {
+            Document doc = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new ByteArrayInputStream(xmlResponse.getBytes(StandardCharsets.UTF_8)));
+            
+            NodeList itemNodes = doc.getElementsByTagName("item");
+            List<TourApiResponse.Item> result = new ArrayList<>();
+            
+            for (int i = 0; i < itemNodes.getLength(); i++) {
+                Element item = (Element) itemNodes.item(i);
+                TourApiResponse.Item tourItem = new TourApiResponse.Item();
+                
+                tourItem.setContentid(getText(item, "contentid"));
+                tourItem.setContenttypeid(getText(item, "contenttypeid"));
+                tourItem.setTitle(getText(item, "title"));
+                tourItem.setAddr1(getText(item, "addr1"));
+                tourItem.setFirstimage(getText(item, "firstimage"));
+                
+                result.add(tourItem);
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("[TourAPI] XML 파싱 실패: {}", e.getMessage());
+            return Collections.emptyList();
+        }
     }
     
     // 위치 기반 관광지 조회

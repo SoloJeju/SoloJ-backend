@@ -31,6 +31,30 @@ public class TourSpotRequest {
             return radius != null ? radius : 1000; // 기본값 1km
         }
     }
+    
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SpotSearchRequestDto {
+        private String keyword;        // 검색 키워드 (제목)
+        private Integer areaCode;      // 지역 코드 (기본값 39: 제주)
+        private Integer contentTypeId; // 관광 타입 필터 (옵션)
+        private Difficulty difficulty; // 혼놀 난이도 필터 (옵션)
+        private Integer page;          // 페이지 번호 (기본값 0)
+        private Integer size;          // 페이지 크기 (기본값 20)
+        
+        public Integer getAreaCode() {
+            return areaCode != null ? areaCode : 39; // 기본값 제주
+        }
+        
+        public Integer getPage() {
+            return page != null ? page : 0;
+        }
+        
+        public Integer getSize() {
+            return size != null ? size : 20;
+        }
+    }
 
 
 }

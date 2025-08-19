@@ -87,6 +87,32 @@ public class TourSpotResponse {
         private List<NearbySpotItemDto> spots;
         private int totalCount;
     }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SpotSearchItemDto {
+        private Long contentId;           // 관광지 ID
+        private Integer contentTypeId;    // 관광지 타입 ID
+        private String title;             // 관광지 이름
+        private String addr1;             // 주소
+        private String firstimage;        // 대표 이미지
+        private Difficulty difficulty;    // 혼놀 난이도
+        private Integer openCompanionRoomCount; // 열려있는 동행방 수
+        private String source;            // 데이터 출처 ("DB" 또는 "TOUR_API")
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SpotSearchListResponse {
+        private List<SpotSearchItemDto> spots;
+        private int totalCount;
+        private int page;
+        private int size;
+    }
 
 
 
