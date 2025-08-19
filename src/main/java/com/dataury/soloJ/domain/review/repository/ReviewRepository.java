@@ -2,6 +2,8 @@ package com.dataury.soloJ.domain.review.repository;
 
 import com.dataury.soloJ.domain.review.entity.Review;
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,4 +50,16 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
         and size(r.images) > 0
     """)
     List<Review> findReviewsWithImagesByContentId(@Param("contentId") Long contentId);
+
+    // ReviewRepository.java
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot"})
+    @Query("""
+      select r from Review r
+      where r.touristSpot.contentId = :spotId
+      order by r.createdAt desc
+    """)
+    org.springframework.data.domain.Page<Review> findPageBySpot(@Param("spotId") Long spotId, Pageable pageable);
+
+    @Query("select count(r) from Review r where r.touristSpot.contentId = :spotId")
+    long countBySpot(@Param("spotId") Long spotId);
 }

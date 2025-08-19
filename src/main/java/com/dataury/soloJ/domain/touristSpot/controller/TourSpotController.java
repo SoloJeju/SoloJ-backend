@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotReviewResponse;
@@ -13,7 +14,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,8 +71,11 @@ public class TourSpotController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<TourSpotReviewResponse.ReviewListResponse> getReviewsByTouristSpot(@PathVariable Long contentId) {
-        return ApiResponse.onSuccess(tourSpotFacadeService.getReviewsByTouristSpot(contentId));
+    public ApiResponse<ReviewListWithSpotAggResponse> getReviewsByTouristSpot(@PathVariable Long contentId,
+                                                                              @RequestParam(defaultValue = "0") int page,
+                                                                              @RequestParam(defaultValue = "10") int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ApiResponse.onSuccess(tourSpotFacadeService.getReviewsByTouristSpot(contentId, pageable));
     }
 
     @Operation(summary = "관광지별 사진 목록 조회 (Tour API + 리뷰 이미지)")

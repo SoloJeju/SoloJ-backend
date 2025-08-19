@@ -17,6 +17,7 @@ import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +33,7 @@ public class ReviewService {
     private final TouristSpotRepository touristSpotRepository;
     private final ReviewTagRepository reviewTagRepository;
     private final GoogleOcrService googleOcrService;
+    private final CacheManager cacheManager;
 
     // contentTypeId로 리뷰 태그 목록 조회
     public List<ReviewResponseDto.ReviewTagResponseDto> getTagsByContentTypeId(int contentTypeId) {
@@ -43,6 +45,7 @@ public class ReviewService {
 
     // 리뷰 생성
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#reviewCreateDto.contentId")
     public ReviewResponseDto.ReviewDto createReview(ReviewRequestDto.ReviewCreateDto reviewCreateDto) {
         // 로그인한 사용자 찾기
         Long userId = SecurityUtils.getCurrentUserId();
@@ -114,6 +117,8 @@ public class ReviewService {
         touristSpot.updateMainStats(mainDiff, mainTag);
         touristSpotRepository.save(touristSpot);
 
+        evictSpotCaches(touristSpot.getContentId());
+
         return new ReviewResponseDto.ReviewDto(
                 savedReview.getId(),
                 savedReview.getReviewText()
@@ -122,6 +127,7 @@ public class ReviewService {
 
     // 리뷰 수정
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#review.touristSpot.contentId")
     public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -195,6 +201,7 @@ public class ReviewService {
 
         touristSpot.updateMainStats(mainDiff, mainTag);
         touristSpotRepository.save(touristSpot);
+        evictSpotCaches(touristSpot.getContentId());
 
         return new ReviewResponseDto.ReviewDto(
                 updatedReview.getId(),
@@ -205,6 +212,7 @@ public class ReviewService {
 
     // 리뷰 삭제
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#touristSpot.contentId")
     public void deleteReview(Long reviewId) {
         // 로그인한 사용자 찾기
         Long userId = SecurityUtils.getCurrentUserId();
@@ -233,6 +241,7 @@ public class ReviewService {
 
         touristSpot.updateMainStats(mainDiff, mainTag);
         touristSpotRepository.save(touristSpot);
+        evictSpotCaches(touristSpot.getContentId());
     }
 
     @Transactional(readOnly = true)
@@ -281,6 +290,12 @@ public class ReviewService {
     }
 
 
+    private void evictSpotCaches(Long spotId){
+        var c1 = cacheManager.getCache("spotAggPct");
+        var c2 = cacheManager.getCache("spotTopTagsPct");
+        if (c1 != null) c1.evict(spotId);
+        if (c2 != null) c2.evict(spotId);
+    }
 
 
 }
