@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -26,6 +27,7 @@ public class TourSpotService {
     private final TourApiService tourApiService;
     private final TouristSpotRepository touristSpotRepository;
     private final TouristSpotReviewTagRepository tagRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public TourSpotResponse.TourSpotListResponse getTourSpotsSummary(Pageable pageable, TourSpotRequest.TourSpotRequestDto filter) {
         List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable, filter);

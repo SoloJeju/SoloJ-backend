@@ -64,6 +64,7 @@ public class TourApiResponse {
         private String overview;
         private String tel;
         private String homepage;
+        private String dist;  // 거리 정보 (위치 기반 조회 시)
     }
 
 

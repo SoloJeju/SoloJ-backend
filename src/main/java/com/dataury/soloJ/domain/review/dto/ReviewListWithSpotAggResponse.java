@@ -38,6 +38,7 @@ public class ReviewListWithSpotAggResponse {
         private String userNickname;
         private String userProfileImageUrl;
         private String thumbnailUrl;
+        private List<String> imageUrls;
         private String text;
         private String difficulty;
         private LocalDateTime createdAt;

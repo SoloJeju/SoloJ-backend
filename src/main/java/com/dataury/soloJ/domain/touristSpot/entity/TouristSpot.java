@@ -32,6 +32,9 @@ public class TouristSpot extends BaseEntity {
 
     @Column(nullable = false)
     private String firstImage;
+    
+    @Column(nullable = true)
+    private String address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

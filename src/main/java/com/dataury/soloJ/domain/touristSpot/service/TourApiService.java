@@ -42,6 +42,7 @@ public class TourApiService {
     private String appName;
     
     private static final String BASE_URL = "https://apis.data.go.kr/B551011/KorService1";
+    private static final String BASE_URL_V2 = "https://apis.data.go.kr/B551011/KorService2";
 
 
     public List<TourApiResponse.Item> fetchTouristSpots(Pageable pageable, TourSpotRequest.TourSpotRequestDto filterRequest) {
@@ -210,12 +211,11 @@ public class TourApiService {
     }
 
     // 관광지 이미지 정보 조회 (detailImage2 사용)
-    // 관광지 이미지 정보 조회 (detailImage2 사용) — 다른 요청과 동일한 방식(문자열 연결)
     public List<TourApiResponse.ImageItem> fetchTouristSpotImages(Long contentId) {
         String url = "https://apis.data.go.kr/B551011/KorService2/detailImage2"
-                + "?serviceKey=" + serviceKey            // ✅ 그대로 붙이기 (재인코딩 금지)
+                + "?serviceKey=" + serviceKey
                 + "&MobileOS=ETC"
-                + "&MobileApp=" + appName                // 다른 메서드들과 동일 스타일
+                + "&MobileApp=" + appName
                 + "&_type=json"
                 + "&contentId=" + contentId
                 + "&imageYN=Y"
@@ -319,5 +319,55 @@ public class TourApiService {
         image.setSerialno(item.path("serialnum").asText(null));
         image.setCpyrhtDivCd(item.path("cpyrhtDivCd").asText(null));
         return image;
+    }
+    
+    // 위치 기반 관광지 조회
+    public List<TourApiResponse.Item> fetchNearbySpots(Double latitude, Double longitude, Integer radius, Integer contentTypeId) {
+        StringBuilder urlBuilder = new StringBuilder(BASE_URL_V2 + "/locationBasedList2");
+        urlBuilder.append("?serviceKey=").append(serviceKey);
+        urlBuilder.append("&MobileOS=WIN");
+        urlBuilder.append("&MobileApp=").append(appName);
+        urlBuilder.append("&_type=json");
+        urlBuilder.append("&mapX=").append(longitude);  // 경도
+        urlBuilder.append("&mapY=").append(latitude);   // 위도
+        urlBuilder.append("&radius=").append(radius != null ? radius : 1000); // 기본 1km
+        urlBuilder.append("&numOfRows=100");
+        urlBuilder.append("&pageNo=1");
+        urlBuilder.append("&arrange=E"); // 거리순 정렬
+        
+        // contentTypeId 필터가 있으면 추가
+        if (contentTypeId != null) {
+            urlBuilder.append("&contentTypeId=").append(contentTypeId);
+        }
+        
+        String url = urlBuilder.toString();
+        log.info("[TourAPI] 위치 기반 조회 URL: {}", url);
+        
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode items = root.path("response").path("body").path("items").path("item");
+            
+            if (items.isArray()) {
+                List<TourApiResponse.Item> result = new ArrayList<>();
+                for (JsonNode item : items) {
+                    TourApiResponse.Item tourItem = new TourApiResponse.Item();
+                    tourItem.setContentid(item.path("contentid").asText());
+                    tourItem.setContenttypeid(item.path("contenttypeid").asText());
+                    tourItem.setTitle(item.path("title").asText());
+                    tourItem.setAddr1(item.path("addr1").asText());
+                    tourItem.setMapx(item.path("mapx").asText());
+                    tourItem.setMapy(item.path("mapy").asText());
+                    tourItem.setFirstimage(item.path("firstimage").asText());
+                    tourItem.setDist(item.path("dist").asText()); // 거리 정보
+                    result.add(tourItem);
+                }
+                return result;
+            }
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("[TourAPI] 위치 기반 조회 실패: {}", e.getMessage());
+            throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
+        }
     }
 }

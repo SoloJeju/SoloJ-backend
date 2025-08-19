@@ -6,6 +6,7 @@ import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,9 @@ public class ReviewQueryService {
                         .userNickname(r.getUser().getUserProfile()!=null ? r.getUser().getUserProfile().getNickName() : "익명")
                         .userProfileImageUrl(r.getUser().getUserProfile()!=null ? r.getUser().getUserProfile().getImageUrl() : null)
                         .thumbnailUrl(r.getThumbnailUrl())
+                        .imageUrls(r.getImages() != null ? r.getImages().stream()
+                                .map(img -> img.getImageUrl())
+                                .toList() : List.of())
                         .text(r.getReviewText())
                         .difficulty(r.getDifficulty()!=null ? r.getDifficulty().name() : "NONE")
                         .createdAt(r.getCreatedAt())

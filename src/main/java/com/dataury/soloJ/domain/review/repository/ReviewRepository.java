@@ -52,7 +52,7 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     List<Review> findReviewsWithImagesByContentId(@Param("contentId") Long contentId);
 
     // ReviewRepository.java
-    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot"})
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
     @Query("""
       select r from Review r
       where r.touristSpot.contentId = :spotId

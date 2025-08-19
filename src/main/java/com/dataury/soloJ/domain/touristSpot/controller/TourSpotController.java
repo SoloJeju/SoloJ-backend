@@ -5,6 +5,7 @@ import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotReviewResponse;
+import com.dataury.soloJ.domain.touristSpot.service.NearbySpotService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
@@ -31,6 +32,7 @@ public class TourSpotController {
 
     private final TourSpotService tourSpotService;
     private final TourSpotFacadeService tourSpotFacadeService;
+    private final NearbySpotService nearbySpotService;
 
     @GetMapping("")
     @Operation(summary = "관광지 정보 조회")
@@ -86,5 +88,16 @@ public class TourSpotController {
     })
     public ApiResponse<TourSpotReviewResponse.ImageListResponse> getImagesByTouristSpot(@PathVariable Long contentId) {
         return ApiResponse.onSuccess(tourSpotFacadeService.getImagesByTouristSpot(contentId));
+    }
+
+    @Operation(summary = "사용자 위치기반 관광지 조회")
+    @PostMapping("/nearby")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<TourSpotResponse.NearbySpotListResponse> getNearbyTouristSpots(
+            @RequestBody TourSpotRequest.NearbySpotRequestDto request) {
+        return ApiResponse.onSuccess(nearbySpotService.getNearbySpots(request));
     }
 }
