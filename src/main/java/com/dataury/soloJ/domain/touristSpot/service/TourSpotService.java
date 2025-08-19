@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -26,6 +27,7 @@ public class TourSpotService {
     private final TourApiService tourApiService;
     private final TouristSpotRepository touristSpotRepository;
     private final TouristSpotReviewTagRepository tagRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public TourSpotResponse.TourSpotListResponse getTourSpotsSummary(Pageable pageable, TourSpotRequest.TourSpotRequestDto filter) {
         List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable, filter);
@@ -62,8 +64,6 @@ public class TourSpotService {
                         .contentId(contentId)
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
-                        .latitude(Double.parseDouble(item.getMapy()))
-                        .longitude(Double.parseDouble(item.getMapx()))
                         .firstImage(item.getFirstimage())
                         .hasCompanionRoom(false)
                         .build());
@@ -75,14 +75,19 @@ public class TourSpotService {
                     .contenttypeid(item.getContenttypeid())
                     .title(item.getTitle())
                     .addr1(item.getAddr1())
-                    .firstimage(item.getFirstimage())
-                    .mapx(item.getMapx())
-                    .mapy(item.getMapy())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .hasCompanionRoom(spot.isHasCompanionRoom())
                     .build();
-        }).toList();
+        })
+        // 난이도 필터링 적용
+        .filter(item -> {
+            if (filter.getDifficulty() == null) {
+                return true; // 필터가 없으면 모두 조회
+            }
+            return item.getDifficulty() == filter.getDifficulty();
+        })
+        .toList();
 
         return new TourSpotResponse.TourSpotListResponse(result);
     }
@@ -106,6 +111,8 @@ public class TourSpotService {
                 .homepage(extractHomepage(item.getHomepage()))
                 .addr1(item.getAddr1())
                 .addr2(item.getAddr2())
+                .firstimage(item.getFirstimage())
+                .firstimage2(item.getFirstimage2())
                 .build();
     }
 

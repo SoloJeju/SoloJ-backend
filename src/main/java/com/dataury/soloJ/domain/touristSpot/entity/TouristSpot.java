@@ -25,13 +25,10 @@ public class TouristSpot extends BaseEntity {
     private int contentTypeId;
 
     @Column(nullable = false)
-    private double latitude;
-
-    @Column(nullable = false)
-    private double longitude;
-
-    @Column(nullable = false)
     private String firstImage;
+    
+    @Column(nullable = true)
+    private String address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

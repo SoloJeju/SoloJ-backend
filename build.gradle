@@ -71,6 +71,12 @@ dependencies {
 
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	// Caffeine 캐시 엔진
+	implementation 'com.github.ben-manes.caffeine:caffeine'  // 버전은 Spring Boot BOM이 관리
+	// (버전 명시가 필요하면 예: implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8')
+
 }
 
 tasks.named('test') {
