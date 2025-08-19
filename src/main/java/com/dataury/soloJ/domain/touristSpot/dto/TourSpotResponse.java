@@ -29,8 +29,6 @@ public class TourSpotResponse {
         private String title;
         private String addr1;
         private String firstimage;
-        private String mapx;
-        private String mapy;
         private boolean hasCompanionRoom;
 
         private Difficulty difficulty;

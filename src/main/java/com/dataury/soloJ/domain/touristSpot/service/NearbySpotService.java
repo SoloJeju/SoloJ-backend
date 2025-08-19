@@ -55,8 +55,6 @@ public class NearbySpotService {
                                 .contentId(contentId)
                                 .name(item.getTitle())
                                 .contentTypeId(Integer.parseInt(item.getContenttypeid()))
-                                .latitude(Double.parseDouble(item.getMapy()))
-                                .longitude(Double.parseDouble(item.getMapx()))
                                 .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
                                 .address(item.getAddr1())
                                 .hasCompanionRoom(false)
@@ -71,8 +69,8 @@ public class NearbySpotService {
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .title(item.getTitle())
                             .addr1(item.getAddr1())
-                            .mapx(Double.parseDouble(item.getMapx()))
-                            .mapy(Double.parseDouble(item.getMapy()))
+                            .mapx(Double.parseDouble(item.getMapx())) // TourAPI에서 가져온 경도
+                            .mapy(Double.parseDouble(item.getMapy())) // TourAPI에서 가져온 위도
                             .distance(Double.parseDouble(item.getDist()))
                             .firstimage(item.getFirstimage())
                             .difficulty(spot.getDifficulty())

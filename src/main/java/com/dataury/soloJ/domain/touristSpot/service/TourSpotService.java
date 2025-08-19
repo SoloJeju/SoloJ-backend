@@ -64,8 +64,6 @@ public class TourSpotService {
                         .contentId(contentId)
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
-                        .latitude(Double.parseDouble(item.getMapy()))
-                        .longitude(Double.parseDouble(item.getMapx()))
                         .firstImage(item.getFirstimage())
                         .hasCompanionRoom(false)
                         .build());
@@ -77,9 +75,6 @@ public class TourSpotService {
                     .contenttypeid(item.getContenttypeid())
                     .title(item.getTitle())
                     .addr1(item.getAddr1())
-                    .firstimage(item.getFirstimage())
-                    .mapx(item.getMapx())
-                    .mapy(item.getMapy())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .hasCompanionRoom(spot.isHasCompanionRoom())
