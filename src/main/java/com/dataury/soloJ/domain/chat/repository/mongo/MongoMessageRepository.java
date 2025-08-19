@@ -21,4 +21,8 @@ public interface MongoMessageRepository extends MongoRepository<Message, String>
     // 시간 범위로 메시지 조회
     List<Message> findByChatRoomIdAndCreatedAtBefore(String chatRoomId, Date createdAtBefore, Pageable pageable);
     List<Message> findByRoomIdAndSendAtBefore(Long roomId, LocalDateTime before, Pageable pageable);
+    
+    // 읽지 않은 메시지 확인용
+    boolean existsByRoomId(Long roomId);
+    boolean existsByRoomIdAndSendAtAfter(Long roomId, LocalDateTime after);
 }

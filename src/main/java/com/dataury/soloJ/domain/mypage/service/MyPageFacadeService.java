@@ -2,6 +2,7 @@ package com.dataury.soloJ.domain.mypage.service;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
+import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.service.PostService;
 import com.dataury.soloJ.domain.community.service.ScrapService;
@@ -19,6 +20,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class MyPageFacadeService {
     private final ChatRoomQueryService chatRoomQueryService;
+    private final MessageReadQueryService messageReadQueryService;
     private final ScrapService scrapService;
     private final PostService postService;
 

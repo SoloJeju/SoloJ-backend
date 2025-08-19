@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.chat.dto;
 
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class ChatRoomRequestDto {
         private Long contentId; // TouristSpot의 contentId
         private LocalDateTime joinDate;
         private Long maxMembers; // 최대 인원수
+        private Gender genderRestriction; // 성별 제한 (MALE, FEMALE, MIXED)
     }
 
     @Data

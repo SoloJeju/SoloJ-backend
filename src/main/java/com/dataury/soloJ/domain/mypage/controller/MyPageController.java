@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.mypage.controller;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.mypage.service.MyPageFacadeService;
 import com.dataury.soloJ.global.ApiResponse;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MyPageController {
 
     private final MyPageFacadeService myPageFacadeService;
+    private final MessageReadQueryService messageReadQueryService;
 
     @GetMapping("/chatrooms")
     @Operation(summary = "사용자 동행방 목록 조회")
@@ -63,5 +65,12 @@ public class MyPageController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
         return ApiResponse.onSuccess(myPageFacadeService.getMyCommentedPosts(pageable));
+    }
+
+    @GetMapping("/unread-messages")
+    @Operation(summary = "읽지 않은 채팅 메시지 여부 확인", description = "사용자가 읽지 않은 채팅 메시지가 있는지 확인합니다.")
+    public ApiResponse<Boolean> hasUnreadMessages() {
+        boolean hasUnread = messageReadQueryService.hasAnyUnreadMessages();
+        return ApiResponse.onSuccess(hasUnread);
     }
 }

@@ -3,7 +3,6 @@ package com.dataury.soloJ.domain.chat.controller;
 import com.dataury.soloJ.domain.chat.dto.ChatMessageDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
-import com.dataury.soloJ.domain.chat.entity.Message;
 import com.dataury.soloJ.domain.chat.service.ChatRoomCommandService;
 import com.dataury.soloJ.domain.chat.service.MessageQueryService;
 import com.dataury.soloJ.global.ApiResponse;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 @Tag(name = "ChatAPI",description = "채팅 관련 기능 API 입니다.")
 @Slf4j
 public class ChatRoomController {
-
 
     private final ChatRoomCommandService chatRoomCommandService;
 
@@ -94,6 +92,13 @@ public class ChatRoomController {
                 roomId, userId, responses.size(), pageResponse.isHasNext());
 
         return ApiResponse.onSuccess(response);
+    }
+
+    @Operation(summary = "채팅방 메시지 읽음 처리", description = "채팅방 입장시 모든 메시지를 읽음 처리합니다.")
+    @PostMapping("/{roomId}/read")
+    public ApiResponse<String> markMessagesAsRead(@PathVariable Long roomId) {
+        chatRoomCommandService.markAllMessagesAsRead(roomId);
+        return ApiResponse.onSuccess("모든 메시지가 읽음 처리되었습니다.");
     }
 
 }

@@ -4,13 +4,16 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
+import com.dataury.soloJ.domain.chat.entity.MessageRead;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
+import com.dataury.soloJ.domain.chat.repository.MessageReadRepository;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.UserProfile;
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -29,6 +32,7 @@ public class ChatRoomCommandService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final JoinChatRepository joinChatRepository;
+    private final MessageReadRepository messageReadRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final TouristSpotRepository touristSpotRepository;
@@ -93,6 +97,17 @@ public class ChatRoomCommandService {
     public ChatRoomResponseDto.CreateChatRoomResponse createChatRoom(ChatRoomRequestDto.CreateChatRoomDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
 
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        
+        // 사용자 프로필 조회
+        UserProfile userProfile = userProfileRepository.findByUser(user)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_PROFILE_NOT_FOUND));
+        
+        // 성별 제한 검증
+        validateGenderRestrictionForCreation(userProfile.getGender(), request.getGenderRestriction());
+
         // 관광지 조회
         TouristSpot touristSpot = touristSpotRepository.findById(request.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
@@ -104,11 +119,11 @@ public class ChatRoomCommandService {
                 .touristSpot(touristSpot)
                 .joinDate(request.getJoinDate())
                 .numberOfMembers(request.getMaxMembers())
+                .genderRestriction(request.getGenderRestriction())
                 .isCompleted(false)
                 .build();
         
         chatRoom = chatRoomRepository.save(chatRoom);
-        User user =  userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         addUserToChatRoom(chatRoom, user);
 
@@ -121,6 +136,7 @@ public class ChatRoomCommandService {
                 .joinDate(chatRoom.getJoinDate())
                 .maxMembers(chatRoom.getNumberOfMembers())
                 .currentMembers(1)
+                .genderRestriction(chatRoom.getGenderRestriction())
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
     }
@@ -137,6 +153,9 @@ public class ChatRoomCommandService {
         // 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 성별 제한 확인
+        validateGenderRestriction(chatRoom, user);
 
         // 이미 참가했는지 확인
         boolean alreadyJoined = joinChatRepository.existsByUserIdAndChatRoomIdAndStatusActive(userId, chatRoomId);
@@ -191,5 +210,51 @@ public class ChatRoomCommandService {
                 .build();
     }
 
+    // 성별 제한 검증
+    private void validateGenderRestriction(ChatRoom chatRoom, User user) {
+        Gender roomGenderRestriction = chatRoom.getGenderRestriction();
+        if (roomGenderRestriction == null || roomGenderRestriction == Gender.MIXED) {
+            return;
+        }
+
+        UserProfile userProfile = userProfileRepository.findByUser(user)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_PROFILE_NOT_FOUND));
+
+        if (userProfile.getGender() != roomGenderRestriction) {
+            throw new GeneralException(ErrorStatus.GENDER_RESTRICTION_VIOLATION);
+        }
+    }
+
+    // 채팅방 생성 시 성별 제한 검증
+    private void validateGenderRestrictionForCreation(Gender userGender, Gender requestedGenderRestriction) {
+        // null이거나 MIXED인 경우는 허용
+        if (requestedGenderRestriction == null || requestedGenderRestriction == Gender.MIXED) {
+            return;
+        }
+        
+        // 사용자 성별과 요청한 성별 제한이 다른 경우 에러
+        if (userGender != requestedGenderRestriction) {
+            throw new GeneralException(ErrorStatus.INVALID_GENDER_RESTRICTION_FOR_CREATION);
+        }
+    }
+
+    // 채팅방 입장시 모든 메시지 읽음 처리
+    @Transactional
+    public void markAllMessagesAsRead(Long chatRoomId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+
+        MessageRead messageRead = messageReadRepository.findByUserAndChatRoom(user, chatRoom)
+                .orElse(MessageRead.builder()
+                        .user(user)
+                        .chatRoom(chatRoom)
+                        .build());
+
+        messageRead.updateLastReadAt();
+        messageReadRepository.save(messageRead);
+    }
 
 }

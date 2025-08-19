@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.home.dto;
 
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -58,5 +59,6 @@ public class HomeResponse {
         private Integer maxParticipants;
         private LocalDateTime scheduledDate;
         private String hostNickname;
+        private Gender genderRestriction;  // 채팅방 성별 제한
     }
 }
