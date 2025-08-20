@@ -8,6 +8,6 @@ public class LoginViewController {
 
     @GetMapping("/login")
     public String loginPage() {
-        return "login"; // templates/login.html 렌더링
+        return "redirect:/oauth2/authorization/kakao";
     }
 }

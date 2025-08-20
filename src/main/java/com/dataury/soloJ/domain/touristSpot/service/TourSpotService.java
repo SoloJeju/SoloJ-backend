@@ -75,6 +75,7 @@ public class TourSpotService {
                     .contenttypeid(item.getContenttypeid())
                     .title(item.getTitle())
                     .addr1(item.getAddr1())
+                    .firstimage(item.getFirstimage())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .hasCompanionRoom(spot.isHasCompanionRoom())
@@ -121,9 +122,11 @@ public class TourSpotService {
         return homepageHtml.replaceAll(".*href=\\\"(.*?)\\\".*", "$1");
     }
 
-    public TourSpotResponse.TourSpotDetailWrapper getTourSpotDetailWithIntro(Long contentId, Long contentTypeId) {
+    public TourSpotResponse.TourSpotDetailWrapper getTourSpotDetailFull(Long contentId, Long contentTypeId) {
         TourSpotResponse.TourSpotDetailDto basic = getTourSpotDetailCommon(contentId, contentTypeId);
         Map<String, Object> intro = tourApiService.fetchDetailIntroAsMap(contentId, contentTypeId);
+        List<Map<String, Object>> info = tourApiService.fetchDetailInfo(contentId, contentTypeId);
+
         TouristSpot spot = touristSpotRepository.findById(contentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
@@ -134,11 +137,13 @@ public class TourSpotService {
         return TourSpotResponse.TourSpotDetailWrapper.builder()
                 .basic(basic)
                 .intro(intro)
+                .info(info) // ✅ 새로 추가
                 .reviewTags(reviewTags)
                 .difficulty(spot.getDifficulty())
                 .hasCompanionRoom(spot.isHasCompanionRoom())
                 .build();
     }
+
 
     public List<TouristSpot> findAllByContentIdIn(List<Long> contentIds) {
         return touristSpotRepository.findAllByContentIdIn(contentIds);

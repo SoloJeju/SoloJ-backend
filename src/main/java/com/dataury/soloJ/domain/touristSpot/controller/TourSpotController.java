@@ -60,7 +60,7 @@ public class TourSpotController {
     public ApiResponse<TourSpotResponse.TourSpotDetailWrapper> getTouristSpots(@PathVariable Long contentId, @RequestParam Long contentTypeId) {
 
        // return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailCommon(contentId, contentTypeId));
-        return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailWithIntro(contentId, contentTypeId));
+        return ApiResponse.onSuccess(tourSpotService.getTourSpotDetailFull(contentId, contentTypeId));
     }
 
     @Operation(summary = "관광지별 채팅방 목록 조회")

@@ -474,4 +474,48 @@ public class TourApiService {
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
+
+    // 반복정보 조회 (detailInfo2)
+    public List<Map<String, Object>> fetchDetailInfo(Long contentId, Long contentTypeId) {
+        String url = BASE_URL_V2 + "/detailInfo2"
+                + "?serviceKey=" + serviceKey
+                + "&MobileApp=" + appName
+                + "&MobileOS=ETC"
+                + "&_type=json"
+                + "&contentId=" + contentId
+                + "&contentTypeId=" + contentTypeId
+                + "&numOfRows=100";
+
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            JsonNode itemNode = objectMapper.readTree(response.getBody())
+                    .path("response").path("body").path("items").path("item");
+
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            if (itemNode.isArray()) {
+                for (JsonNode node : itemNode) {
+                    Map<String, Object> map = objectMapper.convertValue(node, new TypeReference<>() {});
+                    // 빈 값은 제거
+                    map = map.entrySet().stream()
+                            .filter(e -> e.getValue() != null && !String.valueOf(e.getValue()).isBlank())
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    result.add(map);
+                }
+            } else if (itemNode.isObject()) {
+                Map<String, Object> map = objectMapper.convertValue(itemNode, new TypeReference<>() {});
+                map = map.entrySet().stream()
+                        .filter(e -> e.getValue() != null && !String.valueOf(e.getValue()).isBlank())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                result.add(map);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("[TourAPI] detailInfo2 호출 실패 contentId={}, contentTypeId={}", contentId, contentTypeId, e);
+            throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
+        }
+    }
+
 }

@@ -57,6 +57,7 @@ public class TourSpotResponse {
     public static class TourSpotDetailWrapper {
         private TourSpotResponse.TourSpotDetailDto basic;
         private Map<String, Object> intro;
+        private List<Map<String, Object>> info;
         private List<String> reviewTags;
         private Difficulty difficulty;
         private boolean hasCompanionRoom;

@@ -99,7 +99,6 @@ public class WebSecurityConfig {
         List<String> allowedOrigins = List.of(
                 "http://localhost:8080",
                 "http://localhost:5173",
-                "ws://localhost:8080",
                 "http://localhost:3000"
         );
 

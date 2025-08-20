@@ -52,3 +52,7 @@ google-credential.json
 src/main/resources/google-credential.json
 
 app.jar
+
+# JAR files
+*.jar
+/build/libs/*.jar
