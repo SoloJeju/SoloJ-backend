@@ -1,0 +1,65 @@
+package com.dataury.soloJ.domain.notification.controller;
+
+import com.dataury.soloJ.domain.notification.dto.FCMTokenRequestDto;
+import com.dataury.soloJ.domain.notification.dto.NotificationListDto;
+import com.dataury.soloJ.domain.notification.dto.NotificationReadRequestDto;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
+import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.code.status.SuccessStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/notifications")
+@RequiredArgsConstructor
+@Tag(name = "Notification API", description = "알림 관련 API")
+public class NotificationController {
+    
+    private final NotificationService notificationService;
+    
+    @GetMapping
+    @Operation(summary = "내 알림 조회", description = "로그인한 사용자의 알림 목록을 조회합니다")
+    public ApiResponse<NotificationListDto> getMyNotifications() {
+        NotificationListDto notifications = notificationService.getMyNotifications();
+        return ApiResponse.onSuccess(notifications);
+    }
+    
+    @GetMapping("/unread")
+    @Operation(summary = "미확인 알림 여부", description = "읽지 않은 알림이 있는지 확인합니다")
+    public ApiResponse<Boolean> hasUnreadNotifications() {
+        boolean hasUnread = notificationService.hasUnreadNotifications();
+        return ApiResponse.onSuccess(hasUnread);
+    }
+    
+    @PutMapping("/read-all")
+    @Operation(summary = "전체 알림 확인처리", description = "모든 알림을 읽음 처리합니다")
+    public ApiResponse<Void> markAllAsRead() {
+        notificationService.markAllAsRead();
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+    
+    @PutMapping("/read")
+    @Operation(summary = "리스트 알림 확인처리", description = "선택한 알림들을 읽음 처리합니다")
+    public ApiResponse<Void> markNotificationsAsRead(
+            @RequestBody NotificationReadRequestDto requestDto) {
+        notificationService.markNotificationsAsRead(requestDto);
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+    
+    @PostMapping("/fcm-token")
+    @Operation(summary = "FCM 토큰 등록", description = "FCM 푸시 알림을 위한 토큰을 등록합니다")
+    public ApiResponse<Void> registerFcmToken(
+            @RequestBody FCMTokenRequestDto requestDto) {
+        notificationService.updateFcmToken(requestDto.getFcmToken());
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+    
+    @DeleteMapping("/fcm-token")
+    @Operation(summary = "FCM 토큰 삭제", description = "FCM 토큰을 삭제하여 푸시 알림을 비활성화합니다")
+    public ApiResponse<Void> deleteFcmToken() {
+        notificationService.deleteFcmToken();
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+}

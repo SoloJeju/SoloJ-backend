@@ -6,6 +6,7 @@ import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AllArgsConstructor;
@@ -42,7 +43,8 @@ public class MessageQueryService {
 
     private static final String CHAT_ROOM_MESSAGES_KEY = "chatroom:%s:messages";
 
-    public MessagePageResponse getMessagesByChatRoom(Long chatRoomId, Long userId, LocalDateTime lastMessageTime, int size) {
+    public MessagePageResponse getMessagesByChatRoom(Long chatRoomId, LocalDateTime lastMessageTime, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
         if (!joinChatRepository.existsByUserIdAndChatRoomIdAndStatusActive(userId, chatRoomId)) {
             throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
         }

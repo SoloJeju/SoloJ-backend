@@ -6,7 +6,6 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
 import com.dataury.soloJ.domain.chat.service.ChatRoomCommandService;
 import com.dataury.soloJ.domain.chat.service.MessageQueryService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.auth.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,9 +66,9 @@ public class ChatRoomController {
             @Parameter(description = "마지막 메시지 시간 (이전 메시지 조회용)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastMessageTime,
             @Parameter(description = "조회할 메시지 개수") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "현재 사용자 정보", hidden = true) @AuthUser Long userId) {
+) {
 
-        MessageQueryService.MessagePageResponse pageResponse = messageQueryService.getMessagesByChatRoom(roomId, userId, lastMessageTime, size);
+        MessageQueryService.MessagePageResponse pageResponse = messageQueryService.getMessagesByChatRoom(roomId, lastMessageTime, size);
 
         List<ChatMessageDto.Response> responses = pageResponse.getMessages().stream()
                 .map(message -> ChatMessageDto.Response.builder()
@@ -88,8 +87,8 @@ public class ChatRoomController {
                 .hasNext(pageResponse.isHasNext())
                 .build();
 
-        log.info("채팅방 메시지 조회 완료 - roomId: {}, userId: {}, 조회된 메시지 수: {}, hasNext: {}", 
-                roomId, userId, responses.size(), pageResponse.isHasNext());
+        log.info("채팅방 메시지 조회 완료 - roomId: {}, 조회된 메시지 수: {}, hasNext: {}", 
+                roomId, responses.size(), pageResponse.isHasNext());
 
         return ApiResponse.onSuccess(response);
     }

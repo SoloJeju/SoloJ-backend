@@ -2,8 +2,14 @@ package com.dataury.soloJ.domain.chat.service;
 
 import com.dataury.soloJ.domain.chat.dto.ChatMessageDto;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
+import com.dataury.soloJ.domain.chat.entity.JoinChat;
 import com.dataury.soloJ.domain.chat.entity.Message;
+import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
+import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
+import com.dataury.soloJ.domain.user.entity.User;
+import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +37,9 @@ public class MessageCommandService {
     private final ChatRoomRepository chatRoomRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final MongoTemplate mongoTemplate;
+    private final JoinChatRepository joinChatRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private static final String CHAT_ROOM_MESSAGES_KEY = "chatroom:%s:messages";
     private static final String CHAT_ROOM_LATEST_MESSAGE_KEY = "chatroom:%s:latestMessage";
@@ -43,6 +52,7 @@ public class MessageCommandService {
         saveMessageToMongoDB(message); // MongoDB에 실시간 저장
         saveMessageToRedis(message);   // Redis에 캐시
         broadcastMessage(message);
+        sendNotificationToMembers(message); // 알림 전송
         // TODO: FCM 기능은 나중에 구현
         // notifyBackgroundUser(message);
     }
@@ -155,6 +165,31 @@ public class MessageCommandService {
         
         log.info("채팅방 내 메시지 전송 messageId={}, roomId={}", message.getMessageId(), message.getRoomId());
         messagingTemplate.convertAndSend("/topic/" + message.getRoomId(), response);
+    }
+
+    /**
+     * 채팅방 멤버들에게 알림 전송 (메시지 발신자 제외)
+     */
+    private void sendNotificationToMembers(Message message) {
+        try {
+            // 채팅방의 활성 멤버 조회
+            List<JoinChat> activeMembers = joinChatRepository.findByChatRoomIdAndStatus(
+                    message.getRoomId(), JoinChatStatus.ACTIVE);
+            
+            // 발신자를 제외한 멤버들에게 알림 전송
+            for (JoinChat joinChat : activeMembers) {
+                if (!joinChat.getUser().getId().equals(message.getSenderId())) {
+                    notificationService.createChatNotification(
+                            joinChat.getUser(), 
+                            message.getSenderName(), 
+                            message.getRoomId()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.error("알림 전송 실패 - messageId: {}, error: {}", message.getMessageId(), e.getMessage());
+            // 알림 전송 실패가 메시지 처리를 중단시키지 않도록 예외를 다시 throw하지 않음
+        }
     }
 
     /**

@@ -47,7 +47,8 @@ public class User extends BaseEntity{
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private UserProfile userProfile;
 
-
+    @Column(name = "fcm_token")
+    private String fcmToken;
 
     public void changePassword(String password){
         this.password = password;
@@ -55,6 +56,10 @@ public class User extends BaseEntity{
 
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
 

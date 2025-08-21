@@ -65,6 +65,7 @@ dependencies {
 
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
 	implementation 'com.google.cloud:google-cloud-vision:3.31.0'
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
 
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter:3.1.1'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.767'
