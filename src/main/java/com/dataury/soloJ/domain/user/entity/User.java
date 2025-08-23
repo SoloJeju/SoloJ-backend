@@ -47,9 +47,14 @@ public class User extends BaseEntity{
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private UserProfile userProfile;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
 
 
-    public void changePassword(String password){
+    // ========= 비즈니스 로직 ========= //
+
+    public void changePassword(String password) {
         this.password = password;
     }
 
@@ -57,5 +62,16 @@ public class User extends BaseEntity{
         this.name = name;
     }
 
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public boolean isActive() {
+        return this.active;
+    }
 
 }
