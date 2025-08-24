@@ -3,7 +3,8 @@ package com.dataury.soloJ.domain.chat.service;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.MessageRead;
 import com.dataury.soloJ.domain.chat.repository.MessageReadRepository;
-import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository;
+// import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository; // MongoDB 주석처리
+import com.dataury.soloJ.domain.chat.repository.MessageRepository; // MySQL repository 추가
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -24,7 +25,8 @@ import java.util.Map;
 public class MessageReadQueryService {
 
     private final MessageReadRepository messageReadRepository;
-    private final MongoMessageRepository mongoMessageRepository;
+    // private final MongoMessageRepository mongoMessageRepository; // MongoDB 주석처리
+    private final MessageRepository messageRepository; // MySQL repository 추가
     private final UserRepository userRepository;
 
     // 특정 채팅방에서 읽지 않은 메시지가 있는지 확인
@@ -38,12 +40,12 @@ public class MessageReadQueryService {
 
         if (messageRead == null) {
             // 읽음 기록이 없다면, 해당 채팅방에 메시지가 있는지 확인
-            return mongoMessageRepository.existsByRoomId(chatRoomId);
+            return messageRepository.existsByRoomId(chatRoomId);
         }
 
         LocalDateTime lastReadTime = messageRead.getLastReadAt();
         // 마지막 읽은 시간 이후에 새로운 메시지가 있는지 확인
-        return mongoMessageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime);
+        return messageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime);
     }
 
     // 사용자가 참여 중인 모든 채팅방의 읽지 않은 메시지 여부 확인
@@ -68,10 +70,10 @@ public class MessageReadQueryService {
             
             if (lastReadTime == null) {
                 // 읽음 기록이 없다면, 해당 채팅방에 메시지가 있는지 확인
-                hasUnread = mongoMessageRepository.existsByRoomId(chatRoomId);
+                hasUnread = messageRepository.existsByRoomId(chatRoomId);
             } else {
                 // 마지막 읽은 시간 이후에 새로운 메시지가 있는지 확인
-                hasUnread = mongoMessageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime);
+                hasUnread = messageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime);
             }
             
             unreadStatusMap.put(chatRoomId, hasUnread);
@@ -90,7 +92,7 @@ public class MessageReadQueryService {
             Long chatRoomId = messageRead.getChatRoom().getId();
             LocalDateTime lastReadTime = messageRead.getLastReadAt();
             
-            if (mongoMessageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime)) {
+            if (messageRepository.existsByRoomIdAndSendAtAfter(chatRoomId, lastReadTime)) {
                 return true;
             }
         }

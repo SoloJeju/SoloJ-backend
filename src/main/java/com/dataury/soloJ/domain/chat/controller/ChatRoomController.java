@@ -65,7 +65,7 @@ public class ChatRoomController {
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @Parameter(description = "마지막 메시지 시간 (이전 메시지 조회용)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastMessageTime,
-            @Parameter(description = "조회할 메시지 개수") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "조회할 메시지 개수") @RequestParam(defaultValue = "20") int size
 ) {
 
         MessageQueryService.MessagePageResponse pageResponse = messageQueryService.getMessagesByChatRoom(roomId, lastMessageTime, size);
