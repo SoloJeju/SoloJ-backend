@@ -49,6 +49,12 @@ public class AdminManagementService {
             LocalDate.now().atTime(23, 59, 59)
         );
 
+        // 문의 통계 추가 (InquiryRepository가 있다면)
+        // TODO: InquiryRepository 의존성 추가 후 구현
+        long totalInquiries = 0; // inquiryRepository.count();
+        long pendingInquiries = 0; // inquiryRepository.countByStatus(InquiryStatus.PENDING);
+        long todayInquiries = 0; // inquiryRepository.countByCreatedDateBetween(today);
+
         return DashboardStatsDto.builder()
             .totalReports(totalReports)
             .pendingReports(pendingReports)
@@ -56,6 +62,10 @@ public class AdminManagementService {
             .bannedUsers(bannedUsers)
             .restrictedUsers(restrictedUsers)
             .todayReports(todayReports)
+            // 문의 관련 통계 추가
+            .totalInquiries(totalInquiries)
+            .pendingInquiries(pendingInquiries)
+            .todayInquiries(todayInquiries)
             .build();
     }
 
