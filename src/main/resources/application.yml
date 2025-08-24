@@ -8,6 +8,11 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 10000   # 10초
+      validation-timeout: 3000
+      maximum-pool-size: 10
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -57,13 +62,20 @@ spring:
     key: ${SERVICE_KEY}
     app-name: 혼자옵서예
   data:
-    mongodb:
-      uri: mongodb://localhost:27017/soloJ
-      auto-index-creation: true
+#    mongodb:
+#      uri: mongodb://localhost:27017/soloJ
+#      auto-index-creation: true
     redis:
       host: localhost
       port: 6379
       database: 0
+      repositories:
+        enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+
 jwt:
   secret: ${JWT_SECRET:myVeryLongSecretKeyForJWTTokenSigningThatIsAtLeast512BitsLongForHS512Algorithm1234567890}
   access-token-expiration: 900 # 15분 (초 단위)
@@ -79,11 +91,6 @@ discord:
     error: ${DISCORD_WEBHOOK_ERROR:}
     lifecycle: ${DISCORD_WEBHOOK_LIFECYCLE:}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
 
 google:
   application:
@@ -98,3 +105,11 @@ cloud:
       static: ap-northeast-2
     s3:
       bucket: ${BUCKET_NAME}
+
+
+management:
+  metrics:
+    enable:
+      jvm: true
+      system: false   # 시스템 메트릭 꺼짐
+      mongo: false    # 몽고 안 씀

@@ -2,14 +2,18 @@ package com.dataury.soloJ.domain.chat.entity;
 
 import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 import lombok.*;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.index.Indexed;
+// MongoDB imports commented out
+// import org.springframework.data.annotation.Id;
+// import org.springframework.data.mongodb.core.mapping.Document;
+// import org.springframework.data.mongodb.core.mapping.Field;
+// import org.springframework.data.mongodb.core.index.Indexed;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-@Document(collection = "messages")
+// @Document(collection = "messages") // MongoDB annotation commented
+@Entity
+@Table(name = "messages")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -17,40 +21,44 @@ import java.time.LocalDateTime;
 public class Message {
 
     @Id
-    private String id;     // MongoDB 기존 ObjectId
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;     // MySQL auto increment ID
 
-    @Field("messageId")
-    @Indexed(unique = true)
+    @Column(name = "message_id", unique = true, nullable = false)
     private String messageId;     // UUID
 
-    @Field("type")
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
     private MessageType type;     // ENTER, TALK, EXIT
 
-    @Field("roomId")
+    @Column(name = "room_id")
     private Long roomId;
 
-    @Field("senderId")
+    @Column(name = "sender_id")
     private Long senderId;
 
-    @Field("senderName")
+    @Column(name = "sender_name")
     private String senderName;
 
-    @Field("content")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Field("image")
+    @Column(name = "image")
     private String image;         // 이모지 (null 가능)
 
-    @Field("sendAt")
+    @Column(name = "send_at")
     private LocalDateTime sendAt;
 
+    @Column(name = "is_read")
     private Boolean isRead;
+
+    @Column(name = "chat_room_id")
     private String chatRoomId;
 
-    @Field("createdAt")
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Field("updatedAt")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
 }

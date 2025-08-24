@@ -3,9 +3,11 @@ package com.dataury.soloJ.domain.chat.service;
 
 import com.dataury.soloJ.domain.chat.entity.Message;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
-import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository;
+// import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository; // MongoDB 주석처리
+import com.dataury.soloJ.domain.chat.repository.MessageRepository; // MySQL repository 추가
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AllArgsConstructor;
@@ -35,14 +37,16 @@ public class MessageQueryService {
     }
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final MongoMessageRepository mongoMessageRepository;
+    // private final MongoMessageRepository mongoMessageRepository; // MongoDB 주석처리
+    private final MessageRepository messageRepository; // MySQL repository 추가
     private final JoinChatRepository joinChatRepository;
     // private final UserRepository userRepository; // 없애도 됨
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private static final String CHAT_ROOM_MESSAGES_KEY = "chatroom:%s:messages";
 
-    public MessagePageResponse getMessagesByChatRoom(Long chatRoomId, Long userId, LocalDateTime lastMessageTime, int size) {
+    public MessagePageResponse getMessagesByChatRoom(Long chatRoomId, LocalDateTime lastMessageTime, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
         if (!joinChatRepository.existsByUserIdAndChatRoomIdAndStatusActive(userId, chatRoomId)) {
             throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
         }
@@ -55,7 +59,7 @@ public class MessageQueryService {
         if (result.size() < size + 1) {
             int remaining = size + 1 - result.size();
 
-            // Redis에서 일부라도 얻었으면 그 중 가장 오래된 sendAt 이전으로 Mongo 조회
+            // Redis에서 일부라도 얻었으면 그 중 가장 오래된 sendAt 이전으로 MySQL 조회
             LocalDateTime searchBefore = (lastMessageTime == null)
                     ? redisMessages.stream().map(Message::getSendAt).min(LocalDateTime::compareTo).orElse(null)
                     : lastMessageTime;
@@ -63,15 +67,15 @@ public class MessageQueryService {
             if (searchBefore == null && lastMessageTime == null) {
                 // 최초 조회: 최신 메시지부터
                 Pageable pageable = PageRequest.of(0, remaining, Sort.by(Sort.Direction.DESC, "sendAt"));
-                result.addAll(mongoMessageRepository.findByRoomId(chatRoomId, pageable));
+                result.addAll(messageRepository.findByRoomIdOrderBySendAtDesc(chatRoomId, pageable));
             } else {
                 // 이전 메시지 조회
                 LocalDateTime beforeTime = searchBefore != null ? searchBefore : lastMessageTime;
                 Pageable pageable = PageRequest.of(0, remaining, Sort.by(Sort.Direction.DESC, "sendAt"));
                 Set<String> excludeIds = getRedisMessageIds(redisMessages);
                 result.addAll(
-                        mongoMessageRepository
-                                .findByRoomIdAndSendAtBefore(chatRoomId, beforeTime, pageable)
+                        messageRepository
+                                .findByRoomIdAndSendAtBeforeOrderBySendAtDesc(chatRoomId, beforeTime, pageable)
                                 .stream()
                                 .filter(m -> m.getMessageId() != null && !excludeIds.contains(m.getMessageId()))
                                 .toList()
