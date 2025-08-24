@@ -31,19 +31,6 @@ public class ChatRoomQueryService {
 
     // 관광지별 채팅방 목록
     public List<ChatRoomListItem> getChatRoomsByTouristSpot(Long contentId) {
-        return joinChatRepository.findRoomsByTouristSpotAsDto(contentId, JoinChatStatus.ACTIVE)
-                .stream()
-                .map(r -> ChatRoomListItem.builder()
-                        .chatRoomId(r.getChatRoomId())
-                        .title(r.getTitle())
-                        .description(r.getDescription())
-                        .joinDate(r.getJoinDate())
-                        .currentMembers(r.getCurrentMembers())
-                        .maxMembers(r.getMaxMembers())
-                        .isCompleted(r.getIsCompleted())
-                        .hasUnreadMessages(r.getHasUnreadMessages())
-                        .genderRestriction(r.getGenderRestriction())
-                        .build())
-                .toList();
+        return joinChatRepository.findRoomsByTouristSpotAsDto(contentId, JoinChatStatus.ACTIVE);
     }
 }

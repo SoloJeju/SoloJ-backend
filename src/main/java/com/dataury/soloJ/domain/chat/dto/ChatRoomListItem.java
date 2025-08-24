@@ -22,4 +22,5 @@ public class ChatRoomListItem {
     private final Boolean isCompleted;
     private final Boolean hasUnreadMessages; // 읽지 않은 메시지 여부
     private final Gender genderRestriction; // 채팅방 성별 제한
+    private final String touristSpotImage; // 관광지 사진
 }
