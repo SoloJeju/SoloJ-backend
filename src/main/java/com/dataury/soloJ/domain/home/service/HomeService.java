@@ -165,6 +165,7 @@ public class HomeService {
                         .description(room.getChatRoomDescription())
                         .spotContentId(room.getTouristSpot().getContentId())
                         .spotName(room.getTouristSpot().getName())
+                        .spotImage(room.getTouristSpot().getFirstImage()) // 관광지 사진 추가
                         .currentParticipants(room.getNumberOfMembers().intValue())
                         .maxParticipants(10) // 기본값 (실제로는 설정값 사용)
                         .scheduledDate(room.getJoinDate())

@@ -49,7 +49,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.numberOfMembers,  
         r.isCompleted,
         false,
-        r.genderRestriction
+        r.genderRestriction,
+        r.touristSpot.firstImage
     )
     from JoinChat jcUser
         join jcUser.chatRoom r
@@ -58,7 +59,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
               and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findMyChatRoomsAsDto(
@@ -76,7 +77,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.numberOfMembers,  
         r.isCompleted,
         false,
-        r.genderRestriction
+        r.genderRestriction,
+        r.touristSpot.firstImage
     )
     from JoinChat jcUser
       join jcUser.chatRoom r
@@ -85,7 +87,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
             and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
     order by MAX(jcUser.createdAt) desc
     """,
                 countQuery = """
@@ -113,7 +115,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.numberOfMembers,  
         r.isCompleted,
         false,
-        r.genderRestriction
+        r.genderRestriction,
+        r.touristSpot.firstImage
     )
     from ChatRoom r
         left join JoinChat jcActive
@@ -121,7 +124,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
               and jcActive.status = :active
     where r.touristSpot.contentId = :contentId
       and r.isCompleted = false
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findRoomsByTouristSpotAsDto(@Param("contentId") Long contentId,
