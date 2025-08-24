@@ -47,6 +47,9 @@ public class User extends BaseEntity{
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private UserProfile userProfile;
 
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
@@ -72,6 +75,10 @@ public class User extends BaseEntity{
 
     public boolean isActive() {
         return this.active;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
 }

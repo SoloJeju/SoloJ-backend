@@ -6,6 +6,7 @@ import com.dataury.soloJ.domain.community.entity.Comment;
 import com.dataury.soloJ.domain.community.entity.Post;
 import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -23,6 +24,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentResponseDto.CommentCreateResponseDto createComment(
@@ -45,6 +47,15 @@ public class CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+
+        // 게시글 작성자가 댓글 작성자와 다른 경우에만 알림 전송
+        if (!post.getUser().getId().equals(userId)) {
+            notificationService.createCommentNotification(
+                    post.getUser(),
+                    user.getName(),
+                    postId
+            );
+        }
 
         return CommentResponseDto.CommentCreateResponseDto.builder()
                 .commentId(savedComment.getId())
