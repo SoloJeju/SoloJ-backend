@@ -57,7 +57,10 @@ dependencies {
 	implementation 'org.webjars:sockjs-client:1.5.1'
 	implementation 'org.webjars:stomp-websocket:2.3.4'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	
+	// Flyway for MySQL migrations
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
 
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
@@ -81,4 +84,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+configurations.all {
+	exclude group: "commons-logging", module: "commons-logging"
 }
