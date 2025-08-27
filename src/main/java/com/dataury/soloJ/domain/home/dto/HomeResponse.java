@@ -55,6 +55,7 @@ public class HomeResponse {
         private String description;
         private Long spotContentId;
         private String spotName;
+        private String spotImage;  // 관광지 사진
         private Integer currentParticipants;
         private Integer maxParticipants;
         private LocalDateTime scheduledDate;

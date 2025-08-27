@@ -8,9 +8,15 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 10000   # 10초
+      validation-timeout: 3000
+      maximum-pool-size: 10
+  main:
+    lazy-initialization: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -57,13 +63,27 @@ spring:
     key: ${SERVICE_KEY}
     app-name: 혼자옵서예
   data:
-    mongodb:
-      uri: mongodb://localhost:27017/soloJ
-      auto-index-creation: true
     redis:
       host: localhost
       port: 6379
       database: 0
+      repositories:
+        enabled: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.metrics.JvmMetricsAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.metrics.LogbackMetricsAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+
+
 jwt:
   secret: ${JWT_SECRET:myVeryLongSecretKeyForJWTTokenSigningThatIsAtLeast512BitsLongForHS512Algorithm1234567890}
   access-token-expiration: 900 # 15분 (초 단위)
@@ -82,7 +102,6 @@ discord:
 google:
   application:
     credentials: "google-credential.json"
-
 
 
 cloud:
@@ -109,5 +128,4 @@ management:
       system: false   # 시스템 메트릭 꺼짐
       mongo: false    # 몽고 안 씀
       process: false
-
 
