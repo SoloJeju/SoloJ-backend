@@ -50,7 +50,7 @@ public class AdminReportManagementController {
             @RequestParam(defaultValue = "all") String status,
             @Parameter(description = "신고 사유 필터", example = "spam")
             @RequestParam(defaultValue = "all") String reason,
-            @Parameter(description = "콘텐츠 유형 필터", example = "post")
+            @Parameter(description = "콘텐츠 유형 필터 ('all', 'post', 'comment', 'user')", example = "post")
             @RequestParam(defaultValue = "all") String type,
             @Parameter(description = "검색어", example = "사용자명")
             @RequestParam(defaultValue = "") String search) {

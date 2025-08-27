@@ -10,6 +10,7 @@ import com.dataury.soloJ.domain.inquiry.repository.InquiryAttachmentRepository;
 import com.dataury.soloJ.domain.inquiry.repository.InquiryRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,14 +36,17 @@ public class InquiryService {
     // ===== 사용자용 메서드 =====
 
     @Transactional
-    public InquiryResponseDto createInquiry(User user, InquiryRequestDto requestDto) {
+    public InquiryResponseDto createInquiry(InquiryRequestDto requestDto) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         Inquiry inquiry = Inquiry.builder()
                 .user(user)
                 .title(requestDto.getTitle())
                 .content(requestDto.getContent())
                 .category(requestDto.getCategory())
-                .userEmail(requestDto.getUserEmail())
-                .userPhone(requestDto.getUserPhone())
+                .userEmail(user.getEmail())
                 .build();
 
         inquiry = inquiryRepository.save(inquiry);
@@ -52,11 +56,14 @@ public class InquiryService {
             saveAttachments(inquiry, requestDto.getAttachmentUrls());
         }
 
-        log.info("문의 등록 완료: inquiryId={}, userId={}", inquiry.getId(), user.getId());
+        log.info("문의 등록 완료: inquiryId={}, userId={}", inquiry.getId(), userId);
         return convertToResponseDto(inquiry);
     }
 
-    public InquiryListResponseDto getInquiriesForUser(User user, Pageable pageable, InquiryStatus status) {
+    public InquiryListResponseDto getInquiriesForUser(Pageable pageable, InquiryStatus status) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Page<Inquiry> inquiryPage;
         
         if (status != null) {
@@ -84,7 +91,10 @@ public class InquiryService {
                 .build();
     }
 
-    public InquiryResponseDto getInquiryDetailForUser(User user, Long inquiryId) {
+    public InquiryResponseDto getInquiryDetailForUser(Long inquiryId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Inquiry inquiry = inquiryRepository.findByIdAndUser(inquiryId, user)
                 .orElseThrow(() -> new RuntimeException("문의를 찾을 수 없습니다."));
         
@@ -92,7 +102,11 @@ public class InquiryService {
     }
 
     @Transactional
-    public InquiryResponseDto updateInquiry(User user, Long inquiryId, InquiryRequestDto requestDto) {
+    public InquiryResponseDto updateInquiry(Long inquiryId, InquiryRequestDto requestDto) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         Inquiry inquiry = inquiryRepository.findByIdAndUser(inquiryId, user)
                 .orElseThrow(() -> new RuntimeException("문의를 찾을 수 없습니다."));
 
@@ -103,8 +117,7 @@ public class InquiryService {
         inquiry.setTitle(requestDto.getTitle());
         inquiry.setContent(requestDto.getContent());
         inquiry.setCategory(requestDto.getCategory());
-        inquiry.setUserEmail(requestDto.getUserEmail());
-        inquiry.setUserPhone(requestDto.getUserPhone());
+        inquiry.setUserEmail(user.getEmail());
 
         // 기존 첨부파일 삭제 후 새로 등록
         attachmentRepository.deleteByInquiryId(inquiryId);
@@ -112,12 +125,16 @@ public class InquiryService {
             saveAttachments(inquiry, requestDto.getAttachmentUrls());
         }
 
-        log.info("문의 수정 완료: inquiryId={}, userId={}", inquiryId, user.getId());
+        log.info("문의 수정 완료: inquiryId={}, userId={}", inquiryId, userId);
         return convertToResponseDto(inquiry);
     }
 
     @Transactional
-    public void deleteInquiry(User user, Long inquiryId) {
+    public void deleteInquiry(Long inquiryId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         Inquiry inquiry = inquiryRepository.findByIdAndUser(inquiryId, user)
                 .orElseThrow(() -> new RuntimeException("문의를 찾을 수 없습니다."));
 
@@ -126,7 +143,7 @@ public class InquiryService {
         }
 
         inquiryRepository.delete(inquiry);
-        log.info("문의 삭제 완료: inquiryId={}, userId={}", inquiryId, user.getId());
+        log.info("문의 삭제 완료: inquiryId={}, userId={}", inquiryId, userId);
     }
 
     // ===== 관리자용 메서드 =====
@@ -165,7 +182,11 @@ public class InquiryService {
     }
 
     @Transactional
-    public void replyToInquiry(Long inquiryId, User admin, InquiryReplyRequestDto requestDto) {
+    public void replyToInquiry(Long inquiryId, InquiryReplyRequestDto requestDto) {
+        Long adminId = SecurityUtils.getCurrentUserId();
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다."));
+        
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new RuntimeException("문의를 찾을 수 없습니다."));
 
@@ -175,7 +196,7 @@ public class InquiryService {
             inquiry.close();
         }
 
-        log.info("문의 답변 완료: inquiryId={}, adminId={}", inquiryId, admin.getId());
+        log.info("문의 답변 완료: inquiryId={}, adminId={}", inquiryId, adminId);
     }
 
     @Transactional
@@ -268,7 +289,10 @@ public class InquiryService {
                 .build();
     }
 
-    public Map<String, Object> getUserInquiryStats(User user) {
+    public Map<String, Object> getUserInquiryStats() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         long totalInquiries = inquiryRepository.countByUser(user);
         long pendingInquiries = inquiryRepository.countByUserAndStatus(user, InquiryStatus.PENDING);
         long repliedInquiries = inquiryRepository.countByUserAndStatus(user, InquiryStatus.REPLIED);
@@ -352,7 +376,6 @@ public class InquiryService {
                 .priority(inquiry.getPriority())
                 .priorityName(inquiry.getPriority().getDescription())
                 .userEmail(inquiry.getUserEmail())
-                .userPhone(inquiry.getUserPhone())
                 .userId(inquiry.getUser().getId())
                 .userName(inquiry.getUser().getName())
                 .assignedAdminId(inquiry.getAssignedAdmin() != null ? inquiry.getAssignedAdmin().getId() : null)

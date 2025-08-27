@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "review_tags")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -14,7 +15,7 @@ public class ReviewTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "review_tag_id")
+    @Column(name = "id")
     private Long id;
 
     @Enumerated(EnumType.STRING)

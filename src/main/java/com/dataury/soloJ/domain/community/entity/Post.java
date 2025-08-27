@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "posts")
 @Getter
 @Builder
 @NoArgsConstructor
@@ -17,7 +18,7 @@ import java.util.List;
 public class Post extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
     @Column(nullable = false)
@@ -44,6 +45,14 @@ public class Post extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImage> images = new ArrayList<>();
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isVisible = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     public void updateImages(List<PostImage> newImages) {
         if (this.images == null) this.images = new ArrayList<>();
         this.images.clear();
@@ -67,5 +76,24 @@ public class Post extends BaseEntity {
     public void updateThumbnail(String thumbnailUrl, String thumbnailName) {
         this.thumbnailUrl = thumbnailUrl;
         this.thumbnailName = thumbnailName;
+    }
+
+    // 관리자 조치
+    public void hide() {
+        this.isVisible = false;
+    }
+
+    public void show() {
+        this.isVisible = true;
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.isVisible = false;
+    }
+
+    public void restore() {
+        this.isDeleted = false;
+        this.isVisible = true;
     }
 }

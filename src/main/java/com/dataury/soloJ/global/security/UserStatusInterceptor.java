@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import static com.dataury.soloJ.global.security.SecurityUtils.getCurrentUserId;
+
 @Component
 @RequiredArgsConstructor
 public class UserStatusInterceptor implements HandlerInterceptor {

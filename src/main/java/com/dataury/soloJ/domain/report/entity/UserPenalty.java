@@ -8,6 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "user_penalties")
 @Getter
 @Setter
 @NoArgsConstructor

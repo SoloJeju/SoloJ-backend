@@ -8,10 +8,13 @@ import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
 import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.domain.user.entity.User;
+import com.dataury.soloJ.domain.user.entity.UserProfile;
+import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
+import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +27,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final NotificationService notificationService;
+    private final UserPenaltyChecker userPenaltyChecker;
 
     @Transactional
     public CommentResponseDto.CommentCreateResponseDto createComment(
@@ -32,6 +37,9 @@ public class CommentService {
             CommentRequestDto.CreateCommentDto request) {
         
         Long userId = SecurityUtils.getCurrentUserId();
+        
+        // 사용자 제재 상태 확인
+        userPenaltyChecker.checkCommentPermission(userId);
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
@@ -78,5 +86,52 @@ public class CommentService {
         }
 
         comment.delete();
+    }
+
+    // ===== 관리자용 메서드 =====
+
+    public CommentResponseDto.AdminCommentDetailDto getCommentDetailForAdmin(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
+
+        // 댓글 작성자 프로필 조회
+        UserProfile commentAuthorProfile = userProfileRepository.findByUser(comment.getUser())
+                .orElse(null);
+
+        // 게시글 작성자 프로필 조회
+        UserProfile postAuthorProfile = userProfileRepository.findByUser(comment.getPost().getUser())
+                .orElse(null);
+
+        // 댓글 상태 결정
+        String commentStatus = "visible";
+        if (comment.isDeleted()) {
+            commentStatus = "deleted";
+        } else if (!comment.isVisible()) {
+            commentStatus = "hidden";
+        }
+
+        // 게시글 메타 정보 구성 (최소한의 맥락만)
+        CommentResponseDto.PostMetaDto postMeta = CommentResponseDto.PostMetaDto.builder()
+                .postId(comment.getPost().getId())
+                .title(comment.getPost().getTitle())
+                .authorNickname(postAuthorProfile != null ? postAuthorProfile.getNickName() : "익명")
+                .authorId(comment.getPost().getUser().getId())
+                .authorProfileImage(postAuthorProfile != null ? postAuthorProfile.getImageUrl() : null)
+                .createdAt(comment.getPost().getCreatedAt())
+                .build();
+
+        return CommentResponseDto.AdminCommentDetailDto.builder()
+                .commentId(comment.getId())
+                .content(comment.getContent())
+                .originalContent(comment.getOriginalContent())
+                .authorNickname(commentAuthorProfile != null ? commentAuthorProfile.getNickName() : "익명")
+                .authorId(comment.getUser().getId())
+                .authorProfileImage(commentAuthorProfile != null ? commentAuthorProfile.getImageUrl() : null)
+                .isVisible(comment.isVisible())
+                .isDeleted(comment.isDeleted())
+                .status(commentStatus)
+                .createdAt(comment.getCreatedAt())
+                .postMeta(postMeta)
+                .build();
     }
 }

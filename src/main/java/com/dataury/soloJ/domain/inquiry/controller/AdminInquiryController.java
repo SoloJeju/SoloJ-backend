@@ -6,8 +6,6 @@ import com.dataury.soloJ.domain.inquiry.entity.status.InquiryPriority;
 import com.dataury.soloJ.domain.inquiry.entity.status.InquiryStatus;
 import com.dataury.soloJ.domain.inquiry.service.InquiryService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.auth.AuthUser;
-import com.dataury.soloJ.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,11 +60,10 @@ public class AdminInquiryController {
     @PutMapping("/{id}/reply")
     @Operation(summary = "문의 답변", description = "문의에 답변을 작성합니다.")
     public ApiResponse<String> replyToInquiry(
-            @AuthUser User admin,
             @Parameter(description = "문의 ID", required = true)
             @PathVariable Long id,
             @Valid @RequestBody InquiryReplyRequestDto requestDto) {
-        inquiryService.replyToInquiry(id, admin, requestDto);
+        inquiryService.replyToInquiry(id, requestDto);
         return ApiResponse.onSuccess("답변이 등록되었습니다.");
     }
 

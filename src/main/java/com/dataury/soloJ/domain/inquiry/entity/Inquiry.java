@@ -51,9 +51,6 @@ public class Inquiry extends BaseEntity {
     @Column(length = 50)
     private String userEmail;
 
-    @Column(length = 20)
-    private String userPhone;
-
     // 관리자 관련 필드
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_admin_id")

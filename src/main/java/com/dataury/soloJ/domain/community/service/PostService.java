@@ -16,6 +16,7 @@ import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
+import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,10 +37,15 @@ public class PostService {
     private final ScrapRepository scrapRepository;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final UserPenaltyChecker userPenaltyChecker;
 
     @Transactional
     public PostResponseDto.PostCreateResponseDto createPost(PostRequestDto.CreatePostDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
+        
+        // 사용자 제재 상태 확인
+        userPenaltyChecker.checkCommunityWritePermission(userId);
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
@@ -87,6 +93,9 @@ public class PostService {
     @Transactional
     public PostResponseDto.PostCreateResponseDto updatePost(Long postId, PostRequestDto.UpdatePostDto request) {
         Long userId = SecurityUtils.getCurrentUserId();
+        
+        // 사용자 제재 상태 확인
+        userPenaltyChecker.checkCommunityWritePermission(userId);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
@@ -158,8 +167,8 @@ public class PostService {
 
     public Page<PostResponseDto.PostListItemDto> getPostList(PostCategory category, Pageable pageable) {
         Page<Post> posts = (category != null) 
-                ? postRepository.findByPostCategory(category, pageable)
-                : postRepository.findAll(pageable);
+                ? postRepository.findByPostCategoryAndIsVisibleTrueAndIsDeletedFalse(category, pageable)
+                : postRepository.findByIsVisibleTrueAndIsDeletedFalse(pageable);
 
         return posts.map(this::convertToListItemDto);
     }
@@ -236,13 +245,86 @@ public class PostService {
     }
 
     public Page<PostResponseDto.PostListItemDto> getMyPosts(Long userId, Pageable pageable) {
-        Page<Post> posts = postRepository.findByUserId(userId, pageable);
+        Page<Post> posts = postRepository.findByUserIdAndIsVisibleTrueAndIsDeletedFalse(userId, pageable);
         return posts.map(this::convertToListItemDto);
     }
 
     public Page<PostResponseDto.PostListItemDto> getPostsWithMyComments(Long userId, Pageable pageable) {
         Page<Post> posts = postRepository.findCommentedPostsOrderByLatestMyComment(userId, pageable);
         return posts.map(this::convertToListItemDto);
+    }
+
+    // ===== 관리자용 메서드 =====
+    
+    public PostResponseDto.AdminPostDetailDto getPostDetailForAdmin(Long postId) {
+        Post post = postRepository.findByIdWithUserForAdmin(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
+
+        // 모든 댓글 조회 (숨김/삭제 포함)
+        List<PostResponseDto.AdminCommentDto> comments = commentRepository.findByPostIdWithUserForAdmin(postId)
+                .stream()
+                .map(comment -> {
+                    UserProfile profile = userProfileRepository.findByUser(comment.getUser())
+                            .orElse(null);
+
+                    String commentStatus = "visible";
+                    if (comment.isDeleted()) {
+                        commentStatus = "deleted";
+                    } else if (!comment.isVisible()) {
+                        commentStatus = "hidden";
+                    }
+                    
+                    return PostResponseDto.AdminCommentDto.builder()
+                            .commentId(comment.getId())
+                            .content(comment.getContent())
+                            .originalContent(comment.getOriginalContent())
+                            .authorNickname(profile != null ? profile.getNickName() : "익명")
+                            .authorId(comment.getUser().getId())
+                            .authorProfileImage(profile != null ? profile.getImageUrl() : null)
+                            .isVisible(comment.isVisible())
+                            .isDeleted(comment.isDeleted())
+                            .status(commentStatus)
+                            .createdAt(comment.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        UserProfile authorProfile = userProfileRepository.findByUser(post.getUser())
+                .orElse(null);
+
+        // 게시글 상태 결정
+        String postStatus = "visible";
+        if (post.isDeleted()) {
+            postStatus = "deleted";
+        } else if (!post.isVisible()) {
+            postStatus = "hidden";
+        }
+
+        return PostResponseDto.AdminPostDetailDto.builder()
+                .postId(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .postCategory(post.getPostCategory())
+                .authorNickname(authorProfile != null ? authorProfile.getNickName() : "익명")
+                .authorId(post.getUser().getId())
+                .authorProfileImage(authorProfile != null ? authorProfile.getImageUrl() : null)
+                .commentCount(commentRepository.countByPostIdForAdmin(postId))
+                .scrapCount(scrapRepository.countByPostId(postId))
+                .isVisible(post.isVisible())
+                .isDeleted(post.isDeleted())
+                .status(postStatus)
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .thumbnailUrl(post.getThumbnailUrl())
+                .thumbnailName(post.getThumbnailName())
+                .images(post.getImages() != null ? post.getImages().stream()
+                        .map(img -> PostResponseDto.ImageDto.builder()
+                                .imageUrl(img.getImageUrl())
+                                .imageName(img.getImageName())
+                                .build())
+                        .collect(Collectors.toList()) : new ArrayList<>())
+                .comments(comments)
+                .build();
     }
 
     private PostResponseDto.PostListItemDto convertToListItemDto(Post post) {

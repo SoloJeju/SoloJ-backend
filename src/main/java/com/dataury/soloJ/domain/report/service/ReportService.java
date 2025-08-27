@@ -4,7 +4,6 @@ import com.dataury.soloJ.domain.community.entity.Comment;
 import com.dataury.soloJ.domain.community.entity.Post;
 import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
-import com.dataury.soloJ.domain.notification.entity.Notification;
 import com.dataury.soloJ.domain.notification.repository.NotificationRepository;
 import com.dataury.soloJ.domain.report.dto.*;
 import com.dataury.soloJ.domain.report.entity.Report;
@@ -16,6 +15,7 @@ import com.dataury.soloJ.domain.report.repository.UserPenaltyHistoryRepository;
 import com.dataury.soloJ.domain.report.repository.UserPenaltyRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,8 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.dataury.soloJ.global.security.SecurityUtils.getCurrentUserId;
 
 @Slf4j
 @Service
@@ -63,14 +68,17 @@ public class ReportService {
     );
 
     @Transactional
-    public ReportResponseDto createReport(User reporter, ReportRequestDto dto) {
+    public ReportResponseDto createReport(ReportRequestDto dto) {
+        Long reporterId = getCurrentUserId();
+        User reporter = userRepository.findById(reporterId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         // 신고 사유 유효성 검사
         if (!REPORT_REASONS.containsKey(dto.getReason())) {
             throw new RuntimeException("유효하지 않은 신고 사유입니다.");
         }
 
         // 중복 신고 확인
-        if (checkDuplicateReport(reporter, dto.getTargetUserId(), dto.getTargetPostId(), dto.getTargetCommentId())) {
+        if (checkDuplicateReport(dto.getTargetUserId(), dto.getTargetPostId(), dto.getTargetCommentId())) {
             throw new RuntimeException("이미 신고한 대상입니다.");
         }
 
@@ -118,7 +126,7 @@ public class ReportService {
                 .build();
 
         report = reportRepository.save(report);
-        log.info("신고 접수 완료: reportId={}, reporter={}, target={}", report.getId(), reporter.getId(), targetId);
+        log.info("신고 접수 완료: reportId={}, reporter={}, target={}", report.getId(), reporterId, targetId);
 
         // 누적 제재 처리
         processUserPenalty(targetUser);
@@ -203,7 +211,10 @@ public class ReportService {
                 .collect(Collectors.toList());
     }
 
-    public ReportHistoryResponseDto getMyReports(User user, Pageable pageable, String status) {
+    public ReportHistoryResponseDto getMyReports(Pageable pageable, String status) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Page<Report> reportPage;
         
         if (status != null && !status.isEmpty()) {
@@ -232,18 +243,26 @@ public class ReportService {
                 .build();
     }
 
-    public ReportDetailDto getReportDetail(User user, Long reportId) {
+    public ReportDetailDto getReportDetail(Long reportId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         Report report = reportRepository.findById(reportId)
-                .filter(r -> r.getReporter().getId().equals(user.getId()))
+                .filter(r -> r.getReporter().getId().equals(userId))
                 .orElseThrow(() -> new RuntimeException("신고를 찾을 수 없습니다."));
         
         return convertToDetailDto(report);
     }
 
     @Transactional
-    public void cancelReport(User user, Long reportId) {
+    public void cancelReport(Long reportId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         Report report = reportRepository.findById(reportId)
-                .filter(r -> r.getReporter().getId().equals(user.getId()))
+                .filter(r -> r.getReporter().getId().equals(userId))
                 .orElseThrow(() -> new RuntimeException("신고를 찾을 수 없습니다."));
         
         if (report.getStatus() != ReportStatus.PENDING) {
@@ -251,10 +270,13 @@ public class ReportService {
         }
         
         reportRepository.delete(report);
-        log.info("신고 취소: reportId={}, user={}", reportId, user.getId());
+        log.info("신고 취소: reportId={}, user={}", reportId, userId);
     }
 
-    public UserReportStatsDto getUserReportStatistics(User user) {
+    public UserReportStatsDto getUserReportStatistics() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         long totalReports = reportRepository.countByReporter(user);
         long pendingReports = reportRepository.countByReporterAndStatus(user, ReportStatus.PENDING);
         long processedReports = totalReports - pendingReports;
@@ -287,7 +309,10 @@ public class ReportService {
     }
 
     @Transactional
-    public BulkReportResponseDto bulkReport(User reporter, BulkReportRequestDto dto) {
+    public BulkReportResponseDto bulkReport(BulkReportRequestDto dto) {
+        Long reporterId = getCurrentUserId();
+        User reporter = userRepository.findById(reporterId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         List<BulkReportResponseDto.ReportResult> results = new ArrayList<>();
         int successCount = 0;
         int failureCount = 0;
@@ -310,7 +335,7 @@ public class ReportService {
                 }
                 
                 // 중복 체크
-                if (checkDuplicateReport(reporter, reportDto.getTargetUserId(), reportDto.getTargetPostId(), reportDto.getTargetCommentId())) {
+                if (checkDuplicateReport(reportDto.getTargetUserId(), reportDto.getTargetPostId(), reportDto.getTargetCommentId())) {
                     duplicateCount++;
                     results.add(BulkReportResponseDto.ReportResult.builder()
                             .targetType(target.getType())
@@ -321,7 +346,7 @@ public class ReportService {
                     continue;
                 }
                 
-                ReportResponseDto reportResponse = createReport(reporter, reportDto);
+                ReportResponseDto reportResponse = createReport(reportDto);
                 successCount++;
                 results.add(BulkReportResponseDto.ReportResult.builder()
                         .targetType(target.getType())
@@ -350,7 +375,11 @@ public class ReportService {
                 .build();
     }
 
-    public boolean checkDuplicateReport(User reporter, Long targetUserId, Long targetPostId, Long targetCommentId) {
+    public boolean checkDuplicateReport(Long targetUserId, Long targetPostId, Long targetCommentId) {
+        Long reporterId = getCurrentUserId();
+        User reporter = userRepository.findById(reporterId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
         
@@ -368,14 +397,16 @@ public class ReportService {
         return false;
     }
 
-    public List<ReportNotificationDto> getReportNotifications(User user, boolean unreadOnly) {
+    public List<ReportNotificationDto> getReportNotifications(boolean unreadOnly) {
+        Long userId = SecurityUtils.getCurrentUserId();
         // TODO: 알림 시스템과 연동하여 구현
         return new ArrayList<>();
     }
 
-    public void markNotificationAsRead(User user, Long notificationId) {
+    public void markNotificationAsRead(Long notificationId) {
+        Long userId = SecurityUtils.getCurrentUserId();
         // TODO: 알림 시스템과 연동하여 구현
-        log.info("알림 읽음 처리: notificationId={}, user={}", notificationId, user.getId());
+        log.info("알림 읽음 처리: notificationId={}, user={}", notificationId, userId);
     }
 
     // ===== 헬퍼 메서드들 =====

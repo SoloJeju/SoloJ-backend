@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "spot_cart")
+@Table(name = "spot_carts")
 @Getter
 @Builder
 @NoArgsConstructor
@@ -15,7 +15,6 @@ public class SpotCart extends BaseEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_id")
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)

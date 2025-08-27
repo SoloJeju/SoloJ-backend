@@ -27,7 +27,6 @@ public class InquiryResponseDto {
     private InquiryPriority priority;
     private String priorityName;
     private String userEmail;
-    private String userPhone;
     
     // 사용자 정보
     private Long userId;

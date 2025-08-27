@@ -11,15 +11,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DashboardStatsDto {
     // 신고 관련 통계
-    private long totalReports;
-    private long pendingReports;
-    private long resolvedReports;
-    private long bannedUsers;
-    private long restrictedUsers;
-    private long todayReports;
+    private long totalReports;          // 총 신고 건수
+    private long pendingReports;        // 대기 중인 신고
+    private long resolvedReports;       // 처리 완료
+    private long bannedUsers;           // 정지된 사용자
+    private long restrictedUsers;       // 제한된 사용자
     
     // 문의 관련 통계
-    private long totalInquiries;
-    private long pendingInquiries;
-    private long todayInquiries;
+    private long totalInquiries;        // 총 문의 건수
+    private long pendingInquiries;      // 대기 중인 문의
+    private long repliedInquiries;      // 답변 완료
 }

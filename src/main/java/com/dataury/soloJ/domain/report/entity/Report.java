@@ -11,6 +11,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "reports")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,9 +49,17 @@ public class Report extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String detail; // 상세 사유
 
+    @Column(length = 500)
+    private String evidence; // 신고 증거자료
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReportStatus status; // PENDING, REVIEWED, ACTION_TAKEN
+
+    @Column(columnDefinition = "TEXT")
+    private String adminNote; // 관리자 메모
+
+    private LocalDateTime processedAt; // 처리 완료 시간
 
     private LocalDateTime createdAt;
 

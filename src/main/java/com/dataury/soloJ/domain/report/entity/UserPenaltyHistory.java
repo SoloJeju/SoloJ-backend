@@ -22,6 +22,10 @@ public class UserPenaltyHistory extends BaseEntity {
     private Long userId;
 
     private String action; // SOFT_BLOCK, WRITE_RESTRICT, SUSPEND_PENDING, SUSPEND_CONFIRMED
+    
+    private Long adminId; // 처리한 관리자 ID
+    
+    private String reason; // 처리 사유
 
 
 }

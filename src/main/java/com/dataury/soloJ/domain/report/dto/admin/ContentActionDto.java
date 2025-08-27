@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class ContentActionDto {
     private String actionType;
+    private String contentType; // "post" or "comment"
     private String reason;
     private Long adminId;
 }

@@ -28,11 +28,5 @@ public class InquiryRequestDto {
     @NotNull(message = "카테고리는 필수입니다.")
     private InquiryCategory category;
 
-    @Size(max = 100, message = "이메일은 100자를 초과할 수 없습니다.")
-    private String userEmail;
-
-    @Size(max = 20, message = "전화번호는 20자를 초과할 수 없습니다.")
-    private String userPhone;
-
     private List<String> attachmentUrls;
 }

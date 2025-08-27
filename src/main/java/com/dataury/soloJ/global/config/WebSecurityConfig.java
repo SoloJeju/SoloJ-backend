@@ -52,10 +52,11 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                 .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/login", "/oauth2/**").permitAll()
                 .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                 .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()
+                .requestMatchers("/api/inquiries/**", "/api/reports/**").authenticated()
+                .requestMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
         );
 

@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(
-        name = "user_profile",
+        name = "user_profiles",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_user_nick_name", columnNames = "nickName")
         }
@@ -24,7 +24,7 @@ public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_profile_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
 //    @Column(unique = true, nullable = false)

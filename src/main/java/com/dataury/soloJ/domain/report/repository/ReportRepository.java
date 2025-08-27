@@ -62,4 +62,40 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     long countByReporterAndReason(User reporter, String reason);
     
     Optional<Report> findByIdAndReporter(Long id, User reporter);
+    
+    // 신고된 콘텐츠 조회를 위한 메서드들
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.targetPost.id = :postId")
+    long countByTargetPost(@Param("postId") Long postId);
+    
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.targetComment.id = :commentId") 
+    long countByTargetComment(@Param("commentId") Long commentId);
+    
+    // 신고된 사용자 상세 조회를 위한 메서드들
+    List<Report> findByTargetUserIdOrderByCreatedAtDesc(Long targetUserId);
+    
+    long countByTargetUserIdAndTargetPostIsNotNull(Long targetUserId);
+    
+    long countByTargetUserIdAndTargetCommentIsNotNull(Long targetUserId);
+    
+    // 신고 목록 조회를 위한 복잡한 쿼리 메서드 추가
+    @Query("SELECT r FROM Report r " +
+           "WHERE (:status IS NULL OR r.status = :status) " +
+           "AND (:reason IS NULL OR r.reason = :reason) " +
+           "AND (:type IS NULL OR " +
+           "     (:type = 'post' AND r.targetPost IS NOT NULL) OR " +
+           "     (:type = 'comment' AND r.targetComment IS NOT NULL) OR " +
+           "     (:type = 'user' AND r.targetUser IS NOT NULL AND r.targetPost IS NULL AND r.targetComment IS NULL)) " +
+           "AND (:search IS NULL OR :search = '' OR " +
+           "     LOWER(r.reporter.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     LOWER(r.targetUser.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     (r.targetPost IS NOT NULL AND LOWER(r.targetPost.title) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
+           "     (r.targetComment IS NOT NULL AND LOWER(r.targetComment.content) LIKE LOWER(CONCAT('%', :search, '%'))))")
+    Page<Report> findReportsWithFilters(@Param("status") ReportStatus status, 
+                                       @Param("reason") String reason,
+                                       @Param("type") String type,
+                                       @Param("search") String search,
+                                       Pageable pageable);
+                                       
+    // 사용자에 대한 신고 조회
+    long countByTargetUser(User targetUser);
 }

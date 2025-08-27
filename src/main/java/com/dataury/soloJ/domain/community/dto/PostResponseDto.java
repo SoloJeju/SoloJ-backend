@@ -71,4 +71,49 @@ public class PostResponseDto {
         private Long postId;
         private String message;
     }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AdminPostDetailDto {
+        private Long postId;
+        private String title;
+        private String content;
+        private PostCategory postCategory;
+        private String authorNickname;
+        private Long authorId;
+        private String authorProfileImage;
+        private Integer commentCount;
+        private Integer scrapCount;
+        private Boolean isVisible;
+        private Boolean isDeleted;
+        private String status; // "visible", "hidden", "deleted"
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createdAt;
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime updatedAt;
+        private String thumbnailUrl;
+        private String thumbnailName;
+        private List<ImageDto> images;
+        private List<AdminCommentDto> comments;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AdminCommentDto {
+        private Long commentId;
+        private String content;
+        private String originalContent; // 삭제된 댓글의 원본 내용
+        private String authorNickname;
+        private Long authorId;
+        private String authorProfileImage;
+        private Boolean isVisible;
+        private Boolean isDeleted;
+        private String status; // "visible", "hidden", "deleted"
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createdAt;
+    }
 }

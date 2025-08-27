@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "join_chats")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -16,7 +17,7 @@ public class JoinChat extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "join_chat_id", unique = true)
+    @Column(name = "id", unique = true)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
