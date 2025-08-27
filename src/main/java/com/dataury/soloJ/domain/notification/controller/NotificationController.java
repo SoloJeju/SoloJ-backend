@@ -62,4 +62,26 @@ public class NotificationController {
         notificationService.deleteFcmToken();
         return ApiResponse.of(SuccessStatus._OK, null);
     }
+    
+    @PostMapping("/test-fcm")
+    @Operation(summary = "FCM 테스트", description = "현재 사용자에게 테스트 FCM 알림을 전송합니다")
+    public ApiResponse<String> testFcm() {
+        try {
+            notificationService.sendTestNotification();
+            return ApiResponse.onSuccess("테스트 FCM 알림이 전송되었습니다.");
+        } catch (Exception e) {
+            return ApiResponse.onSuccess("FCM 전송 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/reinit-firebase")
+    @Operation(summary = "Firebase 재초기화", description = "Firebase를 강제로 재초기화합니다 (디버깅용)")
+    public ApiResponse<String> reinitializeFirebase() {
+        try {
+            notificationService.reinitializeFirebase();
+            return ApiResponse.onSuccess("Firebase가 재초기화되었습니다.");
+        } catch (Exception e) {
+            return ApiResponse.onSuccess("Firebase 재초기화 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
 }
