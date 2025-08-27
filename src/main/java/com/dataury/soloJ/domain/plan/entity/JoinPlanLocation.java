@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "join_plan_locations")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class JoinPlanLocation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "plan_location_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
     @Column

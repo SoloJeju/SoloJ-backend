@@ -31,6 +31,13 @@ public enum ErrorStatus implements BaseErrorCode {
     PASSWORD_VALIDATION_FAILED(HttpStatus.BAD_REQUEST,"MEMBER4009","비밀번호는 영어 대/소문자, 숫자 중 2종류 이상을 조합해야 하며 8글자에서 12글자 사이의 값이여야 합니다."),
     EMAIL_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "MEMBER4010","올바르지 않은 이메일 형식입니다."),
 
+    // 사용자 제재 관련 에러
+    USER_SOFT_BLOCKED(HttpStatus.FORBIDDEN, "PENALTY4001", "일시 차단 상태로 모든 활동이 제한됩니다."),
+    USER_WRITING_RESTRICTED(HttpStatus.FORBIDDEN, "PENALTY4002", "글 작성이 제한되었습니다."),
+    USER_PERMANENTLY_BANNED(HttpStatus.FORBIDDEN, "PENALTY4003", "영구 차단된 계정입니다."),
+    USER_TRAVEL_RESTRICTED(HttpStatus.FORBIDDEN, "PENALTY4004", "일시 차단 상태로 동행방 이용이 제한됩니다."),
+    USER_MESSAGE_RESTRICTED(HttpStatus.FORBIDDEN, "PENALTY4005", "일시 차단 상태로 메시지 전송이 제한됩니다."),
+
     JWT_SIGNATURE_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "JWT 서명이 올바르지 않습니다."),
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH002", "JWT 토큰이 만료되었습니다."),
     JWT_MALFORMED(HttpStatus.UNAUTHORIZED, "AUTH003", "JWT 토큰이 올바르지 않은 형식입니다."),
@@ -68,7 +75,15 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // Review 관련 에러
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW4001", "존재하지 않는 리뷰입니다."),
-    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REVIEW4002", "해당 리뷰에 대한 권한이 없습니다.");
+    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REVIEW4002", "해당 리뷰에 대한 권한이 없습니다."),
+
+    // Report 관련 에러
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "존재하지 않는 신고입니다."),
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST4001", "존재하지 않는 게시글입니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT4001", "존재하지 않는 댓글입니다."),
+    UNKNOWN_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "CONTENT4001", "알 수 없는 콘텐츠 타입입니다."),
+    ADMIN_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN4001", "관리자를 찾을 수 없습니다."),
+    ADMIN_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "ADMIN4002", "관리자 권한이 필요합니다.");
 
 
 

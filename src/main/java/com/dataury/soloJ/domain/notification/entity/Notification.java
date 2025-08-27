@@ -10,6 +10,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
+@Table(name = "notifications")
 @Getter
 @Setter
 @DynamicUpdate

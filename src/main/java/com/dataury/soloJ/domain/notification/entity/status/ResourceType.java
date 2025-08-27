@@ -1,5 +1,5 @@
 package com.dataury.soloJ.domain.notification.entity.status;
 
 public enum ResourceType {
-    POST, CHAT
+    POST, CHAT, COMMENT, USER, REPORT
 }

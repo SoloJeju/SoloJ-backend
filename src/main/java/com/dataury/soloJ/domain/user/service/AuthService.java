@@ -148,7 +148,7 @@ public class AuthService {
         Long userId = Long.parseLong(claims.getSubject());
 
         // DB에서 확인
-        RefreshToken saved = refreshTokenRepository.findById(userId)
+        RefreshToken saved = refreshTokenRepository.findByUserId(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.REFRESH_TOKEN_NOT_FOUND));
 
         if (!saved.getRefreshToken().equals(refreshToken)) {

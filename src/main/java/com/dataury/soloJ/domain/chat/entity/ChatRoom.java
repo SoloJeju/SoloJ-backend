@@ -10,6 +10,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "chat_rooms")
 @Getter
 @Setter
 @Builder
@@ -19,7 +20,7 @@ public class ChatRoom extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "chat_room_id", unique = true)
+    @Column(name = "id", unique = true)
     private Long id;
 
     @Column

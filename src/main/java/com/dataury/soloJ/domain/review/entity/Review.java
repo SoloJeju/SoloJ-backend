@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "reviews")
 @Getter
 @Builder
 @NoArgsConstructor
@@ -22,7 +23,7 @@ import java.util.List;
 public class Review extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "review_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
     @Column(nullable = false)

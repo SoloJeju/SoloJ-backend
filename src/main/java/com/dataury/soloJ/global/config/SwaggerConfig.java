@@ -33,9 +33,11 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI soloJAPI() {
         Info info = new Info()
-                .title("혼자옵서예 백엔드")
-                .description("혼자옵서예 백엔드 API 명세서")
-                .version("1.0.0");
+                .title("SoloJ 백엔드 API")
+                .description("""
+                    제주도 혼자 여행을 위한 SoloJ 플랫폼의 백엔드 API 명세서입니다.
+                    """)
+                .version("2.0.0");
 
         String jwtSchemeName = "JWT TOKEN";
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);

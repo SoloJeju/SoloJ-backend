@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "tourist_spots")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -15,7 +16,7 @@ import lombok.*;
 public class TouristSpot extends BaseEntity {
 
     @Id
-    @Column(name = "tourist_spot_id", nullable = false)
+    @Column(name = "id", nullable = false)
     private Long contentId; // TourAPI의 contentid 그대로 PK 사용
 
     @Column(nullable = false)

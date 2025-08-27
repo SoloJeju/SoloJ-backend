@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 
 @Entity
+@Table(name = "plans")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 public class Plan extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "plan_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
     @Column(nullable = false)

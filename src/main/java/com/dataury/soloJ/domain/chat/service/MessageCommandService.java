@@ -9,17 +9,11 @@ import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.chat.repository.MessageRepository;
 import com.dataury.soloJ.domain.notification.service.NotificationService;
-import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
-import com.dataury.soloJ.global.code.status.ErrorStatus;
-import com.dataury.soloJ.global.exception.GeneralException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-// MongoDB imports commented out
-// import org.springframework.data.mongodb.core.MongoTemplate;
-// import org.springframework.data.mongodb.core.query.Criteria;
-// import org.springframework.data.mongodb.core.query.Query;
-// import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,13 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Service
 @RequiredArgsConstructor
@@ -228,6 +220,7 @@ public class MessageCommandService {
     }
 
     private int saveRoomMessagesToMySQL(Long roomId) {
+
         String listKey = String.format(CHAT_ROOM_MESSAGES_KEY, roomId);
         List<Object> rawMessages = redisTemplate.opsForList().range(listKey, 0, -1);
         

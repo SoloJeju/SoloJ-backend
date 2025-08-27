@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "user",
+        name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_user_email", columnNames = "email")
         }
@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class User extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id", unique = true, nullable = false)
+    @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
     @Column(unique = true)
@@ -50,7 +50,14 @@ public class User extends BaseEntity{
     @Column(name = "fcm_token")
     private String fcmToken;
 
-    public void changePassword(String password){
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
+
+
+    // ========= 비즈니스 로직 ========= //
+
+    public void changePassword(String password) {
         this.password = password;
     }
 
@@ -58,9 +65,20 @@ public class User extends BaseEntity{
         this.name = name;
     }
 
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public boolean isActive() {
+        return this.active;
+    }
+
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
-
 
 }
