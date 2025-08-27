@@ -75,7 +75,15 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // Review 관련 에러
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW4001", "존재하지 않는 리뷰입니다."),
-    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REVIEW4002", "해당 리뷰에 대한 권한이 없습니다.");
+    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REVIEW4002", "해당 리뷰에 대한 권한이 없습니다."),
+
+    // Report 관련 에러
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4001", "존재하지 않는 신고입니다."),
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST4001", "존재하지 않는 게시글입니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT4001", "존재하지 않는 댓글입니다."),
+    UNKNOWN_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "CONTENT4001", "알 수 없는 콘텐츠 타입입니다."),
+    ADMIN_NOT_FOUND(HttpStatus.NOT_FOUND, "ADMIN4001", "관리자를 찾을 수 없습니다."),
+    ADMIN_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "ADMIN4002", "관리자 권한이 필요합니다.");
 
 
 

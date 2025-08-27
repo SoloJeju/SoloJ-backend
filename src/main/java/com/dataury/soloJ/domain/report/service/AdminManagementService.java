@@ -18,6 +18,8 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.domain.notification.service.NotificationService;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -137,14 +139,14 @@ public class AdminManagementService {
 
     public AdminReportDto getReportDetail(Long reportId) {
         Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new RuntimeException("Report not found"));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
         return convertToAdminReportDto(report);
     }
 
     @Transactional
     public void processReport(Long reportId, ReportProcessDto processDto) {
         Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new RuntimeException("Report not found"));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
         
         String targetType = "user";
         if (report.getTargetPost() != null) {
@@ -209,7 +211,7 @@ public class AdminManagementService {
 
     public ReportedUserDetailDto getReportedUserDetail(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         // 신고 정보
         List<Report> userReports = reportRepository.findByTargetUserIdOrderByCreatedAtDesc(userId);
@@ -265,7 +267,7 @@ public class AdminManagementService {
     @Transactional
     public void applyUserAction(Long userId, UserActionDto actionDto) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         UserPenalty penalty = userPenaltyRepository.findByUserId(userId)
             .orElse(UserPenalty.builder()
@@ -323,7 +325,7 @@ public class AdminManagementService {
     @Transactional
     public void updateUserStatus(Long userId, String status, String reason) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         switch (status) {
             case "active" -> user.activate();
@@ -470,7 +472,7 @@ public class AdminManagementService {
         
         if ("post".equals(contentType)) {
             Post post = postRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.POST_NOT_FOUND));
             
             contentOwner = post.getUser();
             
@@ -485,7 +487,7 @@ public class AdminManagementService {
             
         } else if ("comment".equals(contentType)) {
             Comment comment = commentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
             
             contentOwner = comment.getUser();
             
@@ -498,7 +500,7 @@ public class AdminManagementService {
             
             commentRepository.save(comment);
         } else {
-            throw new RuntimeException("Unknown content type: " + contentType);
+            throw new GeneralException(ErrorStatus.UNKNOWN_CONTENT_TYPE);
         }
         
         // 콘텐츠 소유자에게 조치 알림 전송
@@ -525,7 +527,7 @@ public class AdminManagementService {
         
         if ("post".equals(contentType)) {
             Post post = postRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + contentId));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.POST_NOT_FOUND));
             
             switch (status) {
                 case "visible" -> post.show();
@@ -536,7 +538,7 @@ public class AdminManagementService {
             
         } else if ("comment".equals(contentType)) {
             Comment comment = commentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found with id: " + contentId));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
             
             switch (status) {
                 case "visible" -> comment.show();
@@ -546,7 +548,7 @@ public class AdminManagementService {
             commentRepository.save(comment);
             
         } else {
-            throw new RuntimeException("Unknown content type: " + contentType);
+            throw new GeneralException(ErrorStatus.UNKNOWN_CONTENT_TYPE);
         }
     }
 
@@ -583,10 +585,10 @@ public class AdminManagementService {
     
     public String authenticateAdmin(AdminLoginDto loginDto) {
         User admin = userRepository.findByEmail(loginDto.getUsername())
-            .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new GeneralException(ErrorStatus.ADMIN_NOT_FOUND));
         
         if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("관리자 권한이 필요합니다.");
+            throw new GeneralException(ErrorStatus.ADMIN_PERMISSION_DENIED);
         }
         
         return "admin-jwt-token-" + admin.getId();
