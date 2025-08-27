@@ -66,7 +66,7 @@ public class Review extends BaseEntity {
     private TouristSpot touristSpot;
 
     // 리뷰 정보 업데이트 (부분 수정 가능)
-    public void updateReview(String reviewText, Difficulty difficulty, LocalDate visitDate) {
+    public void updateReview(String reviewText, Difficulty difficulty, LocalDate visitDate, Integer rating) {
         if (reviewText != null) {
             this.reviewText = reviewText;
         }
@@ -75,6 +75,9 @@ public class Review extends BaseEntity {
         }
         if (visitDate != null) {
             this.visitDate = visitDate;
+        }
+        if (rating != null) {
+            this.rating = rating;
         }
     }
 

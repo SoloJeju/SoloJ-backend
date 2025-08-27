@@ -53,6 +53,12 @@ public class ReviewService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#reviewCreateDto.contentId")
     public ReviewResponseDto.ReviewDto createReview(ReviewRequestDto.ReviewCreateDto reviewCreateDto) {
+        // rating 범위 검증 (1~5)
+        if (reviewCreateDto.getRating() != null && 
+            (reviewCreateDto.getRating() < 1 || reviewCreateDto.getRating() > 5)) {
+            throw new GeneralException(ErrorStatus.INVALID_RATING_RANGE);
+        }
+        
         // 로그인한 사용자 찾기
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -79,6 +85,7 @@ public class ReviewService {
                 .difficulty(reviewCreateDto.getDifficulty())
                 .visitDate(reviewCreateDto.getVisitDate())
                 .receipt(reviewCreateDto.getReceipt())
+                .rating(reviewCreateDto.getRating())
                 .thumbnailUrl(thumbnailUrl)
                 .thumbnailName(thumbnailName)
                 .build();
@@ -119,8 +126,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
 
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
 
         evictSpotCaches(touristSpot.getContentId());
@@ -135,6 +145,12 @@ public class ReviewService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#review.touristSpot.contentId")
     public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto request) {
+        // rating 범위 검증 (1~5)
+        if (request.getRating() != null && 
+            (request.getRating() < 1 || request.getRating() > 5)) {
+            throw new GeneralException(ErrorStatus.INVALID_RATING_RANGE);
+        }
+        
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
@@ -150,7 +166,8 @@ public class ReviewService {
         review.updateReview(
                 request.getText(),
                 request.getDifficulty(),
-                request.getVisitDate()
+                request.getVisitDate(),
+                request.getRating()
         );
 
         // (1) 삭제할 이미지 반영
@@ -205,7 +222,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
+
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
         evictSpotCaches(touristSpot.getContentId());
 
@@ -245,7 +266,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
+
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
         evictSpotCaches(touristSpot.getContentId());
     }
@@ -277,6 +302,7 @@ public class ReviewService {
                 .difficulty(review.getDifficulty())
                 .visitDate(review.getVisitDate())
                 .receipt(review.getReceipt())
+                .rating(review.getRating())
                 .thumbnailUrl(review.getThumbnailUrl())
                 .thumbnailName(review.getThumbnailName())
                 .images(review.getImages() != null ? review.getImages().stream()
@@ -428,10 +454,12 @@ public class ReviewService {
                 .touristSpotId(review.getTouristSpot().getContentId())
                 .touristSpotName(review.getTouristSpot().getName())
                 .touristSpotImage(review.getTouristSpot().getFirstImage())
+                .touristSpotAverageRating(review.getTouristSpot().getAverageRating())
                 .reviewText(review.getReviewText())
                 .difficulty(review.getDifficulty())
                 .visitDate(review.getVisitDate())
                 .receipt(review.getReceipt())
+                .rating(review.getRating())
                 .thumbnailUrl(review.getThumbnailUrl())
                 .thumbnailName(review.getThumbnailName())
                 .tags(tagDescriptions)

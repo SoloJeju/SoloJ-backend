@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class ReviewController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
     })
-    public ApiResponse<ReviewResponseDto.ReviewDto> createReview(@RequestBody ReviewRequestDto.ReviewCreateDto reviewCreateDto){
+    public ApiResponse<ReviewResponseDto.ReviewDto> createReview(@Valid @RequestBody ReviewRequestDto.ReviewCreateDto reviewCreateDto){
         return ApiResponse.onSuccess(reviewService.createReview(reviewCreateDto));
     }
 
@@ -52,7 +53,7 @@ public class ReviewController {
     })
     public ApiResponse<ReviewResponseDto.ReviewDto> updateReview(
             @PathVariable Long reviewId,
-            @RequestBody ReviewRequestDto.ReviewUpdateDto reviewUpdateDto){
+            @Valid @RequestBody ReviewRequestDto.ReviewUpdateDto reviewUpdateDto){
         return ApiResponse.onSuccess(reviewService.updateReview(reviewId, reviewUpdateDto));
     }
 

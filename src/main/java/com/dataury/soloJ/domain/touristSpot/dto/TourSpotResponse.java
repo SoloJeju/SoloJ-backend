@@ -33,6 +33,7 @@ public class TourSpotResponse {
 
         private Difficulty difficulty;
         private String reviewTags;
+        private Double averageRating;
     }
 
 
@@ -61,6 +62,7 @@ public class TourSpotResponse {
         private List<String> reviewTags;
         private Difficulty difficulty;
         private boolean hasCompanionRoom;
+        private Double averageRating;
     }
     
     @Data
@@ -78,6 +80,7 @@ public class TourSpotResponse {
         private String firstimage;        // 대표 이미지
         private Difficulty difficulty;    // 혼놀 난이도
         private Integer openCompanionRoomCount; // 열려있는 동행방 수
+        private Double averageRating;
     }
     
     @Data
@@ -102,6 +105,7 @@ public class TourSpotResponse {
         private Difficulty difficulty;    // 혼놀 난이도
         private Integer openCompanionRoomCount; // 열려있는 동행방 수
         private String source;            // 데이터 출처 ("DB" 또는 "TOUR_API")
+        private Double averageRating;
     }
     
     @Data

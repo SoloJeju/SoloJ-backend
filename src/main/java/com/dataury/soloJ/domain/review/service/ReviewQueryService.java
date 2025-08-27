@@ -28,6 +28,7 @@ public class ReviewQueryService {
                                 .toList() : List.of())
                         .text(r.getReviewText())
                         .difficulty(r.getDifficulty()!=null ? r.getDifficulty().name() : "NONE")
+                        .rating(r.getRating())
                         .createdAt(r.getCreatedAt())
                         .build()
         ).toList();

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -61,6 +62,19 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         e.printStackTrace();
 
         return handleExceptionInternalFalse(e, ErrorStatus._INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus._INTERNAL_SERVER_ERROR.getHttpStatus(),request, e.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException e, WebRequest request) {
+        String message = e.getMessage();
+        
+        // Rating 범위 체크 제약 조건 위반인 경우 (백업용)
+        if (message != null && message.contains("chk_rating_range")) {
+            return handleExceptionInternalConstraint(e, ErrorStatus.INVALID_RATING_RANGE, HttpHeaders.EMPTY, request);
+        }
+        
+        // 기타 데이터 무결성 위반
+        return handleExceptionInternalFalse(e, ErrorStatus.DATABASE_ERROR, HttpHeaders.EMPTY, ErrorStatus.DATABASE_ERROR.getHttpStatus(), request, "데이터베이스 제약 조건 위반");
     }
 
     @ExceptionHandler(value = GeneralException.class)

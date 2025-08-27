@@ -43,6 +43,7 @@ public class ReviewResponseDto {
         private Difficulty difficulty;
         private LocalDate visitDate; // 엔티티에 맞춰 LocalDate 또는 LocalDateTime
         private Boolean receipt;
+        private Integer rating;
         private String thumbnailUrl;
         private String thumbnailName;
         private List<ImageDto> images;
@@ -65,10 +66,12 @@ public class ReviewResponseDto {
         private Long touristSpotId;
         private String touristSpotName;
         private String touristSpotImage;
+        private Double touristSpotAverageRating;
         private String reviewText;
         private Difficulty difficulty;
         private LocalDate visitDate;
         private Boolean receipt;
+        private Integer rating;
         private String thumbnailUrl;
         private String thumbnailName;
         private List<String> tags;

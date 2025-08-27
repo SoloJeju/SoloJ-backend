@@ -113,4 +113,8 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
         order by r.createdAt desc
     """)
     List<Review> findBySpotByCursor(@Param("spotId") Long spotId, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    // 관광지별 평균 별점 계산
+    @Query("select AVG(CAST(r.rating as double)) from Review r where r.touristSpot.contentId = :contentId and r.rating is not null")
+    Double findAverageRatingByTouristSpotContentId(@Param("contentId") Long contentId);
 }

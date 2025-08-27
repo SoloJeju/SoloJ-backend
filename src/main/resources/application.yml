@@ -16,7 +16,7 @@ spring:
     lazy-initialization: true
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -71,14 +71,14 @@ spring:
       database: 0
       repositories:
         enabled: false
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    baseline-version: 0
-    locations: classpath:db/migration
-    validate-on-migrate: true
-    clean-disabled: true
-    out-of-order: true
+#  flyway:
+#    enabled: true
+#    baseline-on-migrate: true
+#    baseline-version: 0
+#    locations: classpath:db/migration
+#    validate-on-migrate: true
+#    clean-disabled: true
+#    out-of-order: true
   autoconfigure:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration

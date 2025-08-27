@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
+import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -28,6 +29,7 @@ public class TourSpotService {
     private final TouristSpotRepository touristSpotRepository;
     private final TouristSpotReviewTagRepository tagRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ReviewRepository reviewRepository;
 
     public TourSpotResponse.TourSpotListResponse getTourSpotsSummary(Pageable pageable, TourSpotRequest.TourSpotRequestDto filter) {
         List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable, filter);
@@ -69,6 +71,8 @@ public class TourSpotService {
                         .build());
             }
 
+            // 평균 별점 계산
+            Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
 
             return TourSpotResponse.TourSpotItemWithReview.builder()
                     .contentid(item.getContentid())
@@ -79,6 +83,7 @@ public class TourSpotService {
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .hasCompanionRoom(spot.isHasCompanionRoom())
+                    .averageRating(averageRating)
                     .build();
         })
         // 난이도 필터링 적용
@@ -134,6 +139,9 @@ public class TourSpotService {
                 .map(t -> t.getReviewTag().getDescription())
                 .toList();
 
+        // 평균 별점 계산
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
+
         return TourSpotResponse.TourSpotDetailWrapper.builder()
                 .basic(basic)
                 .intro(intro)
@@ -141,6 +149,7 @@ public class TourSpotService {
                 .reviewTags(reviewTags)
                 .difficulty(spot.getDifficulty())
                 .hasCompanionRoom(spot.isHasCompanionRoom())
+                .averageRating(averageRating)
                 .build();
     }
 

@@ -20,6 +20,7 @@ public class ReviewListWithSpotAggResponse {
         private double easyPct;
         private double mediumPct;
         private double hardPct;
+        private Double averageRating;
         private List<TagPctDto> topTags; // 상위 3개
     }
 
@@ -41,6 +42,7 @@ public class ReviewListWithSpotAggResponse {
         private List<String> imageUrls;
         private String text;
         private String difficulty;
+        private Integer rating;
         private LocalDateTime createdAt;
     }
 }

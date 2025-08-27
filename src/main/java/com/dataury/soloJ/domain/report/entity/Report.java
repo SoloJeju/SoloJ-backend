@@ -61,11 +61,8 @@ public class Report extends BaseEntity {
 
     private LocalDateTime processedAt; // 처리 완료 시간
 
-    private LocalDateTime createdAt;
-
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
         this.status = ReportStatus.PENDING;
     }
 }
