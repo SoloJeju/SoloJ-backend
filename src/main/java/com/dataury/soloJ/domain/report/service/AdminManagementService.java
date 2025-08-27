@@ -17,6 +17,7 @@ import com.dataury.soloJ.domain.report.repository.UserPenaltyRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class AdminManagementService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final InquiryRepository inquiryRepository;
+    private final NotificationService notificationService;
 
     // ===== 대시보드 & 신고 관리 =====
     
@@ -144,6 +146,13 @@ public class AdminManagementService {
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new RuntimeException("Report not found"));
         
+        String targetType = "user";
+        if (report.getTargetPost() != null) {
+            targetType = "post";
+        } else if (report.getTargetComment() != null) {
+            targetType = "comment";
+        }
+        
         if ("approve".equals(processDto.getAction())) {
             report.setStatus(ReportStatus.ACTION_TAKEN);
             // Apply penalties if needed
@@ -152,6 +161,20 @@ public class AdminManagementService {
         }
         
         reportRepository.save(report);
+        
+        // 신고자에게 처리 결과 알림 전송
+        try {
+            notificationService.createReportProcessedNotification(
+                report.getReporter(),
+                processDto.getAction(),
+                reportId,
+                targetType
+            );
+            log.info("Report processed notification sent to reporter: {}", report.getReporter().getId());
+        } catch (Exception e) {
+            log.error("Failed to send report processed notification: ", e);
+        }
+        
         log.info("Report {} processed with action: {}", reportId, processDto.getAction());
     }
 
@@ -280,6 +303,19 @@ public class AdminManagementService {
             .reason(actionDto.getReason())
             .build();
         historyRepository.save(history);
+        
+        // 사용자에게 조치 알림 전송
+        try {
+            notificationService.createUserActionNotification(
+                user,
+                actionDto.getActionType(),
+                actionDto.getReason(),
+                userId
+            );
+            log.info("User action notification sent to user: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to send user action notification: ", e);
+        }
         
         log.info("Admin {} applied action {} to user {}", adminId, actionDto.getActionType(), userId);
     }
@@ -430,9 +466,13 @@ public class AdminManagementService {
         // 콘텐츠 타입 판별 (Post 또는 Comment)
         String contentType = actionDto.getContentType();
         
+        User contentOwner = null;
+        
         if ("post".equals(contentType)) {
             Post post = postRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
+            
+            contentOwner = post.getUser();
             
             switch (actionDto.getActionType()) {
                 case "hide" -> post.hide();
@@ -447,6 +487,8 @@ public class AdminManagementService {
             Comment comment = commentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
             
+            contentOwner = comment.getUser();
+            
             switch (actionDto.getActionType()) {
                 case "hide" -> comment.hide();
                 case "show" -> comment.show();
@@ -457,6 +499,22 @@ public class AdminManagementService {
             commentRepository.save(comment);
         } else {
             throw new RuntimeException("Unknown content type: " + contentType);
+        }
+        
+        // 콘텐츠 소유자에게 조치 알림 전송
+        if (contentOwner != null) {
+            try {
+                notificationService.createContentActionNotification(
+                    contentOwner,
+                    actionDto.getActionType(),
+                    contentType,
+                    contentId,
+                    actionDto.getReason()
+                );
+                log.info("Content action notification sent to content owner: {}", contentOwner.getId());
+            } catch (Exception e) {
+                log.error("Failed to send content action notification: ", e);
+            }
         }
     }
 

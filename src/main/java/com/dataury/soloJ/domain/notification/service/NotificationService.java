@@ -108,6 +108,12 @@ public class NotificationService {
                 return "새로운 댓글";
             case LIKE:
                 return "새로운 좋아요";
+            case ADMIN_CONTENT_ACTION:
+                return "콘텐츠 조치 알림";
+            case ADMIN_USER_ACTION:
+                return "계정 조치 알림";
+            case REPORT_PROCESSED:
+                return "신고 처리 결과";
             default:
                 return "알림";
         }
@@ -168,5 +174,86 @@ public class NotificationService {
     public void reinitializeFirebase() {
         log.info("Firebase reinitialize requested by user: {}", SecurityUtils.getCurrentUserId());
         fcmConfig.reinitializeFirebase();
+    }
+    
+    /**
+     * 관리자 콘텐츠 조치 알림 생성
+     */
+    @Transactional
+    public void createContentActionNotification(User contentOwner, String action, String contentType, Long contentId, String reason) {
+        String message = String.format("회원님의 %s에 대한 관리자 조치가 실행되었습니다. 조치: %s", 
+                getContentTypeName(contentType), getActionName(action));
+        if (reason != null && !reason.trim().isEmpty()) {
+            message += " (사유: " + reason + ")";
+        }
+        
+        ResourceType resourceType = "post".equals(contentType) ? ResourceType.POST : ResourceType.COMMENT;
+        createNotification(contentOwner, Type.ADMIN_CONTENT_ACTION, message, resourceType, contentId);
+    }
+    
+    /**
+     * 관리자 사용자 조치 알림 생성
+     */
+    @Transactional
+    public void createUserActionNotification(User targetUser, String action, String reason, Long userId) {
+        String message = String.format("계정에 대한 관리자 조치가 실행되었습니다. 조치: %s", getUserActionName(action));
+        if (reason != null && !reason.trim().isEmpty()) {
+            message += " (사유: " + reason + ")";
+        }
+        
+        createNotification(targetUser, Type.ADMIN_USER_ACTION, message, ResourceType.USER, userId);
+    }
+    
+    /**
+     * 신고 처리 결과 알림 생성 (신고자에게)
+     */
+    @Transactional
+    public void createReportProcessedNotification(User reporter, String reportResult, Long reportId, String targetType) {
+        String message;
+        if ("approve".equals(reportResult)) {
+            message = String.format("회원님이 신고한 %s에 대해 조치가 완료되었습니다.", getTargetTypeName(targetType));
+        } else {
+            message = String.format("회원님이 신고한 %s에 대한 검토 결과, 조치 대상이 아닌 것으로 판단되었습니다.", getTargetTypeName(targetType));
+        }
+        
+        createNotification(reporter, Type.REPORT_PROCESSED, message, ResourceType.REPORT, reportId);
+    }
+    
+    private String getContentTypeName(String contentType) {
+        switch (contentType) {
+            case "post": return "게시글";
+            case "comment": return "댓글";
+            default: return "콘텐츠";
+        }
+    }
+    
+    private String getActionName(String action) {
+        switch (action) {
+            case "hide": return "숨김 처리";
+            case "show": return "숨김 해제";
+            case "delete": return "삭제 처리";
+            case "restore": return "복원 처리";
+            default: return action;
+        }
+    }
+    
+    private String getUserActionName(String action) {
+        switch (action) {
+            case "warning": return "경고";
+            case "softBlock": return "소프트 블록";
+            case "restrictWriting": return "글쓰기 제한";
+            case "permanentBan": return "영구 정지";
+            case "restore": return "제재 해제";
+            default: return action;
+        }
+    }
+    
+    private String getTargetTypeName(String targetType) {
+        switch (targetType) {
+            case "post": return "게시글";
+            case "comment": return "댓글";
+            case "user": return "사용자";
+            default: return "대상";
+        }
     }
 }
