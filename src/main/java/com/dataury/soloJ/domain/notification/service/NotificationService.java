@@ -11,14 +11,17 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.config.FCMConfig;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,6 +30,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final FCMService fcmService;
+    private final FCMConfig fcmConfig;
     
     public NotificationListDto getMyNotifications() {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -87,7 +91,12 @@ public class NotificationService {
         // FCM 푸시 알림 전송
         if (user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             String title = getNotificationTitle(type);
+            log.info("Sending FCM notification - userId: {}, fcmToken: {}, title: {}, message: {}, notificationId: {}", 
+                    user.getId(), user.getFcmToken().substring(0, Math.min(20, user.getFcmToken().length())) + "...", 
+                    title, message, savedNotification.getId());
             fcmService.sendPushNotification(user.getFcmToken(), title, message, savedNotification.getId());
+        } else {
+            log.warn("FCM token is null or empty for user: {}. Push notification will not be sent.", user.getId());
         }
     }
     
@@ -122,8 +131,13 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         
+        log.info("Updating FCM token for user: {} - newToken: {}", userId, 
+                fcmToken != null ? fcmToken.substring(0, Math.min(20, fcmToken.length())) + "..." : "null");
+        
         user.updateFcmToken(fcmToken);
         userRepository.save(user);
+        
+        log.info("FCM token updated successfully for user: {}", userId);
     }
     
     @Transactional
@@ -134,5 +148,25 @@ public class NotificationService {
         
         user.updateFcmToken(null);
         userRepository.save(user);
+    }
+    
+    @Transactional
+    public void sendTestNotification() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        
+        log.info("Sending test notification to user: {}, fcmToken: {}", 
+                userId, user.getFcmToken() != null ? user.getFcmToken().substring(0, Math.min(20, user.getFcmToken().length())) + "..." : "null");
+        
+        createNotification(user, Type.MESSAGE, "FCM 테스트 알림입니다. 정상적으로 작동하고 있습니다!", ResourceType.CHAT, 0L);
+    }
+    
+    /**
+     * Firebase 강제 재초기화 (디버깅용)
+     */
+    public void reinitializeFirebase() {
+        log.info("Firebase reinitialize requested by user: {}", SecurityUtils.getCurrentUserId());
+        fcmConfig.reinitializeFirebase();
     }
 }
