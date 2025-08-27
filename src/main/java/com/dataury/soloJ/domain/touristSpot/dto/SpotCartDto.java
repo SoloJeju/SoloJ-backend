@@ -50,4 +50,12 @@ public class SpotCartDto {
         private Long cartId;
         private String message;
     }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class BulkDeleteRequest {
+        private List<Long> cartIds;
+    }
 }

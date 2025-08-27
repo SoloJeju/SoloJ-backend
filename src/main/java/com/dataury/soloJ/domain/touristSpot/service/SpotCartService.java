@@ -122,4 +122,24 @@ public class SpotCartService {
         Long userId = SecurityUtils.getCurrentUserId();
         spotCartRepository.deleteAllByUserId(userId);
     }
+    
+    // 장바구니 여러개 일괄 삭제
+    public void removeMultipleFromCart(SpotCartDto.BulkDeleteRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        
+        if (request.getCartIds() == null || request.getCartIds().isEmpty()) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+        
+        // 해당 cartId들이 모두 현재 사용자의 것인지 확인
+        List<SpotCart> cartsToDelete = spotCartRepository.findAllById(request.getCartIds());
+        
+        for (SpotCart cart : cartsToDelete) {
+            if (!cart.getUser().getId().equals(userId)) {
+                throw new GeneralException(ErrorStatus._FORBIDDEN);
+            }
+        }
+        
+        spotCartRepository.deleteAll(cartsToDelete);
+    }
 }

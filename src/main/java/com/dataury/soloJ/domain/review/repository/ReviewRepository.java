@@ -74,6 +74,16 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     default List<Review> findTop3ByOrderByCreatedAtDesc() {
         return findTop3ByOrderByCreatedAtDesc(PageRequest.of(0, 3));
     }
+    
+    // 최신 리뷰 2개 조회 (홈화면용)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("select r from Review r order by r.createdAt desc")
+    List<Review> findTop2ByOrderByCreatedAtDesc(Pageable pageable);
+    
+    // 편의 메서드
+    default List<Review> findTop2ByOrderByCreatedAtDesc() {
+        return findTop2ByOrderByCreatedAtDesc(PageRequest.of(0, 2));
+    }
 
     // 전체 리뷰 조회 (offset 기반)
     @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})

@@ -27,7 +27,7 @@ public class HomeApiController {
     
     @GetMapping("")
     @Operation(summary = "홈화면 메인 데이터 조회", 
-               description = "오늘의 추천 장소 Top3, 최신 혼자 후기 3개, 사용자별 추천 동행방 3개를 조회합니다.")
+               description = "오늘의 추천 장소 Top3, 최신 혼자 후기 2개, 사용자별 추천 동행방 3개를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", 
@@ -65,8 +65,8 @@ public class HomeApiController {
     }
     
     @GetMapping("/latest-reviews")
-    @Operation(summary = "최신 혼자 후기 3개 조회", 
-               description = "최신순으로 정렬된 후기 3개를 조회합니다. Redis 캐시 우선 조회합니다.")
+    @Operation(summary = "최신 혼자 후기 2개 조회", 
+               description = "최신순으로 정렬된 후기 2개를 조회합니다. Redis 캐시 우선 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", 

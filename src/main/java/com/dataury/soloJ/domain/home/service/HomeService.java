@@ -82,7 +82,7 @@ public class HomeService {
         return spotDtos;
     }
     
-    // 최신 혼자 후기 3개 (Redis 우선 조회)
+    // 최신 혼자 후기 2개 (Redis 우선 조회)
     public List<HomeResponse.LatestReviewDto> getLatestReviews() {
         // 캐시에서 먼저 조회
         List<HomeResponse.LatestReviewDto> cachedReviews = cacheService.getLatestReviews();
@@ -92,7 +92,7 @@ public class HomeService {
         }
         
         // 캐시에 없으면 DB에서 조회
-        List<Review> latestReviews = reviewRepository.findTop3ByOrderByCreatedAtDesc();
+        List<Review> latestReviews = reviewRepository.findTop2ByOrderByCreatedAtDesc();
         
         List<HomeResponse.LatestReviewDto> reviewDtos = latestReviews.stream()
                 .map(review -> HomeResponse.LatestReviewDto.builder()
