@@ -99,10 +99,10 @@ discord:
     error: ${DISCORD_WEBHOOK_ERROR:}
     lifecycle: ${DISCORD_WEBHOOK_LIFECYCLE:}
 
-
 google:
   application:
     credentials: "google-credential.json"
+
 
 cloud:
   aws:
@@ -115,6 +115,12 @@ cloud:
       bucket: ${BUCKET_NAME}
 
 
+fcm:
+  enabled: ${FCM_ENABLED:true}
+  key:
+    path: ${FCM_KEY_PATH:firebase/soloj-firbase-key.json}
+
+
 management:
   metrics:
     enable:
@@ -122,3 +128,4 @@ management:
       system: false   # 시스템 메트릭 꺼짐
       mongo: false    # 몽고 안 씀
       process: false
+
