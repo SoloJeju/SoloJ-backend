@@ -9,6 +9,7 @@ import com.dataury.soloJ.domain.community.service.CommentService;
 import com.dataury.soloJ.domain.community.service.PostService;
 import com.dataury.soloJ.domain.community.service.ScrapService;
 import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,16 +54,23 @@ public class CommunityController {
     }
 
     @GetMapping("/posts")
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 조회합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> getPostList(
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getPostList(
             @Parameter(description = "카테고리") @RequestParam(required = false) PostCategory category,
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (0부터 시작, offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "정렬 기준") @RequestParam(defaultValue = "createdAt") String sort,
-            @Parameter(description = "정렬 방향") @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @Parameter(description = "정렬 기준 (offset 기반용)") @RequestParam(defaultValue = "createdAt") String sort,
+            @Parameter(description = "정렬 방향 (offset 기반용)") @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
         
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
-        return ApiResponse.onSuccess(postService.getPostList(category, pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(postService.getPostListByCursor(category, cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));
+            return ApiResponse.onSuccess(postService.getPostList(category, pageable));
+        }
     }
 
     @GetMapping("/posts/{postId}")
@@ -72,14 +80,21 @@ public class CommunityController {
     }
 
     @GetMapping("/posts/search")
-    @Operation(summary = "게시글 검색", description = "키워드로 게시글을 검색합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> searchPosts(
+    @Operation(summary = "게시글 검색", description = "키워드로 게시글을 검색합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> searchPosts(
             @Parameter(description = "검색 키워드") @RequestParam String keyword,
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
         
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.onSuccess(postService.searchPosts(keyword, pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(postService.searchPostsByCursor(keyword, cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(postService.searchPosts(keyword, pageable));
+        }
     }
 
     @PostMapping("/posts/{postId}/comments")

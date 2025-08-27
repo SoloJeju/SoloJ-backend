@@ -15,13 +15,19 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -297,5 +303,160 @@ public class ReviewService {
         if (c2 != null) c2.evict(spotId);
     }
 
+    // 전체 리뷰 조회 (offset 기반)
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDto.ReviewListDto> getAllReviews(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findAllReviews(pageable);
+        return reviews.map(this::convertToListDto);
+    }
+
+    // 전체 리뷰 조회 (커서 기반)
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getAllReviewsByCursor(String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findAllReviewsByCursor(cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // 내가 쓴 리뷰 조회 (offset 기반)
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDto.ReviewListDto> getMyReviews(Pageable pageable) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Page<Review> reviews = reviewRepository.findMyReviews(userId, pageable);
+        return reviews.map(this::convertToListDto);
+    }
+
+    // 내가 쓴 리뷰 조회 (커서 기반)
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getMyReviewsByCursor(String cursor, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findMyReviewsByCursor(userId, cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // 관광지별 리뷰 조회 (커서 기반) - 기존 API 보완용
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getReviewsBySpotByCursor(Long spotId, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findBySpotByCursor(spotId, cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // Review 엔티티를 ReviewListDto로 변환
+    private ReviewResponseDto.ReviewListDto convertToListDto(Review review) {
+        List<String> tagDescriptions = review.getReviewTags() != null 
+                ? review.getReviewTags().stream()
+                    .map(rt -> rt.getTag().getDescription())
+                    .collect(Collectors.toList())
+                : new ArrayList<>();
+        
+        List<ReviewResponseDto.ImageDto> images = review.getImages() != null
+                ? review.getImages().stream()
+                    .map(img -> ReviewResponseDto.ImageDto.builder()
+                            .imageUrl(img.getImageUrl())
+                            .imageName(img.getImageName())
+                            .build())
+                    .collect(Collectors.toList())
+                : new ArrayList<>();
+        
+        return ReviewResponseDto.ReviewListDto.builder()
+                .id(review.getId())
+                .touristSpotId(review.getTouristSpot().getContentId())
+                .touristSpotName(review.getTouristSpot().getName())
+                .touristSpotImage(review.getTouristSpot().getFirstImage())
+                .reviewText(review.getReviewText())
+                .difficulty(review.getDifficulty())
+                .visitDate(review.getVisitDate())
+                .receipt(review.getReceipt())
+                .thumbnailUrl(review.getThumbnailUrl())
+                .thumbnailName(review.getThumbnailName())
+                .tags(tagDescriptions)
+                .images(images)
+                .userId(review.getUser().getId())
+                .userNickname(review.getUser().getUserProfile().getNickName())
+                .userProfileImage(review.getUser().getUserProfile().getImageUrl())
+                .createdAt(review.getCreatedAt())
+                .build();
+    }
+
+    private String encodeCursor(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        String formatted = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return Base64.getEncoder().encodeToString(formatted.getBytes());
+    }
+
+    private LocalDateTime decodeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(cursor));
+            return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 }

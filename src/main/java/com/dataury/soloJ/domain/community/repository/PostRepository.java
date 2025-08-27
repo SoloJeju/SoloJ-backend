@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -50,5 +52,29 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     long countByUserIdAndIsVisible(Long userId, boolean isVisible);
     
     long countByUserIdAndIsDeleted(Long userId, boolean isDeleted);
+
+    // 커서 기반 페이지네이션 메서드들
+    @Query("SELECT p FROM Post p WHERE p.isVisible = true AND p.isDeleted = false AND (:cursor IS NULL OR p.createdAt < :cursor) ORDER BY p.createdAt DESC")
+    List<Post> findAllByCursor(@Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.postCategory = :category AND p.isVisible = true AND p.isDeleted = false AND (:cursor IS NULL OR p.createdAt < :cursor) ORDER BY p.createdAt DESC")
+    List<Post> findByCategoryAndCursor(@Param("category") PostCategory category, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE (p.title LIKE %:keyword% OR p.content LIKE %:keyword%) AND p.isVisible = true AND p.isDeleted = false AND (:cursor IS NULL OR p.createdAt < :cursor) ORDER BY p.createdAt DESC")
+    List<Post> searchByKeywordAndCursor(@Param("keyword") String keyword, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user.id = :userId AND p.isVisible = true AND p.isDeleted = false AND (:cursor IS NULL OR p.createdAt < :cursor) ORDER BY p.createdAt DESC")
+    List<Post> findByUserIdAndCursor(@Param("userId") Long userId, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    @Query("""
+        SELECT p
+        FROM Comment c
+        JOIN c.post p
+        WHERE c.user.id = :userId AND p.isVisible = true AND p.isDeleted = false 
+        AND (:cursor IS NULL OR p.createdAt < :cursor)
+        GROUP BY p
+        ORDER BY MAX(c.createdAt) DESC
+    """)
+    List<Post> findCommentedPostsByUserIdAndCursor(@Param("userId") Long userId, @Param("cursor") LocalDateTime cursor, Pageable pageable);
 
 }

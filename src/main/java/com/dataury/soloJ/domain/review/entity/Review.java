@@ -36,6 +36,9 @@ public class Review extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
+    @Column(name = "rating")
+    private Integer rating;
+
     @Column
     @Builder.Default
     private Boolean receipt=false;

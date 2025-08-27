@@ -15,15 +15,20 @@ import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -252,6 +257,84 @@ public class PostService {
     public Page<PostResponseDto.PostListItemDto> getPostsWithMyComments(Long userId, Pageable pageable) {
         Page<Post> posts = postRepository.findCommentedPostsOrderByLatestMyComment(userId, pageable);
         return posts.map(this::convertToListItemDto);
+    }
+
+    // ===== 커서 기반 페이지네이션 메서드들 =====
+    
+    public CursorPageResponse<PostResponseDto.PostListItemDto> getPostListByCursor(PostCategory category, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Post> posts = (category != null) 
+                ? postRepository.findByCategoryAndCursor(category, cursorDateTime, pageable)
+                : postRepository.findAllByCursor(cursorDateTime, pageable);
+        
+        return buildCursorPageResponse(posts, size);
+    }
+    
+    public CursorPageResponse<PostResponseDto.PostListItemDto> searchPostsByCursor(String keyword, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Post> posts = postRepository.searchByKeywordAndCursor(keyword, cursorDateTime, pageable);
+        
+        return buildCursorPageResponse(posts, size);
+    }
+    
+    public CursorPageResponse<PostResponseDto.PostListItemDto> getMyPostsByCursor(Long userId, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Post> posts = postRepository.findByUserIdAndCursor(userId, cursorDateTime, pageable);
+        
+        return buildCursorPageResponse(posts, size);
+    }
+    
+    public CursorPageResponse<PostResponseDto.PostListItemDto> getPostsWithMyCommentsByCursor(Long userId, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Post> posts = postRepository.findCommentedPostsByUserIdAndCursor(userId, cursorDateTime, pageable);
+        
+        return buildCursorPageResponse(posts, size);
+    }
+
+    private CursorPageResponse<PostResponseDto.PostListItemDto> buildCursorPageResponse(List<Post> posts, int size) {
+        boolean hasNext = posts.size() > size;
+        if (hasNext) {
+            posts = posts.subList(0, size);
+        }
+        
+        List<PostResponseDto.PostListItemDto> items = posts.stream()
+                .map(this::convertToListItemDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !posts.isEmpty() 
+                ? encodeCursor(posts.get(posts.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<PostResponseDto.PostListItemDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    private String encodeCursor(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        String formatted = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return Base64.getEncoder().encodeToString(formatted.getBytes());
+    }
+
+    private LocalDateTime decodeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(cursor));
+            return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ===== 관리자용 메서드 =====

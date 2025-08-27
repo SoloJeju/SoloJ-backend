@@ -4,10 +4,15 @@ import com.dataury.soloJ.domain.review.dto.ReviewRequestDto;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.domain.review.service.ReviewService;
 import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,5 +84,46 @@ public class ReviewController {
         return ApiResponse.onSuccess(reviewService.verifyReceipt(contentId, file));
     }
 
+    // 전체 리뷰 조회
+    @GetMapping("/all")
+    @Operation(summary = "전체 리뷰 목록 조회", description = "모든 리뷰를 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<?> getAllReviews(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(reviewService.getAllReviewsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(reviewService.getAllReviews(pageable));
+        }
+    }
+
+    // 내가 쓴 리뷰 조회
+    @GetMapping("/my")
+    @Operation(summary = "내가 쓴 리뷰 목록 조회", description = "내가 작성한 리뷰를 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다. 토큰 필요.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    })
+    public ApiResponse<?> getMyReviews(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(reviewService.getMyReviewsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(reviewService.getMyReviews(pageable));
+        }
+    }
 
 }

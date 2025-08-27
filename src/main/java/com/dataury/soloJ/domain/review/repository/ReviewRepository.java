@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,4 +74,43 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     default List<Review> findTop3ByOrderByCreatedAtDesc() {
         return findTop3ByOrderByCreatedAtDesc(PageRequest.of(0, 3));
     }
+
+    // 전체 리뷰 조회 (offset 기반)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("select r from Review r order by r.createdAt desc")
+    org.springframework.data.domain.Page<Review> findAllReviews(Pageable pageable);
+
+    // 전체 리뷰 조회 (커서 기반)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("""
+        select r from Review r 
+        where :cursor is null or r.createdAt < :cursor
+        order by r.createdAt desc
+    """)
+    List<Review> findAllReviewsByCursor(@Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    // 내가 쓴 리뷰 조회 (offset 기반)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot"})
+    @Query("select r from Review r where r.user.id = :userId order by r.createdAt desc")
+    org.springframework.data.domain.Page<Review> findMyReviews(@Param("userId") Long userId, Pageable pageable);
+
+    // 내가 쓴 리뷰 조회 (커서 기반)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("""
+        select r from Review r 
+        where r.user.id = :userId
+        and (:cursor is null or r.createdAt < :cursor)
+        order by r.createdAt desc
+    """)
+    List<Review> findMyReviewsByCursor(@Param("userId") Long userId, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    // 관광지별 리뷰 조회 (커서 기반)
+    @EntityGraph(attributePaths = {"user", "user.userProfile", "touristSpot", "images"})
+    @Query("""
+        select r from Review r 
+        where r.touristSpot.contentId = :spotId
+        and (:cursor is null or r.createdAt < :cursor)
+        order by r.createdAt desc
+    """)
+    List<Review> findBySpotByCursor(@Param("spotId") Long spotId, @Param("cursor") LocalDateTime cursor, Pageable pageable);
 }

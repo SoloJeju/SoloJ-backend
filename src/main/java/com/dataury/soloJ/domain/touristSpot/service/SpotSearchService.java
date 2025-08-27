@@ -6,12 +6,15 @@ import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,7 +27,23 @@ public class SpotSearchService {
     private final TourApiService tourApiService;
     private final ChatRoomRepository chatRoomRepository;
     
-    public TourSpotResponse.SpotSearchListResponse searchSpots(TourSpotRequest.SpotSearchRequestDto request) {
+    public Object searchSpots(TourSpotRequest.SpotSearchRequestDto request) {
+        // 커서가 제공되면 커서 기반 페이지네이션 사용 (DB 검색만)
+        if (request.getCursor() != null && !request.getCursor().trim().isEmpty()) {
+            return searchSpotsByCursor(
+                    request.getKeyword(),
+                    request.getContentTypeId(),
+                    request.getDifficulty(),
+                    request.getCursor(),
+                    request.getSize()
+            );
+        }
+        
+        // 기존 offset 기반 페이지네이션 (TourAPI + DB 통합 검색)
+        return searchSpotsWithOffset(request);
+    }
+
+    private TourSpotResponse.SpotSearchListResponse searchSpotsWithOffset(TourSpotRequest.SpotSearchRequestDto request) {
         List<TourSpotResponse.SpotSearchItemDto> allResults = new ArrayList<>();
         
         // 1. DB에서 검색
@@ -158,5 +177,70 @@ public class SpotSearchService {
                 .page(request.getPage())
                 .size(request.getSize())
                 .build();
+    }
+
+    // 커서 기반 검색 메서드 (DB 검색만 지원)
+    public CursorPageResponse<TourSpotResponse.SpotSearchItemDto> searchSpotsByCursor(
+            String keyword, Integer contentTypeId, com.dataury.soloJ.domain.review.entity.status.Difficulty difficulty, 
+            String cursor, int size) {
+        
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1); // 다음 페이지 여부 확인을 위해 +1
+        
+        List<TouristSpot> spots = touristSpotRepository.searchByKeywordWithCursor(
+                keyword, contentTypeId, difficulty, cursorDateTime, pageable);
+        
+        boolean hasNext = spots.size() > size;
+        if (hasNext) {
+            spots = spots.subList(0, size);
+        }
+        
+        // DTO로 변환
+        List<TourSpotResponse.SpotSearchItemDto> results = new ArrayList<>();
+        for (TouristSpot spot : spots) {
+            int openRoomCount = chatRoomRepository.countOpenRoomsBySpotId(spot.getContentId());
+            
+            String address = spot.getAddress() != null && !spot.getAddress().trim().isEmpty() 
+                    ? spot.getAddress() 
+                    : "주소 정보 없음";
+            
+            results.add(TourSpotResponse.SpotSearchItemDto.builder()
+                    .contentId(spot.getContentId())
+                    .contentTypeId(spot.getContentTypeId())
+                    .title(spot.getName())
+                    .addr1(address)
+                    .firstimage(spot.getFirstImage())
+                    .difficulty(spot.getDifficulty())
+                    .openCompanionRoomCount(openRoomCount)
+                    .source("DB")
+                    .build());
+        }
+        
+        String nextCursor = hasNext && !spots.isEmpty() 
+                ? encodeCursor(spots.get(spots.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<TourSpotResponse.SpotSearchItemDto>builder()
+                .content(results)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(results.size())
+                .build();
+    }
+
+    private String encodeCursor(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        String formatted = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return Base64.getEncoder().encodeToString(formatted.getBytes());
+    }
+
+    private LocalDateTime decodeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(cursor));
+            return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

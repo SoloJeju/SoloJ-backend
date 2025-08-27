@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.chat.repository;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.chat.dto.ChatRoomListItemWithCursor;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -129,6 +131,39 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
     """)
     List<ChatRoomListItem> findRoomsByTouristSpotAsDto(@Param("contentId") Long contentId,
                                                          @Param("active") com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus active);
+
+    // 커서 기반 페이지네이션을 위한 메서드 - 커서 정보 포함
+    @Query("""
+    select new com.dataury.soloJ.domain.chat.dto.ChatRoomListItemWithCursor(
+        r.id,
+        r.chatRoomName,
+        r.chatRoomDescription,
+        r.joinDate,
+        count(jcActive),
+        r.numberOfMembers,  
+        r.isCompleted,
+        false,
+        r.genderRestriction,
+        r.touristSpot.firstImage,
+        MAX(jcUser.createdAt)
+    )
+    from JoinChat jcUser
+        join jcUser.chatRoom r
+        left join JoinChat jcActive
+               on jcActive.chatRoom = r
+              and jcActive.status = :active
+    where jcUser.user.id = :userId
+      and jcUser.status = :active
+      and (:cursor is null or jcUser.createdAt < :cursor)
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.numberOfMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
+    order by MAX(jcUser.createdAt) desc
+    """)
+    List<ChatRoomListItemWithCursor> findMyChatRoomsByCursor(
+            @Param("userId") Long userId,
+            @Param("active") JoinChatStatus active,
+            @Param("cursor") LocalDateTime cursor,
+            Pageable pageable
+    );
 
 
 }
