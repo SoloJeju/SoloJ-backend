@@ -3,6 +3,7 @@ package com.dataury.soloJ.domain.notification.service;
 import com.dataury.soloJ.domain.notification.dto.NotificationListDto;
 import com.dataury.soloJ.domain.notification.dto.NotificationReadRequestDto;
 import com.dataury.soloJ.domain.notification.dto.NotificationResponseDto;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import com.dataury.soloJ.domain.notification.entity.Notification;
 import com.dataury.soloJ.domain.notification.entity.status.ResourceType;
 import com.dataury.soloJ.domain.notification.entity.status.Type;
@@ -15,6 +16,8 @@ import com.dataury.soloJ.global.config.FCMConfig;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -272,5 +275,40 @@ public class NotificationService {
             case "user": return "사용자";
             default: return "대상";
         }
+    }
+    
+    public CursorPageResponse<NotificationResponseDto> getMyNotificationsByCursor(String cursor, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        
+        Pageable pageable = PageRequest.of(0, size + 1);
+        List<Notification> notifications;
+        
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            try {
+                Long cursorId = Long.parseLong(cursor);
+                notifications = notificationRepository.findByUserAndIdLessThanOrderByIdDesc(user, cursorId, pageable);
+            } catch (NumberFormatException e) {
+                throw new GeneralException(ErrorStatus._BAD_REQUEST);
+            }
+        } else {
+            notifications = notificationRepository.findByUserOrderByIdDesc(user, pageable);
+        }
+        
+        boolean hasNext = notifications.size() > size;
+        if (hasNext) {
+            notifications = notifications.subList(0, size);
+        }
+        
+        String nextCursor = hasNext && !notifications.isEmpty() 
+            ? String.valueOf(notifications.get(notifications.size() - 1).getId()) 
+            : null;
+            
+        List<NotificationResponseDto> notificationDtos = notifications.stream()
+                .map(NotificationResponseDto::of)
+                .collect(Collectors.toList());
+        
+        return new CursorPageResponse<>(notificationDtos, nextCursor, hasNext, size);
     }
 }

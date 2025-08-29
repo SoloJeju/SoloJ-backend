@@ -26,4 +26,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     void markAsReadByIds(@Param("ids") List<Long> ids, @Param("user") User user);
     
     List<Notification> findByUserAndIsReadFalseOrderByCreatedAtDesc(User user);
+    
+    @Query("SELECT n FROM Notification n WHERE n.user = :user AND n.id < :cursor ORDER BY n.id DESC")
+    List<Notification> findByUserAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, org.springframework.data.domain.Pageable pageable);
+    
+    @Query("SELECT n FROM Notification n WHERE n.user = :user ORDER BY n.id DESC")
+    List<Notification> findByUserOrderByIdDesc(@Param("user") User user, org.springframework.data.domain.Pageable pageable);
 }
