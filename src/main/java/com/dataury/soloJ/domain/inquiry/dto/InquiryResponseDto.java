@@ -48,6 +48,10 @@ public class InquiryResponseDto {
     // 첨부파일
     private List<InquiryAttachmentDto> attachments;
     
+    // 이미지 정보
+    private String imageUrl;
+    private String imageName;
+    
     // 상태 정보
     private boolean isReplied;
     private boolean isClosed;

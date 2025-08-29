@@ -93,7 +93,14 @@ public class AdminManagementService {
     }
 
     public ReportListResponseDto getReports(int page, int limit, String status, String reason, String type, String search) {
+        log.info("getReports called with parameters: page={}, limit={}, status={}, reason={}, type={}, search={}", 
+                page, limit, status, reason, type, search);
+        
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        // 전체 신고 수 확인
+        long totalReports = reportRepository.count();
+        log.info("Total reports in database: {}", totalReports);
         
         // 필터 파라미터 변환
         ReportStatus reportStatus = null;
@@ -109,6 +116,9 @@ public class AdminManagementService {
         String typeFilter = (type != null && !type.isEmpty() && !"all".equals(type)) ? type.toLowerCase() : null;
         String searchFilter = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
         
+        log.info("Converted filters: reportStatus={}, reasonFilter={}, typeFilter={}, searchFilter={}", 
+                reportStatus, reasonFilter, typeFilter, searchFilter);
+        
         // 필터링된 결과를 데이터베이스에서 직접 가져오기
         Page<Report> reportPage = reportRepository.findReportsWithFilters(
             reportStatus, 
@@ -117,6 +127,9 @@ public class AdminManagementService {
             searchFilter, 
             pageable
         );
+        
+        log.info("Query result: totalElements={}, totalPages={}, numberOfElements={}", 
+                reportPage.getTotalElements(), reportPage.getTotalPages(), reportPage.getNumberOfElements());
 
         List<AdminReportDto> reports = reportPage.getContent().stream()
             .map(this::convertToAdminReportDto)

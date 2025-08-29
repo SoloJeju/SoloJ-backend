@@ -4,7 +4,9 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.mypage.service.MyPageFacadeService;
+import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,43 +30,88 @@ public class MyPageController {
     private final MessageReadQueryService messageReadQueryService;
 
     @GetMapping("/chatrooms")
-    @Operation(summary = "사용자 동행방 목록 조회")
-    public ApiResponse<Page<ChatRoomListItem>> getMyChatRooms(
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+    @Operation(summary = "사용자 동행방 목록 조회", description = "커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyChatRooms(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.onSuccess(myPageFacadeService.getMyChatRooms(pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyChatRoomsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size);
+            return ApiResponse.onSuccess(myPageFacadeService.getMyChatRooms(pageable));
+        }
     }
 
     @GetMapping("/scraps")
-    @Operation(summary = "내 스크랩 목록", description = "내가 스크랩한 게시글 목록을 조회합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> getMyScrapList(
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+    @Operation(summary = "내 스크랩 목록", description = "내가 스크랩한 게시글 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyScrapList(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.onSuccess(myPageFacadeService.getMyScrapList(pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyScrapListByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(myPageFacadeService.getMyScrapList(pageable));
+        }
     }
 
     @GetMapping("/posts")
-    @Operation(summary = "내가 쓴 게시글 목록", description = "내가 작성한 게시글 목록을 조회합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> getMyPosts(
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+    @Operation(summary = "내가 쓴 게시글 목록", description = "내가 작성한 게시글 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyPosts(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.onSuccess(myPageFacadeService.getMyPosts(pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyPostsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(myPageFacadeService.getMyPosts(pageable));
+        }
     }
 
     @GetMapping("/commented-posts")
-    @Operation(summary = "내가 댓글 단 게시글 목록", description = "내가 댓글을 단 게시글 목록을 조회합니다.")
-    public ApiResponse<Page<PostResponseDto.PostListItemDto>> getMyCommentedPosts(
-            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+    @Operation(summary = "내가 댓글 단 게시글 목록", description = "내가 댓글을 단 게시글 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyCommentedPosts(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
-        return ApiResponse.onSuccess(myPageFacadeService.getMyCommentedPosts(pageable));
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyCommentedPostsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+            return ApiResponse.onSuccess(myPageFacadeService.getMyCommentedPosts(pageable));
+        }
+    }
+
+    @GetMapping("/reviews")
+    @Operation(summary = "내가 쓴 리뷰 목록", description = "내가 작성한 리뷰 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyReviews(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyReviewsByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(myPageFacadeService.getMyReviews(pageable));
+        }
     }
 
     @GetMapping("/unread-messages")

@@ -29,4 +29,7 @@ public class InquiryRequestDto {
     private InquiryCategory category;
 
     private List<String> attachmentUrls;
+    
+    private String imageUrl;      // 문의 이미지 URL (선택사항)
+    private String imageName;     // 문의 이미지 파일명 (선택사항)
 }

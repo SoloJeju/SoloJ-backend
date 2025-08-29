@@ -21,7 +21,7 @@ public interface ReviewAggregateRepository extends JpaRepository<Review, Long> {
       ROUND(100 * SUM(CASE WHEN r.difficulty='EASY'   THEN 1 ELSE 0 END) / COUNT(*), 1) AS easyPct,
       ROUND(100 * SUM(CASE WHEN r.difficulty='MEDIUM' THEN 1 ELSE 0 END) / COUNT(*), 1) AS mediumPct,
       ROUND(100 * SUM(CASE WHEN r.difficulty='HARD'   THEN 1 ELSE 0 END) / COUNT(*), 1) AS hardPct
-    FROM review r
+    FROM reviews r
     WHERE r.tourist_spot_id = :spotId
       AND r.difficulty <> 'NONE'
     GROUP BY r.tourist_spot_id
@@ -33,8 +33,8 @@ public interface ReviewAggregateRepository extends JpaRepository<Review, Long> {
            ROUND(100 * cnt / NULLIF(SUM(cnt) OVER (), 0), 1) AS pct
     FROM (
       SELECT rt.tag AS tag, COUNT(*) AS cnt
-      FROM review_tag rt
-      JOIN review r ON r.review_id = rt.review_id
+      FROM review_tags rt
+      JOIN reviews r ON r.id = rt.review_id
       WHERE r.tourist_spot_id = :spotId
       GROUP BY rt.tag
     ) t

@@ -7,3 +7,4 @@ public enum PostCategory {
     SOLO_CHALLENGE      // 혼놀챌린지(이벤트)
 }
 
+

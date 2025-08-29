@@ -51,6 +51,12 @@ public class Inquiry extends BaseEntity {
     @Column(length = 50)
     private String userEmail;
 
+    @Column(length = 500)
+    private String imageUrl; // 문의 이미지 URL
+
+    @Column(length = 255)
+    private String imageName; // 문의 이미지 파일명
+
     // 관리자 관련 필드
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_admin_id")

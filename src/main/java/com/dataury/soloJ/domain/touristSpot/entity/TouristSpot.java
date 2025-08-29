@@ -44,10 +44,18 @@ public class TouristSpot extends BaseEntity {
     @Builder.Default
     private boolean hasCompanionRoom = false;
 
+    @Column(nullable = true)
+    @Builder.Default
+    private Double averageRating = null;
+
 
     public void updateMainStats(Difficulty difficulty, ReviewTags tag) {
         this.difficulty = difficulty != null ? difficulty : Difficulty.NONE;
         this.reviewTag = tag;
+    }
+
+    public void updateAverageRating(Double averageRating) {
+        this.averageRating = averageRating != null ? averageRating : 0.0;
     }
 
 }

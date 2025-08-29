@@ -10,6 +10,7 @@ import com.dataury.soloJ.domain.touristSpot.service.SpotSearchService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -103,13 +104,13 @@ public class TourSpotController {
         return ApiResponse.onSuccess(nearbySpotService.getNearbySpots(request));
     }
     
-    @Operation(summary = "관광지 검색", description = "제목으로 관광지를 검색합니다. DB와 TourAPI 모두에서 검색합니다.")
+    @Operation(summary = "관광지 검색", description = "제목으로 관광지를 검색합니다. 커서가 제공되면 커서 기반 페이지네이션(DB 검색)을 사용하고, 없으면 offset 기반(DB + TourAPI 통합 검색)을 사용합니다.")
     @PostMapping("/search")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<TourSpotResponse.SpotSearchListResponse> searchTouristSpots(
+    public ApiResponse<?> searchTouristSpots(
             @RequestBody TourSpotRequest.SpotSearchRequestDto request) {
         return ApiResponse.onSuccess(spotSearchService.searchSpots(request));
     }

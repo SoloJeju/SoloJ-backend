@@ -79,6 +79,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     
     // 신고 목록 조회를 위한 복잡한 쿼리 메서드 추가
     @Query("SELECT r FROM Report r " +
+           "LEFT JOIN r.reporter reporter " +
+           "LEFT JOIN r.targetUser targetUser " +
+           "LEFT JOIN r.targetPost targetPost " +
+           "LEFT JOIN r.targetComment targetComment " +
            "WHERE (:status IS NULL OR r.status = :status) " +
            "AND (:reason IS NULL OR r.reason = :reason) " +
            "AND (:type IS NULL OR " +
@@ -86,10 +90,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
            "     (:type = 'comment' AND r.targetComment IS NOT NULL) OR " +
            "     (:type = 'user' AND r.targetUser IS NOT NULL AND r.targetPost IS NULL AND r.targetComment IS NULL)) " +
            "AND (:search IS NULL OR :search = '' OR " +
-           "     LOWER(r.reporter.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(r.targetUser.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     (r.targetPost IS NOT NULL AND LOWER(r.targetPost.title) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
-           "     (r.targetComment IS NOT NULL AND LOWER(r.targetComment.content) LIKE LOWER(CONCAT('%', :search, '%'))))")
+           "     LOWER(reporter.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     LOWER(targetUser.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     (targetPost IS NOT NULL AND LOWER(targetPost.title) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
+           "     (targetComment IS NOT NULL AND LOWER(targetComment.content) LIKE LOWER(CONCAT('%', :search, '%'))))")
     Page<Report> findReportsWithFilters(@Param("status") ReportStatus status, 
                                        @Param("reason") String reason,
                                        @Param("type") String type,

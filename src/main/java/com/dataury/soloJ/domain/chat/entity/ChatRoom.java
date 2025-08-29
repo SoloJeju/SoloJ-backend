@@ -38,6 +38,9 @@ public class ChatRoom extends BaseEntity {
     @Column
     private Long numberOfMembers;
 
+    @Column(name = "max_members")
+    private Long maxMembers;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tourist_spot_id")
     private TouristSpot touristSpot;

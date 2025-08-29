@@ -31,6 +31,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private TokenProvider tokenProvider;
 
+    private static final List<String> WHITELIST = List.of(
+            "/api/reports/reasons",
+            "/api/inquiries/categories"
+    );
+
+    private boolean isWhitelisted(HttpServletRequest req) {
+        String uri = req.getRequestURI();
+        String method = req.getMethod();
+        // 필요하면 메서드까지 체크
+        return WHITELIST.stream().anyMatch(uri::equals);
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {

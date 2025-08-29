@@ -20,5 +20,7 @@ public class ReportResponseDto {
     private String detail;
     private ReportStatus status;
     private LocalDateTime createdAt;
+    private String imageUrl;         // 신고 이미지 URL
+    private String imageName;        // 신고 이미지 파일명
     private String message;          // 성공 메시지
 }

@@ -76,6 +76,23 @@ public class NotificationService {
     }
     
     @Transactional
+    public void markAsRead(Long notificationId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.NOTIFICATION_NOT_FOUND));
+        
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN);
+        }
+        
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+    }
+    
+    @Transactional
     public void createNotification(User user, Type type, String message, ResourceType resourceType, Long resourceId) {
         Notification notification = Notification.builder()
                 .user(user)

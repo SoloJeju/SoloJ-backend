@@ -3,6 +3,7 @@ package com.dataury.soloJ.domain.review.service;
 import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.review.entity.status.ReviewTags;
 import com.dataury.soloJ.domain.review.repository.ReviewAggregateRepository;
+import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SpotAggReadService {
     private final ReviewAggregateRepository aggRepo;
+    private final ReviewRepository reviewRepository;
 
     @Cacheable(cacheNames = "spotAggPct", key = "#spotId")
     public ReviewListWithSpotAggResponse.SpotAggDto load(Long spotId) {
@@ -34,9 +36,13 @@ public class SpotAggReadService {
             );
         }).toList();
 
+        // 평균 rating 조회
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(spotId);
+
         return ReviewListWithSpotAggResponse.SpotAggDto.builder()
                 .spotId(spotId).totalReviews(total)
                 .easyPct(easy).mediumPct(med).hardPct(hard)
+                .averageRating(averageRating)
                 .topTags(top).build();
     }
 

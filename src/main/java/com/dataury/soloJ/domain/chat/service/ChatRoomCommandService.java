@@ -118,7 +118,8 @@ public class ChatRoomCommandService {
                 .chatRoomDescription(request.getDescription())
                 .touristSpot(touristSpot)
                 .joinDate(request.getJoinDate())
-                .numberOfMembers(request.getMaxMembers())
+                .numberOfMembers(1L)  // 현재 인원은 1명 (방장)
+                .maxMembers(request.getMaxMembers())  // 최대 인원
                 .genderRestriction(request.getGenderRestriction())
                 .isCompleted(false)
                 .build();
@@ -134,7 +135,7 @@ public class ChatRoomCommandService {
                 .touristSpotName(touristSpot.getName())
                 .contentId(touristSpot.getContentId())
                 .joinDate(chatRoom.getJoinDate())
-                .maxMembers(chatRoom.getNumberOfMembers())
+                .maxMembers(chatRoom.getMaxMembers())
                 .currentMembers(1)
                 .genderRestriction(chatRoom.getGenderRestriction())
                 .createdAt(chatRoom.getCreatedAt())
@@ -165,7 +166,7 @@ public class ChatRoomCommandService {
 
         // 최대 인원 확인
         List<JoinChat> currentMembers = joinChatRepository.findByChatRoomIdAndStatus(chatRoomId, JoinChatStatus.ACTIVE);
-        if (currentMembers.size() >= chatRoom.getNumberOfMembers()) {
+        if (currentMembers.size() >= chatRoom.getMaxMembers()) {
             throw new GeneralException(ErrorStatus.CHATROOM_FULL);
         }
 
@@ -176,7 +177,7 @@ public class ChatRoomCommandService {
                 .chatRoomId(chatRoomId)
                 .message("채팅방에 성공적으로 참가했습니다.")
                 .currentMembers(currentMembers.size() + 1)
-                .maxMembers(chatRoom.getNumberOfMembers())
+                .maxMembers(chatRoom.getMaxMembers())
                 .build();
     }
 

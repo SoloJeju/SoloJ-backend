@@ -40,6 +40,7 @@ public class TourSpotRequest {
         private Integer areaCode;      // 지역 코드 (기본값 39: 제주)
         private Integer contentTypeId; // 관광 타입 필터 (옵션)
         private Difficulty difficulty; // 혼놀 난이도 필터 (옵션)
+        private String cursor;         // 커서 (커서 기반 페이지네이션용)
         private Integer page;          // 페이지 번호 (기본값 0)
         private Integer size;          // 페이지 크기 (기본값 20)
         

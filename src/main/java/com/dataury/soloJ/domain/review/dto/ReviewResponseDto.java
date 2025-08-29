@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class ReviewResponseDto {
@@ -42,6 +43,7 @@ public class ReviewResponseDto {
         private Difficulty difficulty;
         private LocalDate visitDate; // 엔티티에 맞춰 LocalDate 또는 LocalDateTime
         private Boolean receipt;
+        private Integer rating;
         private String thumbnailUrl;
         private String thumbnailName;
         private List<ImageDto> images;
@@ -54,6 +56,30 @@ public class ReviewResponseDto {
         private int code;
         private String description;
         private boolean selected;
+    }
+
+    // 리뷰 목록 조회용 DTO
+    @Getter @Builder
+    @AllArgsConstructor
+    public static class ReviewListDto {
+        private Long id;
+        private Long touristSpotId;
+        private String touristSpotName;
+        private String touristSpotImage;
+        private Double touristSpotAverageRating;
+        private String reviewText;
+        private Difficulty difficulty;
+        private LocalDate visitDate;
+        private Boolean receipt;
+        private Integer rating;
+        private String thumbnailUrl;
+        private String thumbnailName;
+        private List<String> tags;
+        private List<ImageDto> images;
+        private Long userId;
+        private String userNickname;
+        private String userProfileImage;
+        private LocalDateTime createdAt;
     }
 
 }

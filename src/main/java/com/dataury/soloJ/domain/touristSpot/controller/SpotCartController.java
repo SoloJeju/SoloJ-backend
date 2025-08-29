@@ -60,4 +60,15 @@ public class SpotCartController {
         spotCartService.clearCart();
         return ApiResponse.onSuccess("장바구니가 비워졌습니다.");
     }
+    
+    @DeleteMapping("/bulk")
+    @Operation(summary = "관광지 장바구니 일괄 삭제", description = "여러 장바구니 아이템을 한 번에 삭제합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<String> removeMultipleFromCart(@RequestBody SpotCartDto.BulkDeleteRequest request) {
+        spotCartService.removeMultipleFromCart(request);
+        return ApiResponse.onSuccess("선택한 항목들이 장바구니에서 삭제되었습니다.");
+    }
 }

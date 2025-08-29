@@ -47,6 +47,8 @@ public class InquiryService {
                 .content(requestDto.getContent())
                 .category(requestDto.getCategory())
                 .userEmail(user.getEmail())
+                .imageUrl(requestDto.getImageUrl())
+                .imageName(requestDto.getImageName())
                 .build();
 
         inquiry = inquiryRepository.save(inquiry);
@@ -118,6 +120,8 @@ public class InquiryService {
         inquiry.setContent(requestDto.getContent());
         inquiry.setCategory(requestDto.getCategory());
         inquiry.setUserEmail(user.getEmail());
+        inquiry.setImageUrl(requestDto.getImageUrl());
+        inquiry.setImageName(requestDto.getImageName());
 
         // 기존 첨부파일 삭제 후 새로 등록
         attachmentRepository.deleteByInquiryId(inquiryId);
@@ -386,6 +390,8 @@ public class InquiryService {
                 .modifiedDate(inquiry.getUpdatedAt())
                 .closedAt(inquiry.getClosedAt())
                 .attachments(attachmentDtos)
+                .imageUrl(inquiry.getImageUrl())
+                .imageName(inquiry.getImageName())
                 .isReplied(inquiry.isReplied())
                 .isClosed(inquiry.isClosed())
                 .build();

@@ -45,6 +45,9 @@ public class S3Service {
      * S3에서 이미지 삭제
      */
     public void deleteFile(String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            throw new IllegalArgumentException("The key must be specified when deleting an object");
+        }
         amazonS3.deleteObject(bucket, fileName);
     }
 

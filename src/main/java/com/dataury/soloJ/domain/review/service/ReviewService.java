@@ -15,13 +15,19 @@ import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +53,12 @@ public class ReviewService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#reviewCreateDto.contentId")
     public ReviewResponseDto.ReviewDto createReview(ReviewRequestDto.ReviewCreateDto reviewCreateDto) {
+        // rating 범위 검증 (1~5)
+        if (reviewCreateDto.getRating() != null && 
+            (reviewCreateDto.getRating() < 1 || reviewCreateDto.getRating() > 5)) {
+            throw new GeneralException(ErrorStatus.INVALID_RATING_RANGE);
+        }
+        
         // 로그인한 사용자 찾기
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -73,6 +85,7 @@ public class ReviewService {
                 .difficulty(reviewCreateDto.getDifficulty())
                 .visitDate(reviewCreateDto.getVisitDate())
                 .receipt(reviewCreateDto.getReceipt())
+                .rating(reviewCreateDto.getRating())
                 .thumbnailUrl(thumbnailUrl)
                 .thumbnailName(thumbnailName)
                 .build();
@@ -113,8 +126,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
 
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
 
         evictSpotCaches(touristSpot.getContentId());
@@ -129,6 +145,12 @@ public class ReviewService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#review.touristSpot.contentId")
     public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto request) {
+        // rating 범위 검증 (1~5)
+        if (request.getRating() != null && 
+            (request.getRating() < 1 || request.getRating() > 5)) {
+            throw new GeneralException(ErrorStatus.INVALID_RATING_RANGE);
+        }
+        
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
@@ -144,7 +166,8 @@ public class ReviewService {
         review.updateReview(
                 request.getText(),
                 request.getDifficulty(),
-                request.getVisitDate()
+                request.getVisitDate(),
+                request.getRating()
         );
 
         // (1) 삭제할 이미지 반영
@@ -199,7 +222,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
+
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
         evictSpotCaches(touristSpot.getContentId());
 
@@ -239,7 +266,11 @@ public class ReviewService {
         ReviewTags mainTag = reviewTagRepository.findTagsByPopularity(touristSpot.getContentId())
                 .stream().findFirst().orElse(null);
 
+        // 평균 rating 업데이트
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(touristSpot.getContentId());
+
         touristSpot.updateMainStats(mainDiff, mainTag);
+        touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
         evictSpotCaches(touristSpot.getContentId());
     }
@@ -271,6 +302,7 @@ public class ReviewService {
                 .difficulty(review.getDifficulty())
                 .visitDate(review.getVisitDate())
                 .receipt(review.getReceipt())
+                .rating(review.getRating())
                 .thumbnailUrl(review.getThumbnailUrl())
                 .thumbnailName(review.getThumbnailName())
                 .images(review.getImages() != null ? review.getImages().stream()
@@ -297,5 +329,162 @@ public class ReviewService {
         if (c2 != null) c2.evict(spotId);
     }
 
+    // 전체 리뷰 조회 (offset 기반)
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDto.ReviewListDto> getAllReviews(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findAllReviews(pageable);
+        return reviews.map(this::convertToListDto);
+    }
+
+    // 전체 리뷰 조회 (커서 기반)
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getAllReviewsByCursor(String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findAllReviewsByCursor(cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // 내가 쓴 리뷰 조회 (offset 기반)
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDto.ReviewListDto> getMyReviews(Pageable pageable) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Page<Review> reviews = reviewRepository.findMyReviews(userId, pageable);
+        return reviews.map(this::convertToListDto);
+    }
+
+    // 내가 쓴 리뷰 조회 (커서 기반)
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getMyReviewsByCursor(String cursor, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findMyReviewsByCursor(userId, cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // 관광지별 리뷰 조회 (커서 기반) - 기존 API 보완용
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getReviewsBySpotByCursor(Long spotId, String cursor, int size) {
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Review> reviews = reviewRepository.findBySpotByCursor(spotId, cursorDateTime, pageable);
+        
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
+        
+        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
+                .map(this::convertToListDto)
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !reviews.isEmpty() 
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
+                .content(items)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(items.size())
+                .build();
+    }
+
+    // Review 엔티티를 ReviewListDto로 변환
+    private ReviewResponseDto.ReviewListDto convertToListDto(Review review) {
+        List<String> tagDescriptions = review.getReviewTags() != null 
+                ? review.getReviewTags().stream()
+                    .map(rt -> rt.getTag().getDescription())
+                    .collect(Collectors.toList())
+                : new ArrayList<>();
+        
+        List<ReviewResponseDto.ImageDto> images = review.getImages() != null
+                ? review.getImages().stream()
+                    .map(img -> ReviewResponseDto.ImageDto.builder()
+                            .imageUrl(img.getImageUrl())
+                            .imageName(img.getImageName())
+                            .build())
+                    .collect(Collectors.toList())
+                : new ArrayList<>();
+        
+        return ReviewResponseDto.ReviewListDto.builder()
+                .id(review.getId())
+                .touristSpotId(review.getTouristSpot().getContentId())
+                .touristSpotName(review.getTouristSpot().getName())
+                .touristSpotImage(review.getTouristSpot().getFirstImage())
+                .touristSpotAverageRating(review.getTouristSpot().getAverageRating())
+                .reviewText(review.getReviewText())
+                .difficulty(review.getDifficulty())
+                .visitDate(review.getVisitDate())
+                .receipt(review.getReceipt())
+                .rating(review.getRating())
+                .thumbnailUrl(review.getThumbnailUrl())
+                .thumbnailName(review.getThumbnailName())
+                .tags(tagDescriptions)
+                .images(images)
+                .userId(review.getUser().getId())
+                .userNickname(review.getUser().getUserProfile().getNickName())
+                .userProfileImage(review.getUser().getUserProfile().getImageUrl())
+                .createdAt(review.getCreatedAt())
+                .build();
+    }
+
+    private String encodeCursor(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        String formatted = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return Base64.getEncoder().encodeToString(formatted.getBytes());
+    }
+
+    private LocalDateTime decodeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(cursor));
+            return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 }
