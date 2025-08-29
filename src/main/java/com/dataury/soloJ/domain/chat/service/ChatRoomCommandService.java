@@ -127,6 +127,10 @@ public class ChatRoomCommandService {
         chatRoom = chatRoomRepository.save(chatRoom);
 
         addUserToChatRoom(chatRoom, user);
+        
+        // 동행방 참여 횟수 증가 (채팅방 생성자도 참여자이므로)
+        user.incrementGroupChatCount();
+        userRepository.save(user);
 
         return ChatRoomResponseDto.CreateChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getId())
@@ -172,6 +176,10 @@ public class ChatRoomCommandService {
 
         // 사용자 추가
         addUserToChatRoom(chatRoom, user);
+        
+        // 동행방 참여 횟수 증가
+        user.incrementGroupChatCount();
+        userRepository.save(user);
 
         return ChatRoomResponseDto.JoinChatRoomResponse.builder()
                 .chatRoomId(chatRoomId)

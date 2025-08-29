@@ -54,6 +54,14 @@ public class User extends BaseEntity{
     @Builder.Default
     private boolean active = true;
 
+    @Column(name = "solo_plan_count")
+    @Builder.Default
+    private Integer soloPlanCount = 0;
+
+    @Column(name = "group_chat_count")
+    @Builder.Default
+    private Integer groupChatCount = 0;
+
 
     // ========= 비즈니스 로직 ========= //
 
@@ -79,6 +87,14 @@ public class User extends BaseEntity{
 
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
+    }
+
+    public void incrementSoloPlanCount() {
+        this.soloPlanCount++;
+    }
+
+    public void incrementGroupChatCount() {
+        this.groupChatCount++;
     }
 
 }

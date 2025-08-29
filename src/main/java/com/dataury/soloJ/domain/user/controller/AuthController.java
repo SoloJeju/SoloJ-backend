@@ -3,9 +3,12 @@ package com.dataury.soloJ.domain.user.controller;
 import com.dataury.soloJ.domain.user.converter.AuthConverter;
 import com.dataury.soloJ.domain.user.dto.AuthRequestDTO;
 import com.dataury.soloJ.domain.user.dto.AuthResponseDTO;
+import com.dataury.soloJ.domain.user.dto.UserRequestDto;
+import com.dataury.soloJ.domain.user.dto.UserResponseDto;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.service.AuthService;
 import com.dataury.soloJ.domain.user.service.MailService;
+import com.dataury.soloJ.domain.user.service.UserService;
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
@@ -27,6 +30,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final MailService mailService;
+    private final UserService userService;
 
 
     @PostMapping("/adminSignup")

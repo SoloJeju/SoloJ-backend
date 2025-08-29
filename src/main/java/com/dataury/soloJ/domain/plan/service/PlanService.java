@@ -54,6 +54,8 @@ public class PlanService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         plan.settingUser(user);
+        
+        user.incrementSoloPlanCount();
 
         int i = 0;
         for (DayPlanDto day : dto.getDays()) {
@@ -66,6 +68,7 @@ public class PlanService {
         }
 
         Plan newPlan = planRepository.save(plan);
+        userRepository.save(user);
         joinPlanLocationRepository.saveAll(locations);
 
         return PlanResponseDto.planDto.builder()
