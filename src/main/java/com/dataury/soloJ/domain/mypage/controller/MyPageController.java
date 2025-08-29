@@ -116,8 +116,7 @@ public class MyPageController {
         boolean hasUnread = messageReadQueryService.hasAnyUnreadMessages();
         return ApiResponse.onSuccess(hasUnread);
     }
-
-
+    
     @GetMapping("/profile")
     @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필 정보를 조회합니다.")
     public ApiResponse<UserResponseDto.MyInfoDto> getMyProfile() {
@@ -144,4 +143,3 @@ public class MyPageController {
     }
 
 }
-
