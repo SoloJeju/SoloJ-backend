@@ -50,6 +50,8 @@ public class WebSecurityConfig {
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/inquiries/categories","/api/reports/reasons").permitAll()
                 .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                 .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/login", "/oauth2/**").permitAll()

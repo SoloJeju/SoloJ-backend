@@ -122,6 +122,9 @@ public class ReportService {
                 .targetComment(targetComment)
                 .reason(dto.getReason())
                 .detail(dto.getDetail())
+                .evidence(dto.getEvidence())
+                .imageUrl(dto.getImageUrl())
+                .imageName(dto.getImageName())
                 .status(ReportStatus.PENDING)
                 .build();
 
@@ -139,6 +142,8 @@ public class ReportService {
                 .detail(dto.getDetail())
                 .status(ReportStatus.PENDING)
                 .createdAt(report.getCreatedAt())
+                .imageUrl(report.getImageUrl())
+                .imageName(report.getImageName())
                 .message("신고가 접수되었습니다.")
                 .build();
     }
@@ -492,7 +497,9 @@ public class ReportService {
                 .reason(report.getReason())
                 .reasonName(REPORT_REASONS.get(report.getReason()))
                 .detail(report.getDetail())
-                .evidence(null) // TODO: Report 엔티티에 evidence 필드 추가 필요
+                .evidence(report.getEvidence())
+                .imageUrl(report.getImageUrl())
+                .imageName(report.getImageName())
                 .status(report.getStatus())
                 .statusName(STATUS_NAMES.get(report.getStatus()))
                 .createdAt(report.getCreatedAt())

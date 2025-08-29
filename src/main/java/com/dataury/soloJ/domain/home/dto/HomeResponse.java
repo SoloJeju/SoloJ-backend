@@ -43,6 +43,7 @@ public class HomeResponse {
         private String spotName;        // 관광지 이름
         private String spotImage;       // 관광지 사진
         private String content;         // 리뷰 내용
+        private Integer rating;         // 별점
     }
     
     @Data

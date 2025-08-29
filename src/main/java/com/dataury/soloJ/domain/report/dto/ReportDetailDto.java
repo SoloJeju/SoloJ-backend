@@ -24,6 +24,8 @@ public class ReportDetailDto {
     private String reasonName;           // 신고 사유 한글명
     private String detail;
     private String evidence;             // 증거 자료 URL
+    private String imageUrl;            // 신고 이미지 URL
+    private String imageName;           // 신고 이미지 파일명
     private ReportStatus status;
     private String statusName;           // 상태 한글명
     private LocalDateTime createdAt;

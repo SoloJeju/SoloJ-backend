@@ -48,6 +48,13 @@ public class NotificationController {
         return ApiResponse.of(SuccessStatus._OK, null);
     }
     
+    @PutMapping("/{notificationId}/read")
+    @Operation(summary = "단일 알림 확인처리", description = "특정 알림을 읽음 처리합니다")
+    public ApiResponse<Void> markAsRead(@PathVariable Long notificationId) {
+        notificationService.markAsRead(notificationId);
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+    
     @PostMapping("/fcm-token")
     @Operation(summary = "FCM 토큰 등록", description = "FCM 푸시 알림을 위한 토큰을 등록합니다")
     public ApiResponse<Void> registerFcmToken(

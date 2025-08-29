@@ -101,6 +101,7 @@ public class HomeService {
                         .spotName(review.getTouristSpot().getName())        // 관광지 이름
                         .spotImage(review.getTouristSpot().getFirstImage()) // 관광지 사진
                         .content(review.getReviewText())                       // 리뷰 내용
+                        .rating(review.getRating())                            // 별점
                         .build())
                 .collect(Collectors.toList());
         
@@ -167,7 +168,7 @@ public class HomeService {
                         .spotName(room.getTouristSpot().getName())
                         .spotImage(room.getTouristSpot().getFirstImage()) // 관광지 사진 추가
                         .currentParticipants(room.getNumberOfMembers().intValue())
-                        .maxParticipants(10) // 기본값 (실제로는 설정값 사용)
+                        .maxParticipants(room.getMaxMembers() != null ? room.getMaxMembers().intValue() : 10) // 최대 인원
                         .scheduledDate(room.getJoinDate())
                         .hostNickname("익명") // 현재 host 정보가 없으므로 기본값
                         .genderRestriction(room.getGenderRestriction()) // 성별 제한 정보 추가

@@ -22,6 +22,7 @@ public class TourSpotReviewResponse {
         private Difficulty difficulty;
         private LocalDate visitDate;
         private Boolean receipt;
+        private Integer rating;
         private String userNickname;
         private String userProfileImage;
         private String thumbnailUrl;

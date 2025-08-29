@@ -26,4 +26,7 @@ public class ReportRequestDto {
     private String detail;        // 상세 설명 (선택사항)
     
     private String evidence;      // 증거 자료 URL (선택사항)
+    
+    private String imageUrl;      // 신고 이미지 URL (선택사항)
+    private String imageName;     // 신고 이미지 파일명 (선택사항)
 }

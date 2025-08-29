@@ -71,8 +71,8 @@ spring:
       database: 0
       repositories:
         enabled: false
-#  flyway:
-#    enabled: true
+  flyway:
+    enabled: false
 #    baseline-on-migrate: true
 #    baseline-version: 0
 #    locations: classpath:db/migration
@@ -85,7 +85,10 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.metrics.JvmMetricsAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.metrics.LogbackMetricsAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
-
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
 
 jwt:
   secret: ${JWT_SECRET:myVeryLongSecretKeyForJWTTokenSigningThatIsAtLeast512BitsLongForHS512Algorithm1234567890}
@@ -132,3 +135,9 @@ management:
       mongo: false    # 몽고 안 씀
       process: false
 
+
+
+server:
+  tomcat:
+    max-http-form-post-size: -1  # 폼 POST 제한 해제(또는 충분히 크게)
+    max-swallow-size: -1         # 업로드 중단 시 버퍼 제한 해제

@@ -52,6 +52,12 @@ public class Report extends BaseEntity {
     @Column(length = 500)
     private String evidence; // 신고 증거자료
 
+    @Column(length = 500)
+    private String imageUrl; // 신고 이미지 URL
+
+    @Column(length = 255)
+    private String imageName; // 신고 이미지 파일명
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReportStatus status; // PENDING, REVIEWED, ACTION_TAKEN
