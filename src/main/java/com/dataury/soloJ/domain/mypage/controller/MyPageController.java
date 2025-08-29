@@ -4,6 +4,9 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.mypage.service.MyPageFacadeService;
+import com.dataury.soloJ.domain.user.dto.UserRequestDto;
+import com.dataury.soloJ.domain.user.dto.UserResponseDto;
+import com.dataury.soloJ.domain.user.service.UserService;
 import com.dataury.soloJ.global.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,10 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -26,6 +26,7 @@ public class MyPageController {
 
     private final MyPageFacadeService myPageFacadeService;
     private final MessageReadQueryService messageReadQueryService;
+    private final UserService userService;
 
     @GetMapping("/chatrooms")
     @Operation(summary = "사용자 동행방 목록 조회")
@@ -72,5 +73,30 @@ public class MyPageController {
     public ApiResponse<Boolean> hasUnreadMessages() {
         boolean hasUnread = messageReadQueryService.hasAnyUnreadMessages();
         return ApiResponse.onSuccess(hasUnread);
+    }
+
+    @GetMapping("/profile")
+    @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필 정보를 조회합니다.")
+    public ApiResponse<UserResponseDto.MyInfoDto> getMyProfile() {
+        return ApiResponse.onSuccess(userService.getMyInfo());
+    }
+
+    @GetMapping("/profile/{userId}")
+    @Operation(summary = "다른 사용자 프로필 조회", description = "특정 사용자의 프로필 정보를 조회합니다.")
+    public ApiResponse<UserResponseDto.ProfileDto> getUserProfile(@PathVariable Long userId) {
+        return ApiResponse.onSuccess(userService.getUserProfile(userId));
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "내 프로필 수정", description = "현재 로그인한 사용자의 프로필 정보를 수정합니다.")
+    public ApiResponse<UserResponseDto.MyInfoDto> updateMyProfile(@RequestBody UserRequestDto.UpdateProfileDto request) {
+        return ApiResponse.onSuccess(userService.updateProfile(request));
+    }
+
+    @DeleteMapping("/profile")
+    @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자를 탈퇴 처리합니다.")
+    public ApiResponse<String> deleteUser() {
+        userService.deleteUser();
+        return ApiResponse.onSuccess("회원 탈퇴가 완료되었습니다.");
     }
 }
