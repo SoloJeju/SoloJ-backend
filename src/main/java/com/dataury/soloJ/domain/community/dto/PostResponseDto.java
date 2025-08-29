@@ -60,7 +60,6 @@ public class PostResponseDto {
         private String thumbnailUrl;
         private String thumbnailName;
         private List<ImageDto> images;
-        private List<CommentResponseDto.CommentDto> comments;
     }
 
     @Getter

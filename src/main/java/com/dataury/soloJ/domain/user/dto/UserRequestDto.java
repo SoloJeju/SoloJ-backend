@@ -17,9 +17,7 @@ public class UserRequestDto {
     @AllArgsConstructor
     public static class UpdateProfileDto {
         private String nickName;
+        private String imageName;
         private String imageUrl;
-        private LocalDate birth;
-        private Gender gender;
-        private Country country;
     }
 }

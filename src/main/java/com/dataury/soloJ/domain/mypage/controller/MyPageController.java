@@ -141,4 +141,21 @@ public class MyPageController {
         userService.deleteUser();
         return ApiResponse.onSuccess("회원 탈퇴가 완료되었습니다.");
     }
+
+    @GetMapping("/plans")
+    @Operation(summary = "내 계획 목록", description = "내가 작성한 계획 목록을 조회합니다. 커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 offset 기반을 사용합니다.")
+    public ApiResponse<?> getMyPlans(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 번호 (offset 기반용)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(myPageFacadeService.getMyPlansByCursor(cursor, size));
+        } else {
+            // 기존 offset 기반 페이지네이션
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ApiResponse.onSuccess(myPageFacadeService.getMyPlans(pageable));
+        }
+    }
 }

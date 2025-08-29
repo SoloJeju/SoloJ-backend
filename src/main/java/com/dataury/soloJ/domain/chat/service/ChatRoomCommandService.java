@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,6 +112,11 @@ public class ChatRoomCommandService {
         // 관광지 조회
         TouristSpot touristSpot = touristSpotRepository.findById(request.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
+
+        // joinDate 유효성 검사 - 현재 시간 이전이면 에러
+        if (request.getJoinDate().isBefore(LocalDateTime.now())) {
+            throw new GeneralException(ErrorStatus.INVALID_JOIN_DATE);
+        }
 
         // 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()

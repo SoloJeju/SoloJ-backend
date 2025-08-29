@@ -48,6 +48,20 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         
+        // 탈퇴한 사용자인 경우 탈퇴 정보만 반환
+        if (!user.isActive()) {
+            return UserResponseDto.ProfileDto.builder()
+                    .userId(user.getId())
+                    .nickName("탈퇴한 사용자입니다")
+                    .imageUrl(null)
+                    .birth(null)
+                    .gender(null)
+                    .country(null)
+                    .soloPlanCount(0)
+                    .groupChatCount(0)
+                    .build();
+        }
+        
         UserProfile userProfile = userProfileRepository.findByUser(user).orElse(null);
         
         return UserResponseDto.ProfileDto.builder()
@@ -72,14 +86,14 @@ public class UserService {
         UserProfile userProfile = userProfileRepository.findByUser(user)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_PROFILE_NOT_FOUND));
         
-        // 프로필 업데이트
+        // 프로필 업데이트 (null이 아닌 값들만 업데이트)
         userProfile.updateProfile(
-                request.getNickName(),
-                request.getBirth(),
-                request.getGender(),
+                request.getNickName() != null ? request.getNickName() : userProfile.getNickName(),
+                userProfile.getBirthDate(),
+                userProfile.getGender(),
                 userProfile.getUserType(),
-                userProfile.getImageName(),
-                request.getImageUrl()
+                request.getImageName() != null ? request.getImageName() : userProfile.getImageName(),
+                request.getImageUrl() != null ? request.getImageUrl() : userProfile.getImageUrl()
         );
         
         userProfileRepository.save(userProfile);

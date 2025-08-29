@@ -1,6 +1,5 @@
 package com.dataury.soloJ.domain.community.service;
 
-import com.dataury.soloJ.domain.community.dto.CommentResponseDto;
 import com.dataury.soloJ.domain.community.dto.PostRequestDto;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.entity.Post;
@@ -14,8 +13,8 @@ import com.dataury.soloJ.domain.user.entity.UserProfile;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
-import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.dto.CursorPageResponse;
+import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
@@ -184,36 +183,6 @@ public class PostService {
         Post post = postRepository.findByIdWithUser(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
 
-        List<CommentResponseDto.CommentDto> comments = commentRepository.findByPostIdWithUser(postId)
-                .stream()
-                .map(comment -> {
-                    // 삭제된 댓글인 경우
-                    if (comment.isDeleted()) {
-                        return CommentResponseDto.CommentDto.builder()
-                                .commentId(comment.getId())
-                                .content("삭제된 댓글입니다.")
-                                .isDeleted(true)
-                                .createdAt(comment.getCreatedAt())
-                                .build();
-                    }
-                    
-                    // 삭제되지 않은 댓글인 경우
-                    UserProfile profile = userProfileRepository.findByUser(comment.getUser())
-                            .orElse(null);
-                    
-                    return CommentResponseDto.CommentDto.builder()
-                            .commentId(comment.getId())
-                            .content(comment.getContent())
-                            .authorNickname(profile != null ? profile.getNickName() : "익명")
-                            .authorId(comment.getUser().getId())
-                            .authorProfileImage(profile != null ? profile.getImageUrl() : null)
-                            .isMine(currentUserId != null && comment.getUser().getId().equals(currentUserId))
-                            .isDeleted(false)
-                            .createdAt(comment.getCreatedAt())
-                            .build();
-                })
-                .collect(Collectors.toList());
-
         UserProfile authorProfile = userProfileRepository.findByUser(post.getUser())
                 .orElse(null);
 
@@ -239,7 +208,6 @@ public class PostService {
                                 .imageName(img.getImageName())
                                 .build())
                         .collect(Collectors.toList()) : new ArrayList<>())
-                .comments(comments)
                 .build();
     }
 

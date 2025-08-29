@@ -67,6 +67,7 @@ public class TourSpotService {
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .firstImage(item.getFirstimage())
+                        .address(item.getAddr1())  // 주소 저장 추가
                         .hasCompanionRoom(false)
                         .build());
             }

@@ -10,6 +10,8 @@ import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.chat.repository.MessageRepository;
 import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,14 @@ public class MessageCommandService {
 
     @Transactional
     public void processMessage(Message message) {
+        // 채팅방 완료 상태 확인
+        ChatRoom chatRoom = chatRoomRepository.findById(message.getRoomId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+        
+        if (chatRoom.getIsCompleted()) {
+            throw new GeneralException(ErrorStatus.CHATROOM_COMPLETED);
+        }
+        
         // Redis에만 임시 저장 (MySQL 배치 저장은 스케줄러가 처리)
         saveMessageToRedis(message);   // Redis에 캐시
         broadcastMessage(message);
