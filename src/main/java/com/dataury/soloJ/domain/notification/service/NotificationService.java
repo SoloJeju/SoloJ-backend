@@ -35,19 +35,28 @@ public class NotificationService {
     private final FCMService fcmService;
     private final FCMConfig fcmConfig;
     
-    public NotificationListDto getMyNotifications() {
+    public CursorPageResponse<NotificationResponseDto> getMyNotifications(int size) {
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         
-        List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        List<Notification> notifications = notificationRepository.findByUserOrderByIdDesc(user, pageable);
+        
+        boolean hasNext = notifications.size() > size;
+        if (hasNext) {
+            notifications = notifications.subList(0, size);
+        }
+        
+        String nextCursor = hasNext && !notifications.isEmpty() 
+            ? String.valueOf(notifications.get(notifications.size() - 1).getId()) 
+            : null;
+            
         List<NotificationResponseDto> notificationDtos = notifications.stream()
                 .map(NotificationResponseDto::of)
                 .collect(Collectors.toList());
         
-        boolean hasUnread = notifications.stream().anyMatch(n -> !n.getIsRead());
-        
-        return NotificationListDto.of(notificationDtos, hasUnread);
+        return new CursorPageResponse<>(notificationDtos, nextCursor, hasNext, size);
     }
     
     public boolean hasUnreadNotifications() {

@@ -21,7 +21,7 @@ public class NotificationController {
     private final NotificationService notificationService;
     
     @GetMapping
-    @Operation(summary = "내 알림 조회", description = "커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 모든 알림을 반환합니다")
+    @Operation(summary = "내 알림 조회", description = "커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 첫 페이지를 반환합니다")
     public ApiResponse<?> getMyNotifications(
             @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
@@ -30,9 +30,8 @@ public class NotificationController {
             // 커서 기반 페이지네이션
             return ApiResponse.onSuccess(notificationService.getMyNotificationsByCursor(cursor, size));
         } else {
-            // 기존 방식 (모든 알림 반환)
-            NotificationListDto notifications = notificationService.getMyNotifications();
-            return ApiResponse.onSuccess(notifications);
+            // 첫 페이지 조회
+            return ApiResponse.onSuccess(notificationService.getMyNotifications(size));
         }
     }
     
