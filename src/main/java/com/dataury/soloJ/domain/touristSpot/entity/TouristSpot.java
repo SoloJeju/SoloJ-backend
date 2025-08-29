@@ -46,7 +46,7 @@ public class TouristSpot extends BaseEntity {
 
     @Column(nullable = true)
     @Builder.Default
-    private Double averageRating = 0.0;
+    private Double averageRating = null;
 
 
     public void updateMainStats(Difficulty difficulty, ReviewTags tag) {

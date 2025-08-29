@@ -54,7 +54,7 @@ public class UserProfile {
     private Country country = Country.KOREA;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Column
     private UserType userType;
 
     @OneToOne(fetch = FetchType.LAZY)
