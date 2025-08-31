@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     
     @Query("SELECT DISTINCT c.post FROM Comment c WHERE c.user.id = :userId AND c.isVisible = true AND c.isDeleted = false ORDER BY c.createdAt DESC")
     Page<com.dataury.soloJ.domain.community.entity.Post> findPostsByUserId(@Param("userId") Long userId, Pageable pageable);
+    
+    // 커서 기반 페이지네이션용
+    @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.user WHERE c.post.id = :postId " +
+           "AND (:cursor IS NULL OR c.createdAt > :cursor) " +
+           "AND c.isVisible = true AND c.isDeleted = false " +
+           "ORDER BY c.createdAt ASC")
+    List<Comment> findByPostIdAndCursor(@Param("postId") Long postId, 
+                                       @Param("cursor") LocalDateTime cursor, 
+                                       Pageable pageable);
     
     // 관리자용 - 모든 댓글 조회
     @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.user WHERE c.post.id = :postId ORDER BY c.createdAt ASC")

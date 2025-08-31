@@ -112,6 +112,15 @@ public class CommunityController {
         return ApiResponse.onSuccess("댓글이 삭제되었습니다.");
     }
 
+    @GetMapping("/posts/{postId}/comments")
+    @Operation(summary = "게시글 댓글 목록 조회", description = "특정 게시글의 댓글 목록을 커서 기반 페이지네이션으로 조회합니다.")
+    public ApiResponse<CursorPageResponse<CommentResponseDto.CommentDto>> getCommentsByPostId(
+            @PathVariable Long postId,
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.onSuccess(commentService.getCommentsByPostId(postId, cursor, size));
+    }
+
     @PutMapping("/posts/{postId}/scrap")
     @Operation(summary = "게시글 스크랩", description = "게시글을 스크랩하거나 스크랩을 취소합니다.")
     public ApiResponse<String> toggleScrap(@PathVariable Long postId) {

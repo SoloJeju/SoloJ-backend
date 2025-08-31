@@ -6,6 +6,8 @@ import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.service.PostService;
 import com.dataury.soloJ.domain.community.service.ScrapService;
+import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
+import com.dataury.soloJ.domain.plan.service.PlanService;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.domain.review.service.ReviewService;
 import com.dataury.soloJ.global.dto.CursorPageResponse;
@@ -27,6 +29,7 @@ public class MyPageFacadeService {
     private final ScrapService scrapService;
     private final PostService postService;
     private final ReviewService reviewService;
+    private final PlanService planService;
 
     public Page<ChatRoomListItem> getMyChatRooms(Pageable pageable) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -75,5 +78,13 @@ public class MyPageFacadeService {
 
     public CursorPageResponse<ReviewResponseDto.ReviewListDto> getMyReviewsByCursor(String cursor, int size) {
         return reviewService.getMyReviewsByCursor(cursor, size);
+    }
+    
+    public Page<PlanResponseDto.PlanListItemDto> getMyPlans(Pageable pageable) {
+        return planService.getMyPlans(pageable);
+    }
+    
+    public CursorPageResponse<PlanResponseDto.PlanListItemDto> getMyPlansByCursor(String cursor, int size) {
+        return planService.getMyPlansByCursor(cursor, size);
     }
 }

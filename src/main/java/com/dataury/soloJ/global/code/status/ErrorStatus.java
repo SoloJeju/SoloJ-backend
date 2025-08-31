@@ -48,6 +48,10 @@ public enum ErrorStatus implements BaseErrorCode {
     // Plan 관련 에러
     INVALID_PLAN_DATE(HttpStatus.BAD_REQUEST, "PLAN4001", "시작 날짜는 종료 날짜보다 앞서야 합니다."),
     PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAN4002", "존재하지 않는 계획입니다."),
+
+    // ChatRoom 관련 에러  
+    INVALID_JOIN_DATE(HttpStatus.BAD_REQUEST, "CHAT4001", "만나는 날짜는 현재 시간 이후로 설정해야 합니다."),
+    CHATROOM_COMPLETED(HttpStatus.BAD_REQUEST, "CHAT4002", "완료된 채팅방에는 메시지를 전송할 수 없습니다."),
     FORBIDDEN_USER(HttpStatus.FORBIDDEN, "PLAN4003", "해당 계획에 대한 권한이 없습니다."),
 
     // Chat Error

@@ -87,8 +87,8 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
            "AND (:reason IS NULL OR r.reason = :reason) " +
            "AND (:type IS NULL OR " +
            "     (:type = 'post' AND r.targetPost IS NOT NULL) OR " +
-           "     (:type = 'comment' AND r.targetComment IS NOT NULL) OR " +
-           "     (:type = 'user' AND r.targetUser IS NOT NULL AND r.targetPost IS NULL AND r.targetComment IS NULL)) " +
+           "     (:type = 'comment' AND r.targetComment IS NOT NULL)) " +
+           "AND (r.targetPost IS NOT NULL OR r.targetComment IS NOT NULL) " +
            "AND (:search IS NULL OR :search = '' OR " +
            "     LOWER(reporter.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "     LOWER(targetUser.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +

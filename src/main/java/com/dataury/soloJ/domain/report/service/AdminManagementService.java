@@ -356,7 +356,7 @@ public class AdminManagementService {
         Page<Report> reportPage = reportRepository.findAll(pageable);
         
         List<Map<String, Object>> contents = reportPage.getContent().stream()
-            .filter(report -> report.getTargetPost() != null || report.getTargetComment() != null || report.getTargetUser() != null)
+            .filter(report -> report.getTargetPost() != null || report.getTargetComment() != null)
             .filter(report -> {
                 // 콘텐츠 유형 필터링 (type)
                 if (!"all".equals(type)) {
@@ -364,9 +364,6 @@ public class AdminManagementService {
                         return false;
                     }
                     if ("comment".equals(type) && report.getTargetComment() == null) {
-                        return false;
-                    }
-                    if ("user".equals(type) && (report.getTargetUser() == null || report.getTargetPost() != null || report.getTargetComment() != null)) {
                         return false;
                     }
                 }
@@ -406,29 +403,6 @@ public class AdminManagementService {
                         commentStatus = "hidden";
                     }
                     contentMap.put("status", commentStatus);
-                    contentMap.put("reportId", report.getId());
-                    contentMap.put("reason", report.getReason());
-                    contentMap.put("createdAt", report.getCreatedAt());
-                    return contentMap;
-                } else if (report.getTargetUser() != null && report.getTargetPost() == null && report.getTargetComment() == null) {
-                    // 사용자 신고의 경우
-                    contentMap.put("contentId", report.getTargetUser().getId());
-                    contentMap.put("contentType", "user");
-                    contentMap.put("title", "사용자: " + report.getTargetUser().getName());
-                    contentMap.put("authorId", report.getTargetUser().getId());
-                    contentMap.put("authorName", report.getTargetUser().getName());
-                    contentMap.put("reportCount", reportRepository.countByTargetUser(report.getTargetUser()));
-                    
-                    String userStatus = "active";
-                    if (!report.getTargetUser().isActive()) {
-                        userStatus = "inactive";
-                    }
-                    UserPenalty penalty = userPenaltyRepository.findByUserId(report.getTargetUser().getId()).orElse(null);
-                    if (penalty != null && penalty.getRestrictedUntil() != null && penalty.getRestrictedUntil().isAfter(LocalDateTime.now())) {
-                        userStatus = "restricted";
-                    }
-                    
-                    contentMap.put("status", userStatus);
                     contentMap.put("reportId", report.getId());
                     contentMap.put("reason", report.getReason());
                     contentMap.put("createdAt", report.getCreatedAt());

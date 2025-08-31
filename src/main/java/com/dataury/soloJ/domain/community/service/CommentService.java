@@ -13,11 +13,20 @@ import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
+import com.dataury.soloJ.global.dto.CursorPageResponse;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +95,91 @@ public class CommentService {
         }
 
         comment.delete();
+    }
+
+    // ===== 게시글 댓글 목록 조회 (커서 기반 페이지네이션) =====
+
+    public CursorPageResponse<CommentResponseDto.CommentDto> getCommentsByPostId(Long postId, String cursor, int size) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        
+        // 게시글 존재 확인
+        postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
+        
+        LocalDateTime cursorDateTime = decodeCursor(cursor);
+        Pageable pageable = PageRequest.of(0, size + 1);
+        
+        List<Comment> comments = commentRepository.findByPostIdAndCursor(postId, cursorDateTime, pageable);
+        
+        boolean hasNext = comments.size() > size;
+        if (hasNext) {
+            comments = comments.subList(0, size);
+        }
+        
+        List<CommentResponseDto.CommentDto> commentDtos = comments.stream()
+                .map(comment -> {
+                    // 삭제된 댓글인 경우
+                    if (comment.isDeleted()) {
+                        return CommentResponseDto.CommentDto.builder()
+                                .commentId(comment.getId())
+                                .content("삭제된 댓글입니다.")
+                                .isDeleted(true)
+                                .createdAt(comment.getCreatedAt())
+                                .build();
+                    }
+                    
+                    // 탈퇴한 사용자인 경우 처리
+                    String authorNickname = "익명";
+                    String authorProfileImage = null;
+                    
+                    if (comment.getUser().isActive()) {
+                        UserProfile profile = userProfileRepository.findByUser(comment.getUser())
+                                .orElse(null);
+                        authorNickname = profile != null ? profile.getNickName() : "익명";
+                        authorProfileImage = profile != null ? profile.getImageUrl() : null;
+                    } else {
+                        authorNickname = "탈퇴한 사용자입니다";
+                    }
+                    
+                    return CommentResponseDto.CommentDto.builder()
+                            .commentId(comment.getId())
+                            .content(comment.getContent())
+                            .authorNickname(authorNickname)
+                            .authorId(comment.getUser().getId())
+                            .authorProfileImage(authorProfileImage)
+                            .isMine(currentUserId != null && comment.getUser().getId().equals(currentUserId))
+                            .isDeleted(false)
+                            .createdAt(comment.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        String nextCursor = hasNext && !comments.isEmpty() 
+                ? encodeCursor(comments.get(comments.size() - 1).getCreatedAt()) 
+                : null;
+        
+        return CursorPageResponse.<CommentResponseDto.CommentDto>builder()
+                .content(commentDtos)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .size(commentDtos.size())
+                .build();
+    }
+
+    private String encodeCursor(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        String formatted = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return Base64.getEncoder().encodeToString(formatted.getBytes());
+    }
+
+    private LocalDateTime decodeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getDecoder().decode(cursor));
+            return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ===== 관리자용 메서드 =====

@@ -49,4 +49,8 @@ public class ChatRoom extends BaseEntity {
     @Column(name = "gender_restriction")
     private Gender genderRestriction;
 
+    public void complete() {
+        this.isCompleted = true;
+    }
+
 }

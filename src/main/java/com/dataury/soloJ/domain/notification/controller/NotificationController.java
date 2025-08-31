@@ -7,6 +7,7 @@ import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.code.status.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +21,18 @@ public class NotificationController {
     private final NotificationService notificationService;
     
     @GetMapping
-    @Operation(summary = "내 알림 조회", description = "로그인한 사용자의 알림 목록을 조회합니다")
-    public ApiResponse<NotificationListDto> getMyNotifications() {
-        NotificationListDto notifications = notificationService.getMyNotifications();
-        return ApiResponse.onSuccess(notifications);
+    @Operation(summary = "내 알림 조회", description = "커서가 제공되면 커서 기반 페이지네이션을 사용하고, 없으면 첫 페이지를 반환합니다")
+    public ApiResponse<?> getMyNotifications(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        
+        if (cursor != null && !cursor.trim().isEmpty()) {
+            // 커서 기반 페이지네이션
+            return ApiResponse.onSuccess(notificationService.getMyNotificationsByCursor(cursor, size));
+        } else {
+            // 첫 페이지 조회
+            return ApiResponse.onSuccess(notificationService.getMyNotifications(size));
+        }
     }
     
     @GetMapping("/unread")

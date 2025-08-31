@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
 import com.dataury.soloJ.domain.plan.dto.CreatePlanAIDto;
 import com.dataury.soloJ.domain.plan.dto.CreatePlanDto;
 import com.dataury.soloJ.domain.plan.service.PlanService;
+import com.dataury.soloJ.domain.plan.service.PlanDetailService;
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.auth.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class PlanController {
 
     private final PlanService planService;
+    private final PlanDetailService planDetailService;
 
     @PostMapping("")
     @Operation(summary = "계획 생성", description = "계획을 생성합니다. 토큰 필요.")
@@ -62,5 +64,15 @@ public class PlanController {
     })
     public ApiResponse<CreatePlanDto> newPlanByAI (@RequestBody CreatePlanAIDto planRequestDto){
         return ApiResponse.onSuccess(planService.generatePlanFromAI(planRequestDto));
+    }
+
+    @GetMapping("/{planId}")
+    @Operation(summary = "계획 단일 상세 조회", description = "특정 계획의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "PLAN001", description = "계획을 찾을 수 없습니다", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    public ApiResponse<PlanResponseDto.PlanDetailDto> getPlanDetail(@PathVariable Long planId) {
+        return ApiResponse.onSuccess(planDetailService.getPlanDetail(planId));
     }
 }

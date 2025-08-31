@@ -78,6 +78,10 @@ dependencies {
 	// Caffeine 캐시 엔진
 	implementation 'com.github.ben-manes.caffeine:caffeine'  // 버전은 Spring Boot BOM이 관리
 	// (버전 명시가 필요하면 예: implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8')
+	
+	// ShedLock for 분산 환경에서 스케줄러 중복 실행 방지
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:5.13.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.13.0'
 
 
 }
