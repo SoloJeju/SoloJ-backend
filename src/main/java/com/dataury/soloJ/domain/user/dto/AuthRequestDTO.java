@@ -24,6 +24,7 @@ public class AuthRequestDTO {
         private String userType;
         private String imageName;
         private String imageUrl;
+        private String bio;
 
     }
 
@@ -56,6 +57,7 @@ public class AuthRequestDTO {
         private String userType;
         private String imageName;
         private String imageUrl;
+        private String bio;
     }
 
 }

@@ -19,5 +19,6 @@ public class UserRequestDto {
         private String nickName;
         private String imageName;
         private String imageUrl;
+        private String bio;
     }
 }

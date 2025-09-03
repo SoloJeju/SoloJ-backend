@@ -3,9 +3,12 @@ package com.dataury.soloJ.domain.chat.controller;
 import com.dataury.soloJ.domain.chat.dto.ChatMessageDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
+import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 import com.dataury.soloJ.domain.chat.service.ChatRoomCommandService;
+import com.dataury.soloJ.domain.chat.service.ChatService;
 import com.dataury.soloJ.domain.chat.service.MessageQueryService;
 import com.dataury.soloJ.global.ApiResponse;
+import com.dataury.soloJ.global.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 public class ChatRoomController {
 
     private final ChatRoomCommandService chatRoomCommandService;
+    private final ChatService chatService;
 
 
     @Operation(summary = "관광지 기반 채팅방 생성", description = "관광지 기반 동행 채팅방을 생성합니다. 생성한 사용자가 자동으로 방장이 됩니다.")
@@ -39,14 +43,41 @@ public class ChatRoomController {
     @PostMapping("/{roomId}/join")
     public ApiResponse<ChatRoomResponseDto.JoinChatRoomResponse> joinChatRoom(
             @PathVariable Long roomId) {
-        return ApiResponse.onSuccess(chatRoomCommandService.joinChatRoom(roomId));
+       ChatRoomResponseDto.JoinChatRoomResponse joinChatRoom = chatRoomCommandService.joinChatRoom(roomId);
+
+        // 처음 메시지를 조회하는 경우(채팅방 입장)에만 ENTER 메시지 전송
+
+            try {
+                Long userId = SecurityUtils.getCurrentUserId();
+                chatService.handleEnterMessage(roomId, userId.toString());
+                log.info("채팅방 입장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
+            } catch (Exception e) {
+                log.error("채팅방 입장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
+                // 입장 메시지 실패해도 메시지 조회는 계속 진행
+            }
+
+        return ApiResponse.onSuccess(joinChatRoom);
     }
 
     @Operation(summary = "채팅방 나가기", description = "사용자가 채팅방에서 나갑니다.")
     @DeleteMapping("/{roomId}/leave")
     public ApiResponse<String> leaveChatRoom(
             @PathVariable Long roomId) {
+
         chatRoomCommandService.leaveChatRoom(roomId);
+        // EXIT 메시지 전송
+        try {
+            Long userId = SecurityUtils.getCurrentUserId();
+            // 사용자 정보를 가져와서 닉네임 전달
+            var userInfo = chatRoomCommandService.getUserInfo(userId);
+            chatService.handleExitMessage(roomId, userId, userInfo.getNickName());
+            log.info("채팅방 퇴장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
+        } catch (Exception e) {
+            log.error("채팅방 퇴장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
+            // 퇴장 메시지 실패해도 채팅방 나가기는 계속 진행
+        }
+        
+
         return ApiResponse.onSuccess("채팅방에서 성공적으로 나갔습니다.");
     }
 
@@ -67,18 +98,20 @@ public class ChatRoomController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastMessageTime,
             @Parameter(description = "조회할 메시지 개수") @RequestParam(defaultValue = "20") int size
 ) {
-
         MessageQueryService.MessagePageResponse pageResponse = messageQueryService.getMessagesByChatRoom(roomId, lastMessageTime, size);
 
         List<ChatMessageDto.Response> responses = pageResponse.getMessages().stream()
                 .map(message -> ChatMessageDto.Response.builder()
                         .id(message.getMessageId())
-                        .type(message.getType())
+                        .type(message.getType() != null ? MessageType.valueOf(message.getType()) : null)
                         .roomId(message.getRoomId())
+                        .senderId(message.getSenderId())
                         .senderName(message.getSenderName())
+                        .senderProfileImage(message.getSenderProfileImage())
                         .content(message.getContent())
                         .image(message.getImage())
                         .sendAt(message.getSendAt())
+                        .isMine(message.getIsMine())
                         .build())
                 .collect(Collectors.toList());
 

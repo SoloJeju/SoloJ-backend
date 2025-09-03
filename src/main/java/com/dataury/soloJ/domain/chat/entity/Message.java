@@ -44,7 +44,10 @@ public class Message {
     private String content;
 
     @Column(name = "image")
-    private String image;         // 이모지 (null 가능)
+    private String image;         // 메시지 첨부 이미지 (null 가능)
+    
+    @Column(name = "sender_profile_image")
+    private String senderProfileImage;  // 발신자 프로필 이미지
 
     @Column(name = "send_at")
     private LocalDateTime sendAt;

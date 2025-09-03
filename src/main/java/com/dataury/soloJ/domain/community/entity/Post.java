@@ -41,6 +41,9 @@ public class Post extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(name = "chat_room_id")
+    private Long chatRoomId; // 동행제안 게시글인 경우 연결된 채팅방 ID
+
     @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImage> images = new ArrayList<>();

@@ -60,6 +60,16 @@ public class PostResponseDto {
         private String thumbnailUrl;
         private String thumbnailName;
         private List<ImageDto> images;
+        
+        // 동행제안 게시글 전용 필드
+        private Long chatRoomId;
+        private String spotName;
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime joinDate;
+        private Integer currentMembers;
+        private Integer maxMembers;
+        private String genderRestriction;
+        private String recruitmentStatus; // "모집중" or "모집완료"
     }
 
     @Getter

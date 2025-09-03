@@ -62,6 +62,9 @@ public class User extends BaseEntity{
     @Builder.Default
     private Integer groupChatCount = 0;
 
+    @Column(name = "bio", length = 100)
+    private String bio;
+
 
     // ========= 비즈니스 로직 ========= //
 
@@ -95,6 +98,10 @@ public class User extends BaseEntity{
 
     public void incrementGroupChatCount() {
         this.groupChatCount++;
+    }
+
+    public void updateBio(String bio) {
+        this.bio = bio;
     }
 
 }

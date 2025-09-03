@@ -30,6 +30,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     boolean existsByRoomIdAndSendAtAfter(Long roomId, LocalDateTime after);
     
+    // 자신이 보낸 메시지를 제외한 안읽은 메시지 확인용
+    boolean existsByRoomIdAndSenderIdNot(Long roomId, Long senderId);
+    
+    boolean existsByRoomIdAndSendAtAfterAndSenderIdNot(Long roomId, LocalDateTime after, Long senderId);
+    
     // 채팅방의 메시지 개수
     long countByRoomId(Long roomId);
     

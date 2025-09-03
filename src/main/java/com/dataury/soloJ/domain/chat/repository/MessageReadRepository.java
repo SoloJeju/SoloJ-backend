@@ -19,4 +19,7 @@ public interface MessageReadRepository extends JpaRepository<MessageRead, Long> 
     
     @Query("SELECT mr FROM MessageRead mr WHERE mr.chatRoom.id IN :chatRoomIds AND mr.user.id = :userId")
     List<MessageRead> findByChatRoomIdsAndUserId(@Param("chatRoomIds") List<Long> chatRoomIds, @Param("userId") Long userId);
+    
+    @Query("SELECT mr FROM MessageRead mr WHERE mr.user.id = :userId AND mr.chatRoom.id = :chatRoomId")
+    Optional<MessageRead> findByUserIdAndChatRoomId(@Param("userId") Long userId, @Param("chatRoomId") Long chatRoomId);
 }

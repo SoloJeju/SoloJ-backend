@@ -64,7 +64,8 @@ public class ChatWebSocketController {
                             .senderId(senderId)
                             .senderName(user.getUserProfile().getNickName())
                             .content(messageRequest.getContent())
-                            .image(userProfile != null ? userProfile.getImageUrl() : null)
+                            .image(null)  // 메시지 첨부 이미지 (현재는 null)
+                            .senderProfileImage(userProfile != null ? userProfile.getImageUrl() : null)
                             .sendAt(sendAt)
                             .build();
                     chatService.handleTalkMessage(talkMessage);
@@ -81,7 +82,8 @@ public class ChatWebSocketController {
                             .senderId(senderId)
                             .senderName(user.getUserProfile().getNickName())
                             .content(messageRequest.getContent())
-                            .image(userProfile != null ? userProfile.getImageUrl() : null)
+                            .image(null)  // 메시지 첨부 이미지 (현재는 null)
+                            .senderProfileImage(userProfile != null ? userProfile.getImageUrl() : null)
                             .sendAt(sendAt)
                             .build();
                     chatService.handleTalkMessage(defaultMessage);

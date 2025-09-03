@@ -1,5 +1,6 @@
 package com.dataury.soloJ.global.exception;
 
+import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.notify.DiscordWebhookClient;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,17 @@ import java.util.UUID;
 public class GlobalExceptionHandler {
 
     private final DiscordWebhookClient webhook;
+
+    @ExceptionHandler(GeneralException.class)
+    public ResponseEntity<?> handleGeneral(GeneralException ex, HttpServletRequest req) {
+        String errorId = UUID.randomUUID().toString();
+        log.warn("[{}] {} {} - {}", errorId, req.getMethod(), req.getRequestURI(), ex.toString());
+
+        return ResponseEntity
+                .status(ex.getErrorReason().getHttpStatus())
+                .body(ApiResponse.onFailure(ex.getErrorReason().getCode(), ex.getMessage(), ""));
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleAll(Exception ex, HttpServletRequest req) {

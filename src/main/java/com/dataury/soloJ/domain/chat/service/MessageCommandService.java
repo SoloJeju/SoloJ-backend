@@ -62,10 +62,15 @@ public class MessageCommandService {
             throw new GeneralException(ErrorStatus.CHATROOM_COMPLETED);
         }
         
+        log.info("📨 메시지 처리 시작 - messageId: {}, roomId: {}, senderId: {}, sendAt: {}", 
+            message.getMessageId(), message.getRoomId(), message.getSenderId(), message.getSendAt());
+        
         // Redis에만 임시 저장 (MySQL 배치 저장은 스케줄러가 처리)
         saveMessageToRedis(message);   // Redis에 캐시
         broadcastMessage(message);
         sendNotificationToMembers(message); // 알림 전송
+        
+        log.info("✅ 메시지 처리 완료 - messageId: {}, roomId: {}", message.getMessageId(), message.getRoomId());
         // TODO: FCM 기능은 나중에 구현
         // notifyBackgroundUser(message);
     }
@@ -167,17 +172,20 @@ public class MessageCommandService {
 
     public void broadcastMessage(Message message) {
         // 채팅방 참여자들에게 메시지 전송 (응답 DTO로 변환)
+        // 브로드캐스트에서는 isMine 생략 (프론트에서 senderId로 판단)
         ChatMessageDto.Response response = ChatMessageDto.Response.builder()
                 .id(message.getMessageId())
                 .type(message.getType())
                 .roomId(message.getRoomId())
+                .senderId(message.getSenderId())
                 .senderName(message.getSenderName())
+                .senderProfileImage(message.getSenderProfileImage())
                 .content(message.getContent())
                 .image(message.getImage())
                 .sendAt(message.getSendAt())
                 .build();
         
-        log.info("채팅방 내 메시지 전송 messageId={}, roomId={}", message.getMessageId(), message.getRoomId());
+        log.info("채팅방 내 메시지 전송 messageId={}, roomId={}, senderId={}", message.getMessageId(), message.getRoomId(), message.getSenderId());
         messagingTemplate.convertAndSend("/topic/" + message.getRoomId(), response);
     }
 
@@ -277,6 +285,9 @@ public class MessageCommandService {
             List<Message> messagesToSave = new ArrayList<>();
             
             for (Message msg : newMessages) {
+                log.debug("💾 MySQL 저장 준비 - messageId: {}, roomId: {}, senderId: {}, sendAt: {}", 
+                    msg.getMessageId(), msg.getRoomId(), msg.getSenderId(), msg.getSendAt());
+                    
                 Message messageToSave = Message.builder()
                         .messageId(msg.getMessageId())
                         .type(msg.getType())
@@ -290,6 +301,7 @@ public class MessageCommandService {
                         .chatRoomId(msg.getRoomId().toString())
                         .createdAt(msg.getSendAt() != null ? msg.getSendAt() : now)
                         .updatedAt(now)
+                        .senderProfileImage(msg.getSenderProfileImage())
                         .build();
                 messagesToSave.add(messageToSave);
             }

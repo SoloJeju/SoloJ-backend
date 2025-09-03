@@ -11,6 +11,9 @@ import com.dataury.soloJ.domain.inquiry.repository.InquiryRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.security.SecurityUtils;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
+import com.dataury.soloJ.domain.notification.entity.status.Type;
+import com.dataury.soloJ.domain.notification.entity.status.ResourceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,7 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final InquiryAttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // ===== 사용자용 메서드 =====
 
@@ -199,6 +203,16 @@ public class InquiryService {
         if (requestDto.isCloseInquiry()) {
             inquiry.close();
         }
+
+        // 문의 작성자에게 답변 알림 전송
+        String message = "문의에 대한 답변이 등록되었습니다.";
+        notificationService.createNotification(
+                inquiry.getUser(),
+                Type.ADMIN_USER_ACTION,
+                message,
+                ResourceType.USER,
+                inquiryId
+        );
 
         log.info("문의 답변 완료: inquiryId={}, adminId={}", inquiryId, adminId);
     }

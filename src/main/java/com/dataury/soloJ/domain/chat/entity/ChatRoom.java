@@ -53,4 +53,11 @@ public class ChatRoom extends BaseEntity {
         this.isCompleted = true;
     }
 
+    public void addMembers(){
+        this.numberOfMembers++;
+    }
+    public void removeMembers(){
+        this.numberOfMembers--;
+    }
+
 }

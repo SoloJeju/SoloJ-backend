@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +33,23 @@ public class MessageQueryService {
     @Getter
     @AllArgsConstructor
     public static class MessagePageResponse {
-        private final List<Message> messages;
+        private final List<MessageDto> messages;
         private final boolean hasNext;
+    }
+    
+    @Getter
+    @AllArgsConstructor
+    public static class MessageDto {
+        private final String messageId;
+        private final String type;
+        private final Long roomId;
+        private final Long senderId;
+        private final String senderName;
+        private final String senderProfileImage;
+        private final String content;
+        private final String image;
+        private final LocalDateTime sendAt;
+        private final Boolean isMine;
     }
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -101,7 +117,23 @@ public class MessageQueryService {
                 .sorted(Comparator.comparing(Message::getSendAt))
                 .toList();
 
-        return new MessagePageResponse(messages, hasNext);
+        // Message를 MessageDto로 변환하면서 isMine 추가
+        List<MessageDto> messageDtos = messages.stream()
+                .map(message -> new MessageDto(
+                        message.getMessageId(),
+                        message.getType() != null ? message.getType().name() : null,
+                        message.getRoomId(),
+                        message.getSenderId(),
+                        message.getSenderName(),
+                        message.getSenderProfileImage(),
+                        message.getContent(),
+                        message.getImage(),
+                        message.getSendAt(),
+                        message.getSenderId() != null && message.getSenderId().equals(userId)
+                ))
+                .toList();
+
+        return new MessagePageResponse(messageDtos, hasNext);
     }
 
 

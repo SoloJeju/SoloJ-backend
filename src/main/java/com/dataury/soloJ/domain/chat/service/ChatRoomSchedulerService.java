@@ -1,16 +1,19 @@
 package com.dataury.soloJ.domain.chat.service;
 
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
+import com.dataury.soloJ.domain.chat.entity.Message;
+import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -19,11 +22,10 @@ import java.util.stream.Collectors;
 public class ChatRoomSchedulerService {
 
     private final ChatRoomRepository chatRoomRepository;
+    private final MessageCommandService messageCommandService;
 
     // 5분마다 실행 - 만료된 채팅방 완료 처리
     @Scheduled(fixedDelay = 300000) // 5분마다 실행 (300초)
-    @SchedulerLock(name = "completeExpiredChatRooms", 
-                   lockAtMostFor = "10m", lockAtLeastFor = "1m")
     @Transactional
     public void completeExpiredChatRooms() {
         long startTime = System.currentTimeMillis();
@@ -41,6 +43,30 @@ public class ChatRoomSchedulerService {
         List<Long> roomIds = expiredChatRooms.stream()
                 .map(ChatRoom::getId)
                 .collect(Collectors.toList());
+        
+        // 각 채팅방에 종료 메시지 전송
+        for (ChatRoom chatRoom : expiredChatRooms) {
+            try {
+                // 시스템 종료 메시지 생성
+                Message systemMessage = Message.builder()
+                        .messageId(UUID.randomUUID().toString())
+                        .type(MessageType.EXIT)
+                        .roomId(chatRoom.getId())
+                        .senderId(0L) // 시스템 메시지는 senderId를 0으로 설정
+                        .senderName("시스템")
+                        .content("약속 시간이 지나 채팅방이 자동 종료되었습니다.")
+                        .sendAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
+                        .image(null)
+                        .senderProfileImage(null)
+                        .build();
+                
+                // 메시지 처리 (WebSocket으로 전송 및 저장)
+                messageCommandService.processMessage(systemMessage);
+                log.info("채팅방 종료 메시지 전송 - roomId: {}", chatRoom.getId());
+            } catch (Exception e) {
+                log.error("채팅방 종료 메시지 전송 실패 - roomId: {}, error: {}", chatRoom.getId(), e.getMessage());
+            }
+        }
         
         // 벌크 업데이트로 한 번에 처리
         int updatedCount = chatRoomRepository.bulkCompleteByIds(roomIds);

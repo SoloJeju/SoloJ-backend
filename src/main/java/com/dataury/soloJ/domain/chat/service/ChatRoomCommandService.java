@@ -9,6 +9,9 @@ import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.chat.repository.MessageReadRepository;
+import com.dataury.soloJ.domain.community.entity.Post;
+import com.dataury.soloJ.domain.community.entity.status.PostCategory;
+import com.dataury.soloJ.domain.community.repository.PostRepository;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.user.entity.User;
@@ -24,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +42,7 @@ public class ChatRoomCommandService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final TouristSpotRepository touristSpotRepository;
+    private final PostRepository postRepository;
 
     // 사용자 채팅방 추가
     @Transactional
@@ -88,6 +94,8 @@ public class ChatRoomCommandService {
             throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
         }
 
+        chatRoom.removeMembers();
+
         joinChat.leaveChat();
         joinChatRepository.save(joinChat);
 
@@ -138,6 +146,9 @@ public class ChatRoomCommandService {
         user.incrementGroupChatCount();
         userRepository.save(user);
 
+        // 커뮤니티에 자동으로 동행제안 게시글 생성
+        createCompanionProposalPost(chatRoom, touristSpot, user);
+
         return ChatRoomResponseDto.CreateChatRoomResponse.builder()
                 .chatRoomId(chatRoom.getId())
                 .title(chatRoom.getChatRoomName())
@@ -161,6 +172,11 @@ public class ChatRoomCommandService {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
 
+        // 완료된 채팅방인지 확인
+        if (chatRoom.getIsCompleted()) {
+            throw new GeneralException(ErrorStatus.CHATROOM_ALREADY_COMPLETED);
+        }
+
         // 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
@@ -182,6 +198,8 @@ public class ChatRoomCommandService {
 
         // 사용자 추가
         addUserToChatRoom(chatRoom, user);
+
+        chatRoom.addMembers();
         
         // 동행방 참여 횟수 증가
         user.incrementGroupChatCount();
@@ -198,6 +216,8 @@ public class ChatRoomCommandService {
     // 채팅방 참가자 목록 조회
     @Transactional(readOnly = true)
     public ChatRoomResponseDto.ChatRoomUsersResponse getChatRoomUsers(Long chatRoomId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
 
@@ -214,6 +234,7 @@ public class ChatRoomCommandService {
                             .profileImage(userProfile != null ? userProfile.getImageUrl() : null)
                             .joinedAt(joinChat.getCreatedAt())
                             .isActive(joinChat.getStatus() == JoinChatStatus.ACTIVE)
+                            .isMine(user.getId().equals(currentUserId))
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -262,14 +283,76 @@ public class ChatRoomCommandService {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
 
-        MessageRead messageRead = messageReadRepository.findByUserAndChatRoom(user, chatRoom)
-                .orElse(MessageRead.builder()
-                        .user(user)
-                        .chatRoom(chatRoom)
-                        .build());
+        // 기존 읽음 기록 조회
+        Optional<MessageRead> existingRead = messageReadRepository.findByUserAndChatRoom(user, chatRoom);
+        
+        if (existingRead.isPresent()) {
+            // 이미 존재하면 시간만 업데이트
+            MessageRead messageRead = existingRead.get();
+            messageRead.updateLastReadAt();
+            messageReadRepository.save(messageRead);
+        } else {
+            // 존재하지 않으면 새로 생성
+            MessageRead newMessageRead = MessageRead.builder()
+                    .user(user)
+                    .chatRoom(chatRoom)
+                    .build();
+            newMessageRead.updateLastReadAt();
+            messageReadRepository.save(newMessageRead);
+        }
+    }
+    
+    // 사용자 정보 조회 (닉네임 가져오기용)
+    public UserProfile getUserInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        return userProfileRepository.findByUser(user)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+    }
 
-        messageRead.updateLastReadAt();
-        messageReadRepository.save(messageRead);
+    // 채팅방 생성 시 자동으로 커뮤니티 동행제안 게시글 생성
+    private void createCompanionProposalPost(ChatRoom chatRoom, TouristSpot touristSpot, User user) {
+        try {
+            // 성별 제한 표시
+            String genderText = "";
+            if (chatRoom.getGenderRestriction() != null) {
+                switch (chatRoom.getGenderRestriction()) {
+                    case MALE -> genderText = " (남성만)";
+                    case FEMALE -> genderText = " (여성만)";
+                    case MIXED -> genderText = "";
+                }
+            }
+
+            // 모집 상태 (새로 생성된 채팅방은 항상 모집중)
+            String recruitmentStatus = "모집중";
+
+            // 약속 일시 포맷팅
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm");
+            String formattedDate = chatRoom.getJoinDate().format(formatter);
+
+            // Post 엔티티 생성
+            Post post = Post.builder()
+                    .title(chatRoom.getChatRoomName())
+                    .content(chatRoom.getChatRoomDescription()) // 단순히 채팅방 설명만
+                    .postCategory(PostCategory.COMPANION_PROPOSAL)
+                    .user(user)
+                    .chatRoomId(chatRoom.getId()) // 채팅방 ID 연결
+                    .isVisible(true)
+                    .isDeleted(false)
+                    .build();
+
+            // 관광지 이미지가 있으면 썸네일로 설정
+            if (touristSpot.getFirstImage() != null && !touristSpot.getFirstImage().isEmpty()) {
+                post.updateThumbnail(touristSpot.getFirstImage(), touristSpot.getName() + "_image");
+            }
+
+            postRepository.save(post);
+            
+        } catch (Exception e) {
+            // 게시글 생성 실패해도 채팅방 생성은 성공으로 처리
+            // 로그만 남기고 예외를 던지지 않음
+            System.err.println("동행제안 게시글 자동 생성 실패 - 채팅방 ID: " + chatRoom.getId() + ", 에러: " + e.getMessage());
+        }
     }
 
 }

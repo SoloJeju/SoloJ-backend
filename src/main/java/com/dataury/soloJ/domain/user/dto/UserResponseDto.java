@@ -23,6 +23,8 @@ public class UserResponseDto {
         private String country;
         private Integer soloPlanCount;
         private Integer groupChatCount;
+        private String bio;
+        private String userType;
     }
 
     @Getter
@@ -37,5 +39,7 @@ public class UserResponseDto {
         private String country;
         private Integer soloPlanCount;
         private Integer groupChatCount;
+        private String bio;
+        private String userType;
     }
 }
