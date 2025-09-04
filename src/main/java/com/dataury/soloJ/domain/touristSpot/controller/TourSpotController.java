@@ -10,7 +10,6 @@ import com.dataury.soloJ.domain.touristSpot.service.SpotSearchService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -110,7 +109,7 @@ public class TourSpotController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<?> searchTouristSpots(
+    public ApiResponse<TourSpotResponse.TourSpotListResponse> searchTouristSpots(
             @RequestBody TourSpotRequest.SpotSearchRequestDto request) {
         return ApiResponse.onSuccess(spotSearchService.searchSpots(request));
     }

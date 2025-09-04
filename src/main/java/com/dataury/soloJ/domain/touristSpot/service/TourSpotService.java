@@ -67,9 +67,14 @@ public class TourSpotService {
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .firstImage(item.getFirstimage())
-                        .address(item.getAddr1())  // 주소 저장 추가
+                        .address(item.getAddr1())
                         .hasCompanionRoom(false)
                         .build());
+            }
+
+            else if (spot.getAddress()==null){
+                spot.setAddress(item.getAddr1());
+                touristSpotRepository.save(spot);
             }
 
             // 평균 별점 계산
