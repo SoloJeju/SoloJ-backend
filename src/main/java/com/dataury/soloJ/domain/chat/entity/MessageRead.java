@@ -35,4 +35,8 @@ public class MessageRead extends BaseEntity {
     public void updateLastReadAt() {
         this.lastReadAt = LocalDateTime.now();
     }
+
+    public void updateLastReadAt(LocalDateTime lastReadAt) {
+        this.lastReadAt = lastReadAt;
+    }
 }

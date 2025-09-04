@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -131,12 +133,15 @@ public class MessageCommandService {
     /**
      * Redis에 최신 메시지만 캐시 (LPUSH + LTRIM, Set 기반 중복 방지, TTL)
      */
+
+    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     public void saveMessageToRedis(Message message) {
         Long roomId = message.getRoomId();
-        String listKey = String.format(CHAT_ROOM_MESSAGES_KEY, roomId);                 // 예: chatroom:{roomId}:messages
-        String latestMessageKey = String.format(CHAT_ROOM_LATEST_MESSAGE_KEY, roomId); // 예: chatroom:{roomId}:latest
+        String listKey = String.format(CHAT_ROOM_MESSAGES_KEY, roomId);
+        String latestMessageKey = String.format(CHAT_ROOM_LATEST_MESSAGE_KEY, roomId);
         String latestMessageTimeKey = String.format(CHAT_ROOM_LATEST_MESSAGE_TIME_KEY, roomId);
-        String idSetKey = "chatroom:%d:messageIds".formatted(roomId);                   // messageId 전용 Set
+        String idSetKey = "chatroom:%d:messageIds".formatted(roomId);
 
         String messageId = message.getMessageId();
 
@@ -159,15 +164,23 @@ public class MessageCommandService {
         }
 
         // 4) 최신 메시지/시간 키 갱신 (+ TTL)
+        // 항상 UTC 기준 ISO_LOCAL_DATE_TIME으로 저장
+        String sendAtUtc = message.getSendAt()
+                .atZone(ZoneOffset.systemDefault())
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime()
+                .format(ISO_FORMATTER);
+
         redisTemplate.opsForValue().set(latestMessageKey, message.getContent(), Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
-        redisTemplate.opsForValue().set(latestMessageTimeKey, message.getSendAt().toString(), Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
+        redisTemplate.opsForValue().set(latestMessageTimeKey, sendAtUtc, Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
 
         // 5) TTL 설정 (리스트/ID세트 둘 다)
         redisTemplate.expire(listKey, Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
         redisTemplate.expire(idSetKey, Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
 
-        log.info("✅ Redis 캐시 저장 완료 - messageId: {}, roomId: {}", messageId, roomId);
+        log.info("✅ Redis 캐시 저장 완료 - messageId: {}, roomId={}, sendAt(UTC)={}", messageId, roomId, sendAtUtc);
     }
+
 
 
     public void broadcastMessage(Message message) {
@@ -333,5 +346,6 @@ public class MessageCommandService {
             }
         }
     }
+
 }
 

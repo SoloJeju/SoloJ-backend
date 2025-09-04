@@ -4,11 +4,13 @@ import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
 import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.JoinChat;
+import com.dataury.soloJ.domain.chat.entity.Message;
 import com.dataury.soloJ.domain.chat.entity.MessageRead;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
 import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.chat.repository.MessageReadRepository;
+import com.dataury.soloJ.domain.chat.repository.MessageRepository;
 import com.dataury.soloJ.domain.community.entity.Post;
 import com.dataury.soloJ.domain.community.entity.status.PostCategory;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
@@ -29,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +44,7 @@ public class ChatRoomCommandService {
     private final UserProfileRepository userProfileRepository;
     private final TouristSpotRepository touristSpotRepository;
     private final PostRepository postRepository;
+    private final MessageRepository messageRepository;
 
     // 사용자 채팅방 추가
     @Transactional
@@ -274,34 +276,38 @@ public class ChatRoomCommandService {
         }
     }
 
-    // 채팅방 입장시 모든 메시지 읽음 처리
+    /**
+     * 채팅방 입장 시 모든 메시지를 읽음 처리
+     */
     @Transactional
     public void markAllMessagesAsRead(Long chatRoomId) {
         Long userId = SecurityUtils.getCurrentUserId();
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
 
+        // 채팅방의 가장 마지막 메시지 조회
+        Message lastMessage = messageRepository.findTopByRoomIdOrderBySendAtDesc(chatRoomId)
+                .orElse(null);
+
+        // 마지막 메시지가 있으면 그 시각 +10ms, 없으면 now()
+        LocalDateTime newLastReadAt = LocalDateTime.now();
+
         // 기존 읽음 기록 조회
-        Optional<MessageRead> existingRead = messageReadRepository.findByUserAndChatRoom(user, chatRoom);
-        
-        if (existingRead.isPresent()) {
-            // 이미 존재하면 시간만 업데이트
-            MessageRead messageRead = existingRead.get();
-            messageRead.updateLastReadAt();
-            messageReadRepository.save(messageRead);
-        } else {
-            // 존재하지 않으면 새로 생성
-            MessageRead newMessageRead = MessageRead.builder()
-                    .user(user)
-                    .chatRoom(chatRoom)
-                    .build();
-            newMessageRead.updateLastReadAt();
-            messageReadRepository.save(newMessageRead);
-        }
+        MessageRead messageRead = messageReadRepository.findByUserAndChatRoom(user, chatRoom)
+                .orElse(MessageRead.builder()
+                        .user(user)
+                        .chatRoom(chatRoom)
+                        .build());
+
+        messageRead.updateLastReadAt(newLastReadAt);
+        messageReadRepository.save(messageRead);
+
     }
-    
+
+
     // 사용자 정보 조회 (닉네임 가져오기용)
     public UserProfile getUserInfo(Long userId) {
         User user = userRepository.findById(userId)

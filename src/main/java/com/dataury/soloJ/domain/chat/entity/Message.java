@@ -64,4 +64,8 @@ public class Message {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    public void setSendAt(LocalDateTime sendAt) {
+        this.sendAt = sendAt;
+    }
+
 }
