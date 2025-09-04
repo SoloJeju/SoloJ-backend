@@ -52,7 +52,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.isCompleted,
         false,
         r.genderRestriction,
-        r.touristSpot.firstImage
+        r.touristSpot.firstImage,
+        r.touristSpot.name
     )
     from JoinChat jcUser
         join jcUser.chatRoom r
@@ -61,7 +62,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
               and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage, r.touristSpot.name
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findMyChatRoomsAsDto(
@@ -80,7 +81,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.isCompleted,
         false,
         r.genderRestriction,
-        r.touristSpot.firstImage
+        r.touristSpot.firstImage,
+        r.touristSpot.name
     )
     from JoinChat jcUser
       join jcUser.chatRoom r
@@ -89,7 +91,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
             and jcActive.status = :active
     where jcUser.user.id = :userId
       and jcUser.status = :active
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage, r.touristSpot.name
     order by MAX(jcUser.createdAt) desc
     """,
                 countQuery = """
@@ -118,7 +120,8 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         r.isCompleted,
         false,
         r.genderRestriction,
-        r.touristSpot.firstImage
+        r.touristSpot.firstImage,
+        r.touristSpot.name
     )
     from ChatRoom r
         left join JoinChat jcActive
@@ -126,7 +129,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
               and jcActive.status = :active
     where r.touristSpot.contentId = :contentId
       and r.isCompleted = false
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage, r.touristSpot.name
     order by r.createdAt desc
     """)
     List<ChatRoomListItem> findRoomsByTouristSpotAsDto(@Param("contentId") Long contentId,
@@ -145,6 +148,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
         false,
         r.genderRestriction,
         r.touristSpot.firstImage,
+        r.touristSpot.name,
         MAX(jcUser.createdAt)
     )
     from JoinChat jcUser
@@ -155,7 +159,7 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
     where jcUser.user.id = :userId
       and jcUser.status = :active
       and (:cursor is null or jcUser.createdAt < :cursor)
-    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage
+    group by r.id, r.chatRoomName, r.chatRoomDescription, r.joinDate, r.maxMembers, r.isCompleted, r.genderRestriction, r.touristSpot.firstImage, r.touristSpot.name
     order by MAX(jcUser.createdAt) desc
     """)
     List<ChatRoomListItemWithCursor> findMyChatRoomsByCursor(

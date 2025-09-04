@@ -30,6 +30,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     boolean existsByRoomIdAndSendAtAfter(Long roomId, LocalDateTime after);
     
+    // 자신이 보낸 메시지를 제외한 안읽은 메시지 확인용
+    boolean existsByRoomIdAndSenderIdNot(Long roomId, Long senderId);
+
+    boolean existsByRoomIdAndSendAtGreaterThanEqualAndSenderIdNot(Long roomId, LocalDateTime lastReadAt, Long userId);
     // 채팅방의 메시지 개수
     long countByRoomId(Long roomId);
     
@@ -38,4 +42,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByRoomIdAndSendAtBetween(@Param("roomId") Long roomId, 
                                               @Param("startTime") LocalDateTime startTime, 
                                               @Param("endTime") LocalDateTime endTime);
+
+    // 특정 채팅방의 가장 최신 메시지 (sendAt 기준 내림차순 정렬 후 1개)
+    Optional<Message> findTopByRoomIdOrderBySendAtDesc(Long roomId);
 }

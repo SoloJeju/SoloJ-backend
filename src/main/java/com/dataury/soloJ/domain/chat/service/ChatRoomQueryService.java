@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,15 +24,29 @@ import java.util.List;
 public class ChatRoomQueryService {
 
     private final JoinChatRepository joinChatRepository;
+    private final MessageReadQueryService messageReadQueryService;
 
     // 내 채팅방 목록
     public Page<ChatRoomListItem> getMyChatRooms(Long userId, Pageable pageable) {
         Pageable pageNoSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        return joinChatRepository.findMyChatRoomsAsDtoPageable(
+        Page<ChatRoomListItem> chatRooms = joinChatRepository.findMyChatRoomsAsDtoPageable(
                 userId,
                 JoinChatStatus.ACTIVE,
                 pageNoSort
         );
+        
+        // 각 채팅방의 미확인 메시지 여부 확인
+        List<Long> chatRoomIds = chatRooms.getContent().stream()
+                .map(ChatRoomListItem::getChatRoomId)
+                .toList();
+        Map<Long, Boolean> unreadStatusMap = messageReadQueryService.getUnreadStatusForAllChatRooms(chatRoomIds);
+        
+        // 미확인 메시지 여부 설정
+        chatRooms.getContent().forEach(room -> 
+                room.setHasUnreadMessages(unreadStatusMap.getOrDefault(room.getChatRoomId(), false))
+        );
+        
+        return chatRooms;
     }
 
     // 관광지별 채팅방 목록
@@ -52,7 +67,13 @@ public class ChatRoomQueryService {
             results = results.subList(0, size);
         }
         
-        // ChatRoomListItemWithCursor를 ChatRoomListItem으로 변환
+        // 각 채팅방의 미확인 메시지 여부 확인
+        List<Long> chatRoomIds = results.stream()
+                .map(ChatRoomListItemWithCursor::getChatRoomId)
+                .toList();
+        Map<Long, Boolean> unreadStatusMap = messageReadQueryService.getUnreadStatusForAllChatRooms(chatRoomIds);
+        
+        // ChatRoomListItemWithCursor를 ChatRoomListItem으로 변환하면서 미확인 메시지 여부 설정
         List<ChatRoomListItem> items = results.stream()
                 .map(item -> new ChatRoomListItem(
                         item.getChatRoomId(),
@@ -62,9 +83,10 @@ public class ChatRoomQueryService {
                         item.getCurrentMembers(),
                         item.getMaxMembers(),
                         item.getIsCompleted(),
-                        item.getHasUnreadMessages(),
+                        unreadStatusMap.getOrDefault(item.getChatRoomId(), false),
                         item.getGenderRestriction(),
-                        item.getTouristSpotImage()
+                        item.getTouristSpotImage(),
+                        item.getSpotName()
                 ))
                 .toList();
         

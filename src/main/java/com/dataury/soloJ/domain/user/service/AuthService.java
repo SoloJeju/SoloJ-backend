@@ -133,13 +133,15 @@ public class AuthService {
         String accessToken = tokenProvider.generateAccessToken(user);
         String refreshToken = tokenProvider.generateRefreshToken(user);
 
+        // 기존 리프레시 토큰 삭제 후 새 토큰 저장
+        refreshTokenRepository.deleteByUserId(user.getId());
         refreshTokenRepository.save(new RefreshToken(
                 user.getId(),
                 refreshToken,
                 LocalDateTime.now().plusDays(7)
         ));
 
-        return new AuthResponseDTO.LoginResponseDTO(accessToken, refreshToken);
+        return new AuthResponseDTO.LoginResponseDTO(user.getId(), accessToken, refreshToken);
     }
 
     // 토큰재발급
@@ -180,6 +182,9 @@ public class AuthService {
                     .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
             user.updateName(dto.getName());
+            if (dto.getBio() != null) {
+                user.updateBio(dto.getBio());
+            }
 
             Optional<UserProfile> existingByNickName = userProfileRepository.findByNickName(dto.getNickName());
             if (existingByNickName.isPresent() && !existingByNickName.get().getUser().getId().equals(userId)) {

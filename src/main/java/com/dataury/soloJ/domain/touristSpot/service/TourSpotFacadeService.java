@@ -1,7 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
-import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
+import com.dataury.soloJ.domain.home.dto.HomeResponse;
 import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.review.entity.Review;
 import com.dataury.soloJ.domain.review.entity.ReviewImage;
@@ -29,8 +29,22 @@ public class TourSpotFacadeService {
     private final TourApiService tourApiService;
     private final ReviewQueryService reviewQueryService;
 
-    public List<ChatRoomListItem> getChatRoomsByTouristSpot(Long contentId) {
-        return chatRoomQueryService.getChatRoomsByTouristSpot(contentId);
+    public List<HomeResponse.OpenChatRoomDto> getChatRoomsByTouristSpot(Long contentId) {
+        var chatRooms = chatRoomQueryService.getChatRoomsByTouristSpot(contentId);
+        return chatRooms.stream()
+                .map(room -> HomeResponse.OpenChatRoomDto.builder()
+                        .roomId(room.getChatRoomId())
+                        .title(room.getTitle())
+                        .description(room.getDescription())
+                        .spotContentId(contentId)
+                        .spotName(room.getSpotName())
+                        .spotImage(room.getTouristSpotImage())
+                        .currentParticipants(room.getCurrentMembers() != null ? room.getCurrentMembers().intValue() : 0)
+                        .maxParticipants(room.getMaxMembers() != null ? room.getMaxMembers().intValue() : 10)
+                        .scheduledDate(room.getJoinDate())
+                        .genderRestriction(room.getGenderRestriction())
+                        .build())
+                .toList();
     }
 
     // 관광지별 리뷰 리스트 조회

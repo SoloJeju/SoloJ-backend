@@ -23,5 +23,6 @@ public class ChatRoomListItemWithCursor {
     private final Boolean hasUnreadMessages;
     private final Gender genderRestriction;
     private final String touristSpotImage;
+    private final String spotName; // 관광지 이름
     private final LocalDateTime cursor; // 커서 정보 (JoinChat의 createdAt)
 }

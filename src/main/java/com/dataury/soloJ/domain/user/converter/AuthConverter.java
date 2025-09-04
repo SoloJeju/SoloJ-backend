@@ -16,6 +16,7 @@ public class AuthConverter {
                 .name(request.getName())
                 .password(request.getPassword())
                 .role(role)
+                .bio(request.getBio())
                 .build();
 
         UserProfile.UserProfileBuilder profileBuilder = UserProfile.builder()
@@ -41,10 +42,17 @@ public class AuthConverter {
     public record UserRegistrationData(User user, UserProfile userProfile) {}
 
     public static AuthResponseDTO.SignResponseDTO toSigninResponseDTO(User user){
+        String userTypeDisplayName = null;
+        if (user.getUserProfile() != null && user.getUserProfile().getUserType() != null) {
+            userTypeDisplayName = user.getUserProfile().getUserType().getDisplayName();
+        }
+        
         return AuthResponseDTO.SignResponseDTO.builder()
                 .name(user.getName())
                 .role(user.getRole())
                 .id(user.getId())
+                .bio(user.getBio())
+                .userType(userTypeDisplayName)
                 .build();
 
     }

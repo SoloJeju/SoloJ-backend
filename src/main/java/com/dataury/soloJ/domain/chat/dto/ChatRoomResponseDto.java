@@ -88,6 +88,7 @@ public class ChatRoomResponseDto {
             private String profileImage;
             private LocalDateTime joinedAt;
             private boolean isActive;
+            private boolean isMine;  // 현재 로그인한 사용자인지 여부
         }
     }
 

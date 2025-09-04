@@ -20,7 +20,8 @@ public class ChatRoomListItem {
     private final Long currentMembers;  // count() → Long
     private final Long maxMembers;   // 정원
     private final Boolean isCompleted;
-    private final Boolean hasUnreadMessages; // 읽지 않은 메시지 여부
+    private Boolean hasUnreadMessages; // 읽지 않은 메시지 여부 (setter 필요하므로 final 제거)
     private final Gender genderRestriction; // 채팅방 성별 제한
     private final String touristSpotImage; // 관광지 사진
+    private final String spotName; // 관광지 이름
 }

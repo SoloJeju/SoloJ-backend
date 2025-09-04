@@ -28,10 +28,13 @@ public class ChatMessageDto {
         private String id;           // UUID
         private MessageType type;    // ENTER, TALK, EXIT
         private Long roomId;
-        private String senderName;
-        private String content;
-        private String image;        // 이미지
+        private Long senderId;       // 발신자 ID
+        private String senderName;   // 발신자 닉네임
+        private String senderProfileImage;  // 발신자 프로필 사진
+        private String content;      // 메시지 내용
+        private String image;        // 메시지 첨부 이미지
         private LocalDateTime sendAt;
+        private Boolean isMine;      // 내가 보낸 메시지 여부
     }
 
     @Getter

@@ -40,6 +40,8 @@ public class UserService {
                 .country(userProfile != null ? userProfile.getCountry().name() : null)
                 .soloPlanCount(user.getSoloPlanCount())
                 .groupChatCount(user.getGroupChatCount())
+                .bio(user.getBio())
+                .userType(userProfile != null && userProfile.getUserType() != null ? userProfile.getUserType().getDisplayName() : null)
                 .build();
     }
 
@@ -59,6 +61,8 @@ public class UserService {
                     .country(null)
                     .soloPlanCount(0)
                     .groupChatCount(0)
+                    .bio(null)
+                    .userType(null)
                     .build();
         }
         
@@ -73,6 +77,8 @@ public class UserService {
                 .country(userProfile != null ? userProfile.getCountry().name() : null)
                 .soloPlanCount(user.getSoloPlanCount())
                 .groupChatCount(user.getGroupChatCount())
+                .bio(user.getBio())
+                .userType(userProfile != null && userProfile.getUserType() != null ? userProfile.getUserType().getDisplayName() : null)
                 .build();
     }
 
@@ -96,6 +102,11 @@ public class UserService {
                 request.getImageUrl() != null ? request.getImageUrl() : userProfile.getImageUrl()
         );
         
+        // bio 업데이트
+        if (request.getBio() != null) {
+            user.updateBio(request.getBio());
+        }
+        
         userProfileRepository.save(userProfile);
         
         return UserResponseDto.MyInfoDto.builder()
@@ -109,6 +120,8 @@ public class UserService {
                 .country(userProfile.getCountry().name())
                 .soloPlanCount(user.getSoloPlanCount())
                 .groupChatCount(user.getGroupChatCount())
+                .bio(user.getBio())
+                .userType(userProfile.getUserType() != null ? userProfile.getUserType().getDisplayName() : null)
                 .build();
     }
 

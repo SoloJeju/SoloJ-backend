@@ -1,5 +1,10 @@
 package com.dataury.soloJ.domain.community.service;
 
+import com.dataury.soloJ.domain.chat.entity.ChatRoom;
+import com.dataury.soloJ.domain.chat.entity.JoinChat;
+import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
+import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
 import com.dataury.soloJ.domain.community.dto.PostRequestDto;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.entity.Post;
@@ -8,8 +13,10 @@ import com.dataury.soloJ.domain.community.entity.status.PostCategory;
 import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
 import com.dataury.soloJ.domain.community.repository.ScrapRepository;
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.UserProfile;
+import com.dataury.soloJ.domain.user.entity.status.Gender;
 import com.dataury.soloJ.domain.user.repository.UserProfileRepository;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -42,6 +49,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserPenaltyChecker userPenaltyChecker;
+    private final ChatRoomRepository chatRoomRepository;
+    private final JoinChatRepository joinChatRepository;
 
     @Transactional
     public PostResponseDto.PostCreateResponseDto createPost(PostRequestDto.CreatePostDto request) {
@@ -186,7 +195,7 @@ public class PostService {
         UserProfile authorProfile = userProfileRepository.findByUser(post.getUser())
                 .orElse(null);
 
-        return PostResponseDto.PostDetailDto.builder()
+        PostResponseDto.PostDetailDto.PostDetailDtoBuilder builder = PostResponseDto.PostDetailDto.builder()
                 .postId(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
@@ -207,8 +216,43 @@ public class PostService {
                                 .imageUrl(img.getImageUrl())
                                 .imageName(img.getImageName())
                                 .build())
-                        .collect(Collectors.toList()) : new ArrayList<>())
-                .build();
+                        .collect(Collectors.toList()) : new ArrayList<>());
+
+        // 동행제안 게시글인 경우 채팅방 정보 추가
+        if (post.getPostCategory() == PostCategory.COMPANION_PROPOSAL && post.getChatRoomId() != null) {
+            ChatRoom chatRoom = chatRoomRepository.findById(post.getChatRoomId()).orElse(null);
+            if (chatRoom != null) {
+                // 현재 채팅방 멤버 수 계산
+                List<JoinChat> currentMembers = joinChatRepository.findByChatRoomIdAndStatus(chatRoom.getId(), JoinChatStatus.ACTIVE);
+                
+                // 성별 제한 텍스트 설정
+                String genderRestrictionText = null;
+                if (chatRoom.getGenderRestriction() != null) {
+                    switch (chatRoom.getGenderRestriction()) {
+                        case MALE -> genderRestrictionText = "남성만";
+                        case FEMALE -> genderRestrictionText = "여성만";
+                        case MIXED -> genderRestrictionText = "성별무관";
+                    }
+                }
+                
+                // 모집 상태 (완료 여부에 따라)
+                String recruitmentStatus = chatRoom.getIsCompleted() ? "모집완료" : "모집중";
+                
+                // 관광지 이름
+                String spotName = chatRoom.getTouristSpot() != null ? chatRoom.getTouristSpot().getName() : null;
+                
+                builder
+                    .chatRoomId(chatRoom.getId())
+                    .spotName(spotName)
+                    .joinDate(chatRoom.getJoinDate())
+                    .currentMembers(currentMembers.size())
+                    .maxMembers(chatRoom.getMaxMembers().intValue())
+                    .genderRestriction(genderRestrictionText)
+                    .recruitmentStatus(recruitmentStatus);
+            }
+        }
+
+        return builder.build();
     }
 
     public Page<PostResponseDto.PostListItemDto> searchPosts(String keyword, Pageable pageable) {

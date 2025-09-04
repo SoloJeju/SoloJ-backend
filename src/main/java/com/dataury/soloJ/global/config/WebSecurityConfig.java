@@ -56,7 +56,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/login", "/oauth2/**").permitAll()
                 .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
-                .requestMatchers("/ws", "/ws/**", "/ws/info/**").permitAll()
+                .requestMatchers("/ws/**", "/ws/info/**", "/ws/iframe.html**").permitAll()
                 .requestMatchers("/api/inquiries/**", "/api/reports/**").authenticated()
                 .requestMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
@@ -102,7 +102,9 @@ public class WebSecurityConfig {
         List<String> allowedOrigins = List.of(
                 "http://localhost:8080",
                 "http://localhost:5173",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "https://soloj.vercel.app",
+                "https://soloj.store"
         );
 
         config.setAllowedOrigins(allowedOrigins);

@@ -1,6 +1,6 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
-import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
+import com.dataury.soloJ.domain.home.dto.HomeResponse;
 import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -66,7 +66,7 @@ public class TourSpotController {
 
     @Operation(summary = "관광지별 채팅방 목록 조회")
     @GetMapping("/{contentId}/groups")
-    public ApiResponse<List<ChatRoomListItem>> getChatRoomsByTouristSpot(@PathVariable Long contentId) {
+    public ApiResponse<List<HomeResponse.OpenChatRoomDto>> getChatRoomsByTouristSpot(@PathVariable Long contentId) {
         return ApiResponse.onSuccess(tourSpotFacadeService.getChatRoomsByTouristSpot(contentId));
     }
 

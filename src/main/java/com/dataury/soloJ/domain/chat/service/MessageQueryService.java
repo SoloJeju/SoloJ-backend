@@ -3,8 +3,7 @@ package com.dataury.soloJ.domain.chat.service;
 
 import com.dataury.soloJ.domain.chat.entity.Message;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
-// import com.dataury.soloJ.domain.chat.repository.mongo.MongoMessageRepository; // MongoDB 주석처리
-import com.dataury.soloJ.domain.chat.repository.MessageRepository; // MySQL repository 추가
+import com.dataury.soloJ.domain.chat.repository.MessageRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
@@ -21,6 +20,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,8 +33,23 @@ public class MessageQueryService {
     @Getter
     @AllArgsConstructor
     public static class MessagePageResponse {
-        private final List<Message> messages;
+        private final List<MessageDto> messages;
         private final boolean hasNext;
+    }
+    
+    @Getter
+    @AllArgsConstructor
+    public static class MessageDto {
+        private final String messageId;
+        private final String type;
+        private final Long roomId;
+        private final Long senderId;
+        private final String senderName;
+        private final String senderProfileImage;
+        private final String content;
+        private final String image;
+        private final LocalDateTime sendAt;
+        private final Boolean isMine;
     }
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -101,7 +117,23 @@ public class MessageQueryService {
                 .sorted(Comparator.comparing(Message::getSendAt))
                 .toList();
 
-        return new MessagePageResponse(messages, hasNext);
+        // Message를 MessageDto로 변환하면서 isMine 추가
+        List<MessageDto> messageDtos = messages.stream()
+                .map(message -> new MessageDto(
+                        message.getMessageId(),
+                        message.getType() != null ? message.getType().name() : null,
+                        message.getRoomId(),
+                        message.getSenderId(),
+                        message.getSenderName(),
+                        message.getSenderProfileImage(),
+                        message.getContent(),
+                        message.getImage(),
+                        message.getSendAt(),
+                        message.getSenderId() != null && message.getSenderId().equals(userId)
+                ))
+                .toList();
+
+        return new MessagePageResponse(messageDtos, hasNext);
     }
 
 
@@ -115,18 +147,25 @@ public class MessageQueryService {
         List<Message> messages = raw.stream()
                 .map(obj -> {
                     try {
-                        return objectMapper.convertValue(obj, Message.class);
+                        Message msg = objectMapper.convertValue(obj, Message.class);
+                        if (msg.getSendAt() != null) {
+                            // UTC 기준으로 normalize
+                            msg.setSendAt(
+                                    msg.getSendAt()
+                                            .atZone(ZoneId.systemDefault())
+                                            .withZoneSameInstant(ZoneOffset.UTC)
+                                            .toLocalDateTime()
+                            );
+                        }
+                        return msg;
                     } catch (Exception e) {
                         log.warn("Redis 메시지 변환 실패: {}", e.getMessage());
                         return null;
                     }
                 })
                 .filter(Objects::nonNull)
-                // before가 있으면 그 이전 메시지만 필터
-                .filter(m -> before == null || m.getSendAt().isBefore(before))
-                .sorted(Comparator.comparing(Message::getSendAt).reversed())
-                .limit(size)
                 .toList();
+
 
         log.info("Redis에서 조회된 메시지 수: {} (요청: {}), key={}", messages.size(), size, redisKey);
         return messages;

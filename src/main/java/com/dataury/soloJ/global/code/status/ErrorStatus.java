@@ -63,6 +63,7 @@ public enum ErrorStatus implements BaseErrorCode {
     USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND,"CHAT4006","사용자 프로필을 찾을 수 없습니다."),
     GENDER_RESTRICTION_VIOLATION(HttpStatus.FORBIDDEN,"CHAT4007","해당 채팅방의 성별 제한에 맞지 않습니다."),
     INVALID_GENDER_RESTRICTION_FOR_CREATION(HttpStatus.BAD_REQUEST,"CHAT4008","사용자 성별과 다른 성별 제한의 채팅방은 생성할 수 없습니다."),
+    CHATROOM_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST,"CHAT4009","이미 종료된 채팅방입니다."),
 
 
     PAGE_BOUND_ERROR(HttpStatus.BAD_REQUEST, "PAGE4001", "페이징 번호가 적절하지 않습니다."),

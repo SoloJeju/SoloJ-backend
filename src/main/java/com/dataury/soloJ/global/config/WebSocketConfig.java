@@ -22,7 +22,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 연결 엔드포인트 - http://서버주소/ws
         registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*"); // 네이티브 WebSocket
+        registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .withSockJS(); // SockJS fallback
+
     }
 }

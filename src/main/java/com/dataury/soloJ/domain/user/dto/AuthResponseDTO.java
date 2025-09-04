@@ -15,6 +15,8 @@ public class AuthResponseDTO {
         private String name;
         private Long id;
         private Role role;
+        private String bio;
+        private String userType;
     }
 
 
@@ -24,6 +26,7 @@ public class AuthResponseDTO {
     @NoArgsConstructor
     @Builder
     public static class LoginResponseDTO {
+        private Long id;
         private String accessToken;
         private String refreshToken;
     }

@@ -60,7 +60,7 @@ public class HomeResponse {
         private Integer currentParticipants;
         private Integer maxParticipants;
         private LocalDateTime scheduledDate;
-        private String hostNickname;
         private Gender genderRestriction;  // 채팅방 성별 제한
+        private Boolean hasUnreadMessages; // 읽지 않은 메시지 여부 (마이페이지용)
     }
 }
