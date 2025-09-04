@@ -28,4 +28,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Modifying
     @Query("UPDATE ChatRoom c SET c.isCompleted = true WHERE c.id IN :roomIds")
     int bulkCompleteByIds(@Param("roomIds") List<Long> roomIds);
+
+    @Query("SELECT cr.touristSpot.contentId, COUNT(cr) " +
+            "FROM ChatRoom cr " +
+            "WHERE cr.touristSpot.contentId IN :spotIds AND cr.isCompleted= false " +
+            "GROUP BY cr.touristSpot.contentId")
+    List<Object[]> countOpenRoomsBySpotIds(@Param("spotIds") List<Long> spotIds);
 }

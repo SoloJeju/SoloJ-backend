@@ -75,6 +75,16 @@ public class SpotSearchService {
                         Collectors.mapping(tag -> tag.getReviewTag().getDescription(), Collectors.toList())
                 ));
 
+        List<Long> spotIds = spots.stream().map(TouristSpot::getContentId).toList();
+        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(spotIds);
+
+        Map<Long, Integer> roomCountMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
+
         // 최종 응답 리스트 생성
         List<TourSpotResponse.TourSpotItemWithReview> result = spots.stream().map(spot -> {
                     Long contentId = spot.getContentId();
@@ -89,7 +99,7 @@ public class SpotSearchService {
                             .firstimage(spot.getFirstImage())
                             .difficulty(spot.getDifficulty())
                             .reviewTags(tagMap.getOrDefault(contentId, Collections.emptyList()).toString())
-                            .hasCompanionRoom(spot.isHasCompanionRoom())
+                            .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
                             .averageRating(averageRating)
                             .build();
                 })
@@ -180,7 +190,6 @@ public class SpotSearchService {
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
                             .address(item.getAddr1())
-                            .hasCompanionRoom(false)
                             .build());
                     
                     log.debug("TourAPI에서 새로 가져온 주소: {} (contentId: {})", item.getAddr1(), contentId);

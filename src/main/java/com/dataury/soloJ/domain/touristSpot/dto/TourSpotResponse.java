@@ -29,7 +29,7 @@ public class TourSpotResponse {
         private String title;
         private String addr1;
         private String firstimage;
-        private boolean hasCompanionRoom;
+        private int companionRoomCount;
 
         private Difficulty difficulty;
         private String reviewTags;
@@ -61,7 +61,6 @@ public class TourSpotResponse {
         private List<Map<String, Object>> info;
         private List<String> reviewTags;
         private Difficulty difficulty;
-        private boolean hasCompanionRoom;
         private Double averageRating;
     }
     

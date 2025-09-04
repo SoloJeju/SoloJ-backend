@@ -1,5 +1,6 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import com.dataury.soloJ.domain.touristSpot.dto.SpotCartDto;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -36,6 +37,7 @@ public class SpotCartService {
     private final TourApiService tourApiService;
     private final ReviewRepository reviewRepository;
     private final TouristSpotReviewTagRepository tagRepository;
+    private final ChatRoomRepository chatRoomRepository;
     
     // 장바구니에 관광지 추가
     public SpotCartDto.AddCartResponse addToCart(SpotCartDto.AddCartRequest request) {
@@ -64,7 +66,6 @@ public class SpotCartService {
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
                             .address(item.getAddr1())
-                            .hasCompanionRoom(false)
                             .build());
                 });
         
@@ -110,6 +111,14 @@ public class SpotCartService {
                         Collectors.mapping(tag -> tag.getReviewTag().getDescription(), Collectors.toList())
                 ));
 
+        // 동행방 개수 한 번에 조회
+        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);
+        Map<Long, Integer> roomCountMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
         // 최종 응답 리스트 생성
         List<TourSpotResponse.TourSpotItemWithReview> result = spots.stream().map(spot -> {
                     Long contentId = Long.valueOf(spot.getContentId());
@@ -125,7 +134,7 @@ public class SpotCartService {
                             .firstimage(spot.getFirstImage())
                             .difficulty(spot.getDifficulty())
                             .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
-                            .hasCompanionRoom(spot.isHasCompanionRoom())
+                            .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
                             .averageRating(averageRating)
                             .build();
                 })

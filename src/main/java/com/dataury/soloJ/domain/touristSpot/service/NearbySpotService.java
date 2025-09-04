@@ -42,13 +42,19 @@ public class NearbySpotService {
         // DB에서 관광지 정보 조회
         Map<Long, TouristSpot> spotMap = touristSpotRepository.findAllById(contentIds).stream()
                 .collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
-        
-        // 응답 리스트 생성
+
+        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);
+        Map<Long, Integer> roomCountMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
         List<TourSpotResponse.NearbySpotItemDto> spots = apiItems.stream()
                 .map(item -> {
                     Long contentId = Long.valueOf(item.getContentid());
                     TouristSpot spot = spotMap.get(contentId);
-                    
+
                     // DB에 없으면 새로 저장
                     if (spot == null) {
                         spot = touristSpotRepository.save(TouristSpot.builder()
@@ -57,35 +63,26 @@ public class NearbySpotService {
                                 .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                                 .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
                                 .address(item.getAddr1())
-                                .hasCompanionRoom(false)
                                 .build());
                     }
-                    
-                    // 동행방 수 조회
-                    int openRoomCount = chatRoomRepository.countOpenRoomsBySpotId(contentId);
-                    
+
                     return TourSpotResponse.NearbySpotItemDto.builder()
                             .contentId(contentId)
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .title(item.getTitle())
                             .addr1(item.getAddr1())
-                            .mapx(Double.parseDouble(item.getMapx())) // TourAPI에서 가져온 경도
-                            .mapy(Double.parseDouble(item.getMapy())) // TourAPI에서 가져온 위도
+                            .mapx(Double.parseDouble(item.getMapx()))
+                            .mapy(Double.parseDouble(item.getMapy()))
                             .distance(Double.parseDouble(item.getDist()))
                             .firstimage(item.getFirstimage())
                             .difficulty(spot.getDifficulty())
-                            .openCompanionRoomCount(openRoomCount)
+                            .openCompanionRoomCount(roomCountMap.getOrDefault(contentId, 0)) // ✅ 여기서 Map 사용
                             .build();
                 })
                 // 난이도 필터 적용
-                .filter(spot -> {
-                    if (request.getDifficulty() == null) {
-                        return true;
-                    }
-                    return spot.getDifficulty() == request.getDifficulty();
-                })
+                .filter(spot -> request.getDifficulty() == null || spot.getDifficulty() == request.getDifficulty())
                 .toList();
-        
+
         return TourSpotResponse.NearbySpotListResponse.builder()
                 .spots(spots)
                 .totalCount(spots.size())

@@ -40,10 +40,6 @@ public class TouristSpot extends BaseEntity {
     @Column(nullable = true)
     private ReviewTags reviewTag;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean hasCompanionRoom = false;
-
     @Column(nullable = true)
     @Builder.Default
     private Double averageRating = null;
