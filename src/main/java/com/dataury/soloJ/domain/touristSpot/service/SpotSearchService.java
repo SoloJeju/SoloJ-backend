@@ -120,16 +120,21 @@ public class SpotSearchService {
                 request.getDifficulty(), 
                 pageable
         );
-        
+        List<Long> spotIds = dbSpots.stream().map(TouristSpot::getContentId).toList();
+        Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(spotIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
         // DB 결과를 DTO로 변환
         Set<Long> dbContentIds = new HashSet<>();
         for (TouristSpot spot : dbSpots) {
             dbContentIds.add(spot.getContentId());
-            
-            int openRoomCount = chatRoomRepository.countOpenRoomsBySpotId(spot.getContentId());
-            
-            log.debug("DB에서 가져온 주소: {} (contentId: {})", spot.getAddress(), spot.getContentId());
-            
+
+            int openRoomCount = roomCountMap.getOrDefault(spot.getContentId(), 0);
+
             allResults.add(TourSpotResponse.SpotSearchItemDto.builder()
                     .contentId(spot.getContentId())
                     .contentTypeId(spot.getContentTypeId())
@@ -194,7 +199,7 @@ public class SpotSearchService {
                     
                     log.debug("TourAPI에서 새로 가져온 주소: {} (contentId: {})", item.getAddr1(), contentId);
                     
-                    int openRoomCount = chatRoomRepository.countOpenRoomsBySpotId(contentId);
+
                     
                     allResults.add(TourSpotResponse.SpotSearchItemDto.builder()
                             .contentId(contentId)
@@ -203,7 +208,7 @@ public class SpotSearchService {
                             .addr1(item.getAddr1()) // TourAPI에서 가져온 최신 주소
                             .firstimage(item.getFirstimage())
                             .difficulty(newSpot.getDifficulty()) // 기본값
-                            .openCompanionRoomCount(openRoomCount)
+                            .openCompanionRoomCount(0)//처음 가져온거니까 0
                             .source("TOUR_API")
                             .build());
                     
@@ -249,24 +254,29 @@ public class SpotSearchService {
         if (hasNext) {
             spots = spots.subList(0, size);
         }
-        
-        // DTO로 변환
-        List<TourSpotResponse.SpotSearchItemDto> results = new ArrayList<>();
-        for (TouristSpot spot : spots) {
-            int openRoomCount = chatRoomRepository.countOpenRoomsBySpotId(spot.getContentId());
 
-            
-            results.add(TourSpotResponse.SpotSearchItemDto.builder()
-                    .contentId(spot.getContentId())
-                    .contentTypeId(spot.getContentTypeId())
-                    .title(spot.getName())
-                    .addr1(spot.getAddress())
-                    .firstimage(spot.getFirstImage())
-                    .difficulty(spot.getDifficulty())
-                    .openCompanionRoomCount(openRoomCount)
-                    .source("DB")
-                    .build());
-        }
+        // 동행방 개수 한꺼번에 조회
+        List<Long> spotIds = spots.stream().map(TouristSpot::getContentId).toList();
+        Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(spotIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
+        // DTO로 변환
+        List<TourSpotResponse.SpotSearchItemDto> results = spots.stream()
+                .map(spot -> TourSpotResponse.SpotSearchItemDto.builder()
+                        .contentId(spot.getContentId())
+                        .contentTypeId(spot.getContentTypeId())
+                        .title(spot.getName())
+                        .addr1(spot.getAddress())
+                        .firstimage(spot.getFirstImage())
+                        .difficulty(spot.getDifficulty())
+                        .openCompanionRoomCount(roomCountMap.getOrDefault(spot.getContentId(), 0)) // ✅ 여기 적용
+                        .source("DB")
+                        .build())
+                .toList();
         
         String nextCursor = hasNext && !spots.isEmpty() 
                 ? encodeCursor(spots.get(spots.size() - 1).getCreatedAt()) 
