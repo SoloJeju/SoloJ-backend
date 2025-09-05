@@ -34,4 +34,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             "WHERE cr.touristSpot.contentId IN :spotIds AND cr.isCompleted= false " +
             "GROUP BY cr.touristSpot.contentId")
     List<Object[]> countOpenRoomsBySpotIds(@Param("spotIds") List<Long> spotIds);
+
+
+
 }

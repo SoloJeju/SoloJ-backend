@@ -2,6 +2,7 @@ package com.dataury.soloJ.domain.review.repository;
 
 import com.dataury.soloJ.domain.review.entity.Review;
 import com.dataury.soloJ.domain.review.entity.status.Difficulty;
+import com.dataury.soloJ.domain.review.dto.ReviewImageRow;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -127,4 +128,37 @@ public interface ReviewRepository extends JpaRepository<Review,Long> {
     // 관광지별 평균 별점 계산
     @Query("select AVG(CAST(r.rating as double)) from Review r where r.touristSpot.contentId = :contentId and r.rating is not null")
     Double findAverageRatingByTouristSpotContentId(@Param("contentId") Long contentId);
+
+
+    // ReviewRepository.java - 커서 조건으로 슬라이스 조회
+    @Query("""
+select new com.dataury.soloJ.domain.review.dto.ReviewImageRow(
+  ri.id, ri.imageUrl, ri.imageName, r.id, r.createdAt
+)
+from ReviewImage ri
+join ri.review r
+where r.touristSpot.contentId = :contentId
+  and (
+    :createdAt is null
+    or r.createdAt < :createdAt
+    or (r.createdAt = :createdAt and ri.id < :imageId)
+  )
+order by r.createdAt desc, ri.id desc
+""")
+    List<ReviewImageRow> findReviewImagesPageBySpotWithCursor(
+            @Param("contentId") Long contentId,
+            @Param("createdAt") LocalDateTime createdAt,
+            @Param("imageId") Long imageId,
+            Pageable pageable
+    );
+
+    @Query("""
+select count(ri.id)
+from ReviewImage ri
+join ri.review r
+where r.touristSpot.contentId = :contentId
+""")
+    long countReviewImagesBySpot(@Param("contentId") Long contentId);
+
+
 }

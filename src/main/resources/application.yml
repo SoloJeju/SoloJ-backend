@@ -64,6 +64,9 @@ spring:
   tourapi:
     key: ${SERVICE_KEY}
     app-name: 혼자옵서예
+    images:
+      page-size: 20   # TourAPI 호출당 numOfRows (1~30 권장)
+      max-page: 200   # 안전장치 (무한 page 탐색 방지)
   data:
     redis:
       host: localhost

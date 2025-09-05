@@ -210,7 +210,10 @@ public class TourApiService {
     }
 
     // 관광지 이미지 정보 조회 (detailImage2 사용)
-    public List<TourApiResponse.ImageItem> fetchTouristSpotImages(Long contentId) {
+    public List<TourApiResponse.ImageItem> fetchTouristSpotImages(Long contentId, int pageNo, int numOfRows) {
+        int rows = Math.max(1, Math.min(numOfRows, 50)); // 안전 가드 (공식 스펙 100도 되긴 하나 지나친 낭비 방지)
+        int page = Math.max(1, pageNo);
+
         String url = "https://apis.data.go.kr/B551011/KorService2/detailImage2"
                 + "?serviceKey=" + serviceKey
                 + "&MobileOS=ETC"
@@ -218,22 +221,19 @@ public class TourApiService {
                 + "&_type=json"
                 + "&contentId=" + contentId
                 + "&imageYN=Y"
-                + "&numOfRows=100";
+                + "&pageNo=" + page
+                + "&numOfRows=" + rows;
 
-        log.info("[TourAPI] detailImage2 URL={}", url);
+        log.info("[TourAPI] detailImage2 page call URL={}", url);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                log.warn("[TourAPI] detailImage2 HTTP={} bodyNull={}",
-                        response.getStatusCodeValue(), (response.getBody() == null));
+                log.warn("[TourAPI] HTTP={} bodyNull={}", response.getStatusCodeValue(), response.getBody()==null);
                 return List.of();
             }
-
             String body = response.getBody().trim();
 
-            // JSON 우선 파싱 (다른 메서드와 동일한 Jackson 파싱)
             if (!body.startsWith("<")) {
                 JsonNode root = objectMapper.readTree(body);
                 JsonNode itemNode = root.path("response").path("body").path("items").path("item");
@@ -243,23 +243,17 @@ public class TourApiService {
                 } else if (itemNode.isObject()) {
                     images.add(toImageItem(itemNode));
                 }
-                log.info("[TourAPI] detailImage2 contentId={} items={}", contentId, images.size());
+                log.info("[TourAPI] contentId={} pageNo={} rows={} items={}", contentId, page, rows, images.size());
                 return images;
             }
 
-            // XML/HTML 응답 폴백 (이미 추가해 둔 파서 재사용)
+            // XML fallback
             List<TourApiResponse.ImageItem> fallback = parseImageItemsFromXml(body);
-            if (!fallback.isEmpty()) {
-                log.info("[TourAPI] detailImage2 XML fallback used. contentId={} items={}", contentId, fallback.size());
-                return fallback;
-            } else {
-                log.warn("[TourAPI] detailImage2 returned non-JSON and no items parsed. snippet={}",
-                        body.substring(0, Math.min(200, body.length())).replaceAll("\\s+", " "));
-                return List.of();
-            }
+            log.info("[TourAPI] XML fallback contentId={} pageNo={} items={}", contentId, page, fallback.size());
+            return fallback;
 
         } catch (Exception e) {
-            log.error("[TourAPI] detailImage2 error contentId={}", contentId, e);
+            log.error("[TourAPI] error contentId={} pageNo={}", contentId, page, e);
             return List.of();
         }
     }

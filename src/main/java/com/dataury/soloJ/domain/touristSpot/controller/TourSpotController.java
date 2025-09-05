@@ -1,24 +1,22 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.home.dto.HomeResponse;
-import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
+import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
-import com.dataury.soloJ.domain.touristSpot.dto.TourSpotReviewResponse;
 import com.dataury.soloJ.domain.touristSpot.service.NearbySpotService;
 import com.dataury.soloJ.domain.touristSpot.service.SpotSearchService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotFacadeService;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.global.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,22 +73,27 @@ public class TourSpotController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<ReviewListWithSpotAggResponse> getReviewsByTouristSpot(@PathVariable Long contentId,
-                                                                              @RequestParam(defaultValue = "0") int page,
-                                                                              @RequestParam(defaultValue = "10") int size) {
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.onSuccess(tourSpotFacadeService.getReviewsByTouristSpot(contentId, pageable));
+    public ApiResponse<?> getReviewsBySpotByCursor(
+            @PathVariable Long contentId,
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.onSuccess(tourSpotFacadeService.getReviewsByTouristSpot(contentId, cursor, size));
     }
 
-    @Operation(summary = "관광지별 사진 목록 조회 (Tour API + 리뷰 이미지)")
+    @Operation(summary = "관광지별 사진 목록 조회 (커서 페이지네이션)", description = "Tour API 이미지 + 리뷰 이미지를 합쳐 커서 기반 페이지네이션으로 반환")
     @GetMapping("/{contentId}/images")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<TourSpotReviewResponse.ImageListResponse> getImagesByTouristSpot(@PathVariable Long contentId) {
-        return ApiResponse.onSuccess(tourSpotFacadeService.getImagesByTouristSpot(contentId));
+    public ApiResponse<TourApiResponse.ImageCursorPageResponse> getImagesByTouristSpot(
+            @PathVariable Long contentId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ApiResponse.onSuccess(tourSpotFacadeService.getImagesByTouristSpot(contentId, cursor, size));
     }
+
 
     @Operation(summary = "사용자 위치기반 관광지 조회")
     @PostMapping("/nearby")

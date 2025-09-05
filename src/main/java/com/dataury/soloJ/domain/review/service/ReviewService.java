@@ -1,5 +1,7 @@
 package com.dataury.soloJ.domain.review.service;
 
+import com.dataury.soloJ.domain.review.dto.CursorReviewListWithSpotAggResponse;
+import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.review.dto.ReviewRequestDto;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.domain.review.entity.Review;
@@ -14,8 +16,8 @@ import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
-import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.dto.CursorPageResponse;
+import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
@@ -40,6 +42,7 @@ public class ReviewService {
     private final ReviewTagRepository reviewTagRepository;
     private final GoogleOcrService googleOcrService;
     private final CacheManager cacheManager;
+    private final SpotAggReadService spotAggReadService;
 
     // contentTypeId로 리뷰 태그 목록 조회
     public List<ReviewResponseDto.ReviewTagResponseDto> getTagsByContentTypeId(int contentTypeId) {
@@ -403,34 +406,59 @@ public class ReviewService {
                 .build();
     }
 
-    // 관광지별 리뷰 조회 (커서 기반) - 기존 API 보완용
+    // 관광지별 리뷰 조회 (커서 기반) 
     @Transactional(readOnly = true)
-    public CursorPageResponse<ReviewResponseDto.ReviewListDto> getReviewsBySpotByCursor(Long spotId, String cursor, int size) {
+    public CursorReviewListWithSpotAggResponse getReviewsBySpotByCursor(Long spotId, String cursor, int size) {
+        // 1) 커서 파싱
         LocalDateTime cursorDateTime = decodeCursor(cursor);
+
+        // 2) size+1 로 더 가져와서 hasNext 판별
         Pageable pageable = PageRequest.of(0, size + 1);
-        
+
         List<Review> reviews = reviewRepository.findBySpotByCursor(spotId, cursorDateTime, pageable);
-        
+
         boolean hasNext = reviews.size() > size;
         if (hasNext) {
             reviews = reviews.subList(0, size);
         }
-        
-        List<ReviewResponseDto.ReviewListDto> items = reviews.stream()
-                .map(this::convertToListDto)
-                .collect(Collectors.toList());
-        
-        String nextCursor = hasNext && !reviews.isEmpty() 
-                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt()) 
+
+        // 3) 리스트 아이템 변환 (기존 page 방식과 동일 포맷 유지)
+        List<ReviewListWithSpotAggResponse.ReviewItemDto> items = reviews.stream()
+                .map(r -> ReviewListWithSpotAggResponse.ReviewItemDto.builder()
+                        .reviewId(r.getId())
+                        .userId(r.getUser().getId())
+                        .userNickname(r.getUser().getUserProfile() != null ? r.getUser().getUserProfile().getNickName() : "익명")
+                        .userProfileImageUrl(r.getUser().getUserProfile() != null ? r.getUser().getUserProfile().getImageUrl() : null)
+                        .thumbnailUrl(r.getThumbnailUrl())
+                        .imageUrls(r.getImages() != null ? r.getImages().stream()
+                                .map(img -> img.getImageUrl())
+                                .toList() : List.of())
+                        .text(r.getReviewText())
+                        .difficulty(r.getDifficulty() != null ? r.getDifficulty().name() : "NONE")
+                        .rating(r.getRating())
+                        .createdAt(r.getCreatedAt())
+                        .build()
+                )
+                .toList();
+
+        // 4) nextCursor 계산
+        String nextCursor = hasNext && !reviews.isEmpty()
+                ? encodeCursor(reviews.get(reviews.size() - 1).getCreatedAt())
                 : null;
-        
-        return CursorPageResponse.<ReviewResponseDto.ReviewListDto>builder()
-                .content(items)
+
+        // 5) 관광지 Agg 로드 (평균/난이도비율/태그비율 포함)
+        ReviewListWithSpotAggResponse.SpotAggDto agg = spotAggReadService.load(spotId);
+
+        // 6) 합쳐서 반환
+        return CursorReviewListWithSpotAggResponse.builder()
+                .spotAgg(agg)
+                .reviews(items)
                 .nextCursor(nextCursor)
                 .hasNext(hasNext)
                 .size(items.size())
                 .build();
     }
+
 
     // Review 엔티티를 ReviewListDto로 변환
     private ReviewResponseDto.ReviewListDto convertToListDto(Review review) {
