@@ -111,13 +111,20 @@ public class TourSpotFacadeService {
 
             // 리뷰가 소진되면 TourAPI에서 채우기
             // 현재 페이지 버퍼가 없거나 다 썼으면 다음 페이지를 새로 호출
+            // 현재 페이지 버퍼가 없거나 다 썼으면 다음 페이지를 새로 호출
             if (apiPage == null || apiIdxInPage >= apiPage.size()) {
                 if (apiPageNo > apiMaxPage) break; // 안전장치
+
                 apiPage = tourApiService.fetchTouristSpotImages(contentId, apiPageNo, apiRows);
                 apiIdxInPage = 0;
-                apiPageNo++; // 다음에 또 필요하면 그 다음 페이지로
-                if (apiPage.isEmpty()) break; // 더 없음
+
+                // ✅ 비었는지 먼저 확인
+                if (apiPage == null || apiPage.isEmpty()) break;
+
+                // ✅ 내용이 있을 때만 다음 페이지 번호로 이동
+                apiPageNo++;
             }
+
 
             // 현재 페이지에서 유효 이미지 소비
             while (result.size() < pageSize && apiIdxInPage < apiPage.size()) {

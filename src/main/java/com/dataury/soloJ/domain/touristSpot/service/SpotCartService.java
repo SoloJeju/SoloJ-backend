@@ -121,7 +121,7 @@ public class SpotCartService {
 
         // 최종 응답 리스트 생성
         List<TourSpotResponse.TourSpotItemWithReview> result = spots.stream().map(spot -> {
-                    Long contentId = Long.valueOf(spot.getContentId());
+                    Long contentId = spot.getContentId();
 
                     // 평균 별점 계산
                     Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
