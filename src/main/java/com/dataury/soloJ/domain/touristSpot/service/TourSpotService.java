@@ -55,6 +55,14 @@ public class TourSpotService {
                         Collectors.mapping(tag -> tag.getReviewTag().getDescription(), Collectors.toList())
                 ));
 
+        // 동행방 개수 한 번에 조회
+        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);
+        Map<Long, Integer> roomCountMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
         // 최종 응답 리스트 생성
         List<TourSpotResponse.TourSpotItemWithReview> result = items.stream().map(item -> {
             Long contentId = Long.valueOf(item.getContentid());
@@ -67,9 +75,13 @@ public class TourSpotService {
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .firstImage(item.getFirstimage())
-                        .address(item.getAddr1())  // 주소 저장 추가
-                        .hasCompanionRoom(false)
+                        .address(item.getAddr1())
                         .build());
+            }
+
+            else if (spot.getAddress()==null){
+                spot.setAddress(item.getAddr1());
+                touristSpotRepository.save(spot);
             }
 
             // 평균 별점 계산
@@ -83,7 +95,7 @@ public class TourSpotService {
                     .firstimage(item.getFirstimage())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
-                    .hasCompanionRoom(spot.isHasCompanionRoom())
+                    .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
                     .averageRating(averageRating)
                     .build();
         })
@@ -146,10 +158,9 @@ public class TourSpotService {
         return TourSpotResponse.TourSpotDetailWrapper.builder()
                 .basic(basic)
                 .intro(intro)
-                .info(info) // ✅ 새로 추가
+                .info(info)
                 .reviewTags(reviewTags)
                 .difficulty(spot.getDifficulty())
-                .hasCompanionRoom(spot.isHasCompanionRoom())
                 .averageRating(averageRating)
                 .build();
     }

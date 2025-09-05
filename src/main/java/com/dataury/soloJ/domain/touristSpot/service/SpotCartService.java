@@ -1,10 +1,15 @@
 package com.dataury.soloJ.domain.touristSpot.service;
 
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
+import com.dataury.soloJ.domain.review.repository.ReviewRepository;
 import com.dataury.soloJ.domain.touristSpot.dto.SpotCartDto;
+import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.entity.SpotCart;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpotReviewTag;
 import com.dataury.soloJ.domain.touristSpot.repository.SpotCartRepository;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
+import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotReviewTagRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -16,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +35,9 @@ public class SpotCartService {
     private final TouristSpotRepository touristSpotRepository;
     private final UserRepository userRepository;
     private final TourApiService tourApiService;
+    private final ReviewRepository reviewRepository;
+    private final TouristSpotReviewTagRepository tagRepository;
+    private final ChatRoomRepository chatRoomRepository;
     
     // 장바구니에 관광지 추가
     public SpotCartDto.AddCartResponse addToCart(SpotCartDto.AddCartRequest request) {
@@ -56,7 +66,6 @@ public class SpotCartService {
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
                             .address(item.getAddr1())
-                            .hasCompanionRoom(false)
                             .build());
                 });
         
@@ -77,29 +86,61 @@ public class SpotCartService {
     
     // 장바구니 목록 조회
     @Transactional(readOnly = true)
-    public SpotCartDto.CartListResponse getCartList() {
+    public TourSpotResponse.TourSpotListResponse getCartList() {
         Long userId = SecurityUtils.getCurrentUserId();
         
         List<SpotCart> cartItems = spotCartRepository.findByUserIdWithSpot(userId);
-        
-        List<SpotCartDto.CartItemResponse> items = cartItems.stream()
-                .map(cart -> SpotCartDto.CartItemResponse.builder()
-                        .cartId(cart.getId())
-                        .contentId(cart.getTouristSpot().getContentId())
-                        .name(cart.getTouristSpot().getName())
-                        .address(cart.getTouristSpot().getAddress())
-                        .firstImage(cart.getTouristSpot().getFirstImage())
-                        .contentTypeId(cart.getTouristSpot().getContentTypeId())
-                        .difficulty(cart.getTouristSpot().getDifficulty())
-                        .sortOrder(cart.getSortOrder())
-                        .addedAt(cart.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
-        
-        return SpotCartDto.CartListResponse.builder()
-                .items(items)
-                .totalCount(items.size())
-                .build();
+
+        List<Long> contentIds = cartItems.stream()
+                .map(cart -> cart.getTouristSpot().getContentId())
+                .toList();
+
+        List<TouristSpot> spots = touristSpotRepository.findAllById(contentIds);
+
+        // 관광지 ID → TouristSpot 맵핑
+        Map<Long, TouristSpot> spotMap = spots.stream()
+                .collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
+
+        // 관광지 태그들 한 번에 조회
+        List<TouristSpotReviewTag> allTags = tagRepository.findAllByTouristSpotIn(spots);
+
+        // 관광지 ID → description 리스트 매핑
+        Map<Long, List<String>> tagMap = allTags.stream()
+                .collect(Collectors.groupingBy(
+                        tag -> tag.getTouristSpot().getContentId(),
+                        Collectors.mapping(tag -> tag.getReviewTag().getDescription(), Collectors.toList())
+                ));
+
+        // 동행방 개수 한 번에 조회
+        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);
+        Map<Long, Integer> roomCountMap = counts.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
+        // 최종 응답 리스트 생성
+        List<TourSpotResponse.TourSpotItemWithReview> result = spots.stream().map(spot -> {
+                    Long contentId = spot.getContentId();
+
+                    // 평균 별점 계산
+                    Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
+
+                    return TourSpotResponse.TourSpotItemWithReview.builder()
+                            .contentid(spot.getContentId().toString())
+                            .contenttypeid(String.valueOf(spot.getContentTypeId()))
+                            .title(spot.getName())
+                            .addr1(spot.getAddress())
+                            .firstimage(spot.getFirstImage())
+                            .difficulty(spot.getDifficulty())
+                            .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
+                            .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
+                            .averageRating(averageRating)
+                            .build();
+                })
+                .toList();
+
+        return new TourSpotResponse.TourSpotListResponse(result);
     }
     
     // 장바구니 아이템 삭제

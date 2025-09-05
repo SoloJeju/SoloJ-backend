@@ -20,8 +20,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -147,17 +145,8 @@ public class MessageQueryService {
         List<Message> messages = raw.stream()
                 .map(obj -> {
                     try {
-                        Message msg = objectMapper.convertValue(obj, Message.class);
-                        if (msg.getSendAt() != null) {
-                            // UTC 기준으로 normalize
-                            msg.setSendAt(
-                                    msg.getSendAt()
-                                            .atZone(ZoneId.systemDefault())
-                                            .withZoneSameInstant(ZoneOffset.UTC)
-                                            .toLocalDateTime()
-                            );
-                        }
-                        return msg;
+                        // ✅ 변환 금지: 그대로 역직렬화만 한다.
+                        return objectMapper.convertValue(obj, Message.class);
                     } catch (Exception e) {
                         log.warn("Redis 메시지 변환 실패: {}", e.getMessage());
                         return null;

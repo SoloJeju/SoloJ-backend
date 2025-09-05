@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.touristSpot.dto.SpotCartDto;
+import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.service.SpotCartService;
 import com.dataury.soloJ.global.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +36,7 @@ public class SpotCartController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<SpotCartDto.CartListResponse> getCartList() {
+    public ApiResponse<TourSpotResponse.TourSpotListResponse> getCartList() {
         return ApiResponse.onSuccess(spotCartService.getCartList());
     }
     

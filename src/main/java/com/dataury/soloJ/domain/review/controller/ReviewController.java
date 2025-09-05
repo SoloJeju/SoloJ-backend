@@ -4,18 +4,16 @@ import com.dataury.soloJ.domain.review.dto.ReviewRequestDto;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
 import com.dataury.soloJ.domain.review.service.ReviewService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -37,7 +35,7 @@ public class ReviewController {
         return ApiResponse.onSuccess(reviewService.getTagsByContentTypeId(contentTypeId));
     }
 
-    @PostMapping("/")
+    @PostMapping("")
     @Operation(summary = "리뷰 생성", description = "리뷰를 생성합니다. 토큰 필요.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
@@ -126,5 +124,16 @@ public class ReviewController {
             return ApiResponse.onSuccess(reviewService.getMyReviews(pageable));
         }
     }
+
+    @GetMapping("/tourist/{spotId}")
+    public ApiResponse<?> getReviewsBySpotByCursor(
+            @PathVariable Long spotId,
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+
+        var response = reviewService.getReviewsBySpotByCursor(spotId, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
 
 }
