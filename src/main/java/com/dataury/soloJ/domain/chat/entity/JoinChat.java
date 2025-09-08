@@ -32,7 +32,15 @@ public class JoinChat extends BaseEntity {
     @Column(name = "join_status")
     private JoinChatStatus status;
 
-    // 상태 변경 메서드
+    @Column(name = "is_owner", nullable = false)
+    private boolean isOwner;
+
+    // 편의 메서드
+    public void makeOwner() { this.isOwner = true; }
+    public void revokeOwner() { this.isOwner = false; }
+    public boolean isActive() { return this.status == JoinChatStatus.ACTIVE;}
+
+        // 상태 변경 메서드
     public void leaveChat() {
         this.status = JoinChatStatus.INACTIVE;
     }

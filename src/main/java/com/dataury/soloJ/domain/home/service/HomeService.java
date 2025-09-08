@@ -164,7 +164,7 @@ public class HomeService {
                         .roomId(room.getId())
                         .title(room.getChatRoomName())
                         .description(room.getChatRoomDescription())
-                        .spotContentId(room.getTouristSpot().getContentId())
+                        .isCompleted(room.getIsCompleted())
                         .spotName(room.getTouristSpot().getName())
                         .spotImage(room.getTouristSpot().getFirstImage()) // 관광지 사진 추가
                         .currentParticipants(room.getNumberOfMembers().intValue())

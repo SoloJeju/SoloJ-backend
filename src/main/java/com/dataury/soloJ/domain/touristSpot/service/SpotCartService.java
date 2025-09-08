@@ -47,7 +47,7 @@ public class SpotCartService {
         
         // 중복 체크
         if (spotCartRepository.existsByUserIdAndTouristSpotContentId(userId, request.getContentId())) {
-            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+            throw new GeneralException(ErrorStatus.SPOT_CART_ALERADY);
         }
         
         // 관광지 조회 (없으면 TourAPI에서 가져와서 저장)

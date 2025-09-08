@@ -83,7 +83,7 @@ public class PlanService {
 
 
     @Transactional
-    public PlanResponseDto.planDto updatePlan( Long planId, CreatePlanDto dto) {
+    public PlanResponseDto.planDto updatePlan(Long planId, CreatePlanDto dto) {
         Long userId = SecurityUtils.getCurrentUserId();
 
         Plan plan = planRepository.findById(planId)

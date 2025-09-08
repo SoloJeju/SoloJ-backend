@@ -24,6 +24,7 @@ import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
+import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,12 +46,15 @@ public class ChatRoomCommandService {
     private final TouristSpotRepository touristSpotRepository;
     private final PostRepository postRepository;
     private final MessageRepository messageRepository;
+    private final UserPenaltyChecker userPenaltyChecker;
 
     // 사용자 채팅방 추가
     @Transactional
-    public void addUserToChatRoom(ChatRoom chatRoom, User user) {
+    public void addUserToChatRoom(ChatRoom chatRoom, User user, Boolean isOwner) {
         Long chatRoomId = chatRoom.getId();
         Long userId = user.getId();
+
+        userPenaltyChecker.checkTravelPermission(userId);
 
         // 이미 ACTIVE면 스킵
         boolean activeExists = joinChatRepository
@@ -68,6 +72,7 @@ public class ChatRoomCommandService {
                     .user(user)
                     .chatRoom(chatRoom)
                     .status(JoinChatStatus.ACTIVE)
+                    .isOwner(isOwner)
                     .build());
         });
 
@@ -96,6 +101,10 @@ public class ChatRoomCommandService {
             throw new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND);
         }
 
+        if (joinChat.isOwner()){
+            throw new GeneralException(ErrorStatus.OWNER_NOT_OUT);
+        }
+
         chatRoom.removeMembers();
 
         joinChat.leaveChat();
@@ -115,6 +124,8 @@ public class ChatRoomCommandService {
         // 사용자 프로필 조회
         UserProfile userProfile = userProfileRepository.findByUser(user)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_PROFILE_NOT_FOUND));
+
+        userPenaltyChecker.checkTravelPermission(userId);
         
         // 성별 제한 검증
         validateGenderRestrictionForCreation(userProfile.getGender(), request.getGenderRestriction());
@@ -142,7 +153,7 @@ public class ChatRoomCommandService {
         
         chatRoom = chatRoomRepository.save(chatRoom);
 
-        addUserToChatRoom(chatRoom, user);
+        addUserToChatRoom(chatRoom, user, true);
         
         // 동행방 참여 횟수 증가 (채팅방 생성자도 참여자이므로)
         user.incrementGroupChatCount();
@@ -199,7 +210,7 @@ public class ChatRoomCommandService {
         }
 
         // 사용자 추가
-        addUserToChatRoom(chatRoom, user);
+        addUserToChatRoom(chatRoom, user,false);
 
         chatRoom.addMembers();
         
@@ -237,6 +248,7 @@ public class ChatRoomCommandService {
                             .joinedAt(joinChat.getCreatedAt())
                             .isActive(joinChat.getStatus() == JoinChatStatus.ACTIVE)
                             .isMine(user.getId().equals(currentUserId))
+                            .isOwner(joinChat.isOwner())
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -359,6 +371,67 @@ public class ChatRoomCommandService {
             // 로그만 남기고 예외를 던지지 않음
             System.err.println("동행제안 게시글 자동 생성 실패 - 채팅방 ID: " + chatRoom.getId() + ", 에러: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public void deleteChatRoom(Long roomId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+
+        // 현재 유저(요청자)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 내 참여 정보 (활성)
+        JoinChat myJoin = joinChatRepository
+                .findByUserAndChatRoomAndStatus(user, room, JoinChatStatus.ACTIVE)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND));
+
+        // 방장 체크
+        if (!myJoin.isOwner()) {
+            throw new GeneralException(ErrorStatus.OWNER_JOINCHAT); // 네가 쓰는 코드에 맞게 에러코드만 유지
+        }
+
+        // 활성 멤버 수 = 1(= 방장 혼자)만 허용
+        long activeCount = joinChatRepository.countByChatRoomAndStatus(room, JoinChatStatus.ACTIVE);
+        if (activeCount > 1) {
+            // 다른 멤버가 남아 있음
+            throw new GeneralException(ErrorStatus.CHATROOM_HAS_OTHERS); // 없으면 하나 추가해도 됨
+        }
+
+        // **삭제 순서 중요**: 읽음 → 메시지 → 참여 → 방
+        // (외래키 제약 때문에 읽음이 메시지를, 메시지가 방을 참조하는 구조가 보통임)
+        messageReadRepository.deleteByRoomId(roomId);
+        messageRepository.deleteByRoomId(roomId);
+        joinChatRepository.deleteByChatRoom(room);
+        chatRoomRepository.delete(room); // 진짜 물리 삭제
+    }
+
+    @Transactional
+    public void completeChatRoom(Long roomId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+
+        // 현재 유저(요청자)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 내 참여 정보 (활성)
+        JoinChat myJoin = joinChatRepository
+                .findByUserAndChatRoomAndStatus(user, room, JoinChatStatus.ACTIVE)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.JOINCHAT_NOT_FOUND));
+
+        // 방장 체크
+        if (!myJoin.isOwner()) {
+            throw new GeneralException(ErrorStatus.OWNER_JOINCHAT); // 네가 쓰는 코드에 맞게 에러코드만 유지
+        }
+
+        room.complete();
+        chatRoomRepository.save(room);
     }
 
 }

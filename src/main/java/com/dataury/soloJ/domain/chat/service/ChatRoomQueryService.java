@@ -2,9 +2,14 @@ package com.dataury.soloJ.domain.chat.service;
 
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomListItemWithCursor;
+import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.status.JoinChatStatus;
+import com.dataury.soloJ.domain.chat.repository.ChatRoomRepository;
 import com.dataury.soloJ.domain.chat.repository.JoinChatRepository;
+import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.dto.CursorPageResponse;
+import com.dataury.soloJ.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +30,7 @@ public class ChatRoomQueryService {
 
     private final JoinChatRepository joinChatRepository;
     private final MessageReadQueryService messageReadQueryService;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 내 채팅방 목록
     public Page<ChatRoomListItem> getMyChatRooms(Long userId, Pageable pageable) {
@@ -99,6 +105,23 @@ public class ChatRoomQueryService {
                 .nextCursor(nextCursor)
                 .hasNext(hasNext)
                 .size(items.size())
+                .build();
+    }
+
+    public ChatRoomListItem getDetailChatRoom(Long roomId){
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(()-> new GeneralException(ErrorStatus.CHATROOM_NOT_FOUND));
+        TouristSpot touristSpot = chatRoom.getTouristSpot();
+        return ChatRoomListItem.builder()
+                .chatRoomId(roomId)
+                .currentMembers(chatRoom.getNumberOfMembers())
+                .maxMembers(chatRoom.getMaxMembers())
+                .isCompleted(chatRoom.getIsCompleted())
+                .description(chatRoom.getChatRoomDescription())
+                .joinDate(chatRoom.getJoinDate())
+                .title(chatRoom.getChatRoomName())
+                .spotName(touristSpot.getName())
+                .genderRestriction(chatRoom.getGenderRestriction())
+                .touristSpotImage(touristSpot.getFirstImage())
                 .build();
     }
 

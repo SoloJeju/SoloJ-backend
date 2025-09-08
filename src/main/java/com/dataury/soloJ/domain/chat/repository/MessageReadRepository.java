@@ -4,6 +4,7 @@ import com.dataury.soloJ.domain.chat.entity.ChatRoom;
 import com.dataury.soloJ.domain.chat.entity.MessageRead;
 import com.dataury.soloJ.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,4 +23,8 @@ public interface MessageReadRepository extends JpaRepository<MessageRead, Long> 
     
     @Query("SELECT mr FROM MessageRead mr WHERE mr.user.id = :userId AND mr.chatRoom.id = :chatRoomId")
     Optional<MessageRead> findByUserIdAndChatRoomId(@Param("userId") Long userId, @Param("chatRoomId") Long chatRoomId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from MessageRead mr where mr.chatRoom.id = :roomId")
+    void deleteByRoomId(@Param("roomId") Long roomId);
 }

@@ -169,5 +169,12 @@ public interface JoinChatRepository extends JpaRepository<JoinChat, Long> {
             Pageable pageable
     );
 
+    Optional<JoinChat> findByUserAndChatRoomAndStatus(User user, ChatRoom room, JoinChatStatus status);
+
+    long countByChatRoomAndStatus(ChatRoom room, JoinChatStatus status);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from JoinChat jc where jc.chatRoom = :room")
+    void deleteByChatRoom(@Param("room") ChatRoom room);
 
 }

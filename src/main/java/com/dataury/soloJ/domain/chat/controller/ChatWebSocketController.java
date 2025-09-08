@@ -11,6 +11,7 @@ import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.TokenProvider;
+import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -32,6 +33,7 @@ public class ChatWebSocketController {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final ChatService chatService;
+    private final UserPenaltyChecker userPenaltyChecker;
 
     @MessageMapping("/chat/{roomId}")
     public void sendMessage(@DestinationVariable Long roomId, 
@@ -45,6 +47,8 @@ public class ChatWebSocketController {
                     .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
             
             UserProfile userProfile = userProfileRepository.findByUser(user).orElse(null);
+
+            userPenaltyChecker.checkMessagePermission(senderId);
             
             // 메시지 ID 및 전송 시간 생성
             String messageId = UUID.randomUUID().toString();
