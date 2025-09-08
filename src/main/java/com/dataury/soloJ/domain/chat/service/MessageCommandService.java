@@ -73,8 +73,7 @@ public class MessageCommandService {
         sendNotificationToMembers(message); // 알림 전송
         
         log.info("✅ 메시지 처리 완료 - messageId: {}, roomId: {}", message.getMessageId(), message.getRoomId());
-        // TODO: FCM 기능은 나중에 구현
-        // notifyBackgroundUser(message);
+
     }
 
     // MongoDB 관련 메서드 주석처리

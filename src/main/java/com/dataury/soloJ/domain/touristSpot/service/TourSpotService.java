@@ -75,14 +75,9 @@ public class TourSpotService {
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .firstImage(item.getFirstimage())
-                        .address(item.getAddr1())
                         .build());
             }
 
-            else if (spot.getAddress()==null){
-                spot.setAddress(item.getAddr1());
-                touristSpotRepository.save(spot);
-            }
 
             // 평균 별점 계산
             Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
@@ -93,6 +88,7 @@ public class TourSpotService {
                     .title(item.getTitle())
                     .addr1(item.getAddr1())
                     .firstimage(item.getFirstimage())
+                    .tel(item.getTel())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))

@@ -27,9 +27,6 @@ public class TouristSpot extends BaseEntity {
 
     @Column(nullable = false)
     private String firstImage;
-    
-    @Column(nullable = true)
-    private String address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -37,10 +34,10 @@ public class TouristSpot extends BaseEntity {
     private Difficulty difficulty = Difficulty.NONE;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Column
     private ReviewTags reviewTag;
 
-    @Column(nullable = true)
+    @Column
     @Builder.Default
     private Double averageRating = null;
 

@@ -23,11 +23,28 @@ public class TourSpotResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class SpotCartListResponse{
+        private List<SpotCartItem> cart;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SpotCartItem{
+        private String title;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class TourSpotItemWithReview {
         private String contentid;
         private String contenttypeid;
         private String title;
         private String addr1;
+        private String tel;
         private String firstimage;
         private int companionRoomCount;
 
@@ -73,6 +90,7 @@ public class TourSpotResponse {
         private Integer contentTypeId;    // 관광지 타입 ID
         private String title;             // 관광지 이름
         private String addr1;             // 주소
+        private String tel;
         private Double mapx;              // 경도 (X좌표)
         private Double mapy;              // 위도 (Y좌표)
         private Double distance;          // 거리 (미터)
@@ -102,6 +120,7 @@ public class TourSpotResponse {
         private String addr1;             // 주소
         private String firstimage;        // 대표 이미지
         private Difficulty difficulty;    // 혼놀 난이도
+        private String tel;
         private Integer openCompanionRoomCount; // 열려있는 동행방 수
         private String source;            // 데이터 출처 ("DB" 또는 "TOUR_API")
         private Double averageRating;

@@ -67,7 +67,6 @@ public class PlanResponseDto {
         private String memo;
         private Long contentId;
         private String spotTitle;
-        private String spotAddress;
         private String spotImageUrl;
     }
 }

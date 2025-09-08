@@ -36,7 +36,7 @@ public class SpotCartController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
-    public ApiResponse<TourSpotResponse.TourSpotListResponse> getCartList() {
+    public ApiResponse<TourSpotResponse.SpotCartListResponse> getCartList() {
         return ApiResponse.onSuccess(spotCartService.getCartList());
     }
     

@@ -62,7 +62,6 @@ public class NearbySpotService {
                                 .name(item.getTitle())
                                 .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                                 .firstImage(item.getFirstimage() != null ? item.getFirstimage() : "")
-                                .address(item.getAddr1())
                                 .build());
                     }
 
@@ -71,6 +70,7 @@ public class NearbySpotService {
                             .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                             .title(item.getTitle())
                             .addr1(item.getAddr1())
+                            .tel(item.getTel())
                             .mapx(Double.parseDouble(item.getMapx()))
                             .mapy(Double.parseDouble(item.getMapy()))
                             .distance(Double.parseDouble(item.getDist()))

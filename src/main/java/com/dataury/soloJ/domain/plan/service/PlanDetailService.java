@@ -46,7 +46,6 @@ public class PlanDetailService {
                                     .memo(location.getMemo())
                                     .contentId(location.getTouristSpot().getContentId())
                                     .spotTitle(location.getTouristSpot().getName())
-                                    .spotAddress(location.getTouristSpot().getAddress())
                                     .spotImageUrl(location.getTouristSpot().getFirstImage())
                                     .build())
                             .toList();

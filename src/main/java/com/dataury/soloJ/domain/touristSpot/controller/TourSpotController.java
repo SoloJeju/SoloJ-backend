@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.home.dto.HomeResponse;
+import com.dataury.soloJ.domain.touristSpot.dto.CursorTourSpotListResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
@@ -105,15 +106,18 @@ public class TourSpotController {
             @RequestBody TourSpotRequest.NearbySpotRequestDto request) {
         return ApiResponse.onSuccess(nearbySpotService.getNearbySpots(request));
     }
-    
-    @Operation(summary = "관광지 검색", description = "제목으로 관광지를 검색합니다. 커서가 제공되면 커서 기반 페이지네이션(DB 검색)을 사용하고, 없으면 offset 기반(DB + TourAPI 통합 검색)을 사용합니다.")
+
     @PostMapping("/search")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
-    })
-    public ApiResponse<TourSpotResponse.TourSpotListResponse> searchTouristSpots(
-            @RequestBody TourSpotRequest.SpotSearchRequestDto request) {
-        return ApiResponse.onSuccess(spotSearchService.searchSpots(request));
+    @Operation(summary = "관광지 검색", description = "제목으로 관광지를 검색합니다. 커서가 제공되면 Cursor 기반, 없으면 Offset 기반으로 동작합니다.")
+    public ApiResponse<?> searchTouristSpots(@RequestBody TourSpotRequest.SpotSearchRequestDto request) {
+        if (request.getCursor() != null && !request.getCursor().isEmpty()) {
+            CursorTourSpotListResponse response = spotSearchService.searchSpotsByCursor(request);
+            return ApiResponse.onSuccess(response);
+        } else {
+            TourSpotResponse.TourSpotListResponse response = spotSearchService.searchSpotsWithOffset(request);
+            return ApiResponse.onSuccess(response);
+        }
     }
+
+
 }
