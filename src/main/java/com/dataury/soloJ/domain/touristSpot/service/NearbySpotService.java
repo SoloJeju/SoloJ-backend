@@ -40,7 +40,7 @@ public class NearbySpotService {
                 .toList();
         
         // DB에서 관광지 정보 조회
-        Map<Long, TouristSpot> spotMap = touristSpotRepository.findAllById(contentIds).stream()
+        Map<Long, TouristSpot> spotMap = touristSpotRepository.findAllByContentIdIn(contentIds).stream()
                 .collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
 
         List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);

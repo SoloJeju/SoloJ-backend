@@ -16,7 +16,10 @@ import lombok.*;
 public class TouristSpot extends BaseEntity {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)   // 내부 PK
+    private Long id;
+
+    @Column(name = "content_id", nullable = true, unique = true)
     private Long contentId; // TourAPI의 contentid 그대로 PK 사용
 
     @Column(nullable = false)
@@ -40,6 +43,10 @@ public class TouristSpot extends BaseEntity {
     @Column
     @Builder.Default
     private Double averageRating = null;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean aiGenerated = false;
 
 
     public void updateMainStats(Difficulty difficulty, ReviewTags tag) {

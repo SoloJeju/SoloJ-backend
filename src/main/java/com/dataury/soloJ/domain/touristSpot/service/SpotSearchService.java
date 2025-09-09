@@ -33,7 +33,7 @@ public class SpotSearchService {
     /**
      * Offset 기반 검색
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public TourSpotResponse.TourSpotListResponse searchSpotsWithOffset(TourSpotRequest.SpotSearchRequestDto request) {
         log.info("📌 [Offset 검색 요청] keyword={}, areaCode={}, contentTypeId={}, page={}, size={}",
                 request.getKeyword(), request.getAreaCode(), request.getContentTypeId(),
@@ -47,18 +47,38 @@ public class SpotSearchService {
                 request.getSize()
         );
 
-        apiResults.forEach(item ->
-                log.debug("➡️ contentId={}, title={}, addr1={}", item.getContentid(), item.getTitle(), item.getAddr1())
-        );
-
 
         List<Long> contentIds = apiResults.stream()
                 .map(item -> Long.valueOf(item.getContentid()))
+                .filter(id -> id != -1L) // ✅ AI 장소 제외
                 .toList();
 
-        Map<Long, TouristSpot> dbSpotMap = touristSpotRepository.findAllById(contentIds).stream()
-                .collect(Collectors.toMap(TouristSpot::getContentId, spot -> spot));
+        Map<Long, TouristSpot> dbSpotMap = touristSpotRepository.findAllByContentIdIn(contentIds).stream()
+                .filter(spot -> spot.getContentId() != -1L) // ✅ 안전장치
+                .collect(Collectors.toMap(
+                        TouristSpot::getContentId,
+                        spot -> spot,
+                        (existing, duplicate) -> existing // ✅ 중복 방지
+                ));
 
+        apiResults.forEach(item -> {
+            Long contentId = Long.valueOf(item.getContentid());
+            if (!dbSpotMap.containsKey(contentId) && contentId != -1L) {
+                TouristSpot newSpot = TouristSpot.builder()
+                        .contentId(contentId)
+                        .name(item.getTitle())
+                        .firstImage(item.getFirstimage())
+                        .contentTypeId(
+                                item.getContenttypeid() != null && !item.getContenttypeid().isBlank()
+                                        ? Integer.parseInt(item.getContenttypeid())
+                                        : null
+                        )
+                        .build();
+                touristSpotRepository.save(newSpot);
+                dbSpotMap.put(contentId, newSpot);
+                log.info("🆕 새 관광지 저장: contentId={}, title={}", contentId, item.getTitle());
+            }
+        });
         Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(contentIds).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
 
@@ -121,7 +141,7 @@ public class SpotSearchService {
                 .map(item -> Long.valueOf(item.getContentid()))
                 .toList();
 
-        Map<Long, TouristSpot> dbSpotMap = touristSpotRepository.findAllById(contentIds).stream()
+        Map<Long, TouristSpot> dbSpotMap = touristSpotRepository.findAllByContentIdIn(contentIds).stream()
                 .collect(Collectors.toMap(TouristSpot::getContentId, spot -> spot));
 
         Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(contentIds).stream()

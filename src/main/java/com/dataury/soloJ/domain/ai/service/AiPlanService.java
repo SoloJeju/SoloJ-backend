@@ -29,6 +29,7 @@ public class AiPlanService {
     public List<DayPlanDto> generate(CreatePlanAIDto requestDto) {
         String prompt = createPrompt(requestDto);
         String gptResponse = chatGPTService.generate(prompt);
+        System.out.println("gptResponse: " + gptResponse);
         return parseAiResponse(gptResponse, requestDto.getStartDate().toLocalDate());
     }
 
@@ -106,7 +107,9 @@ public class AiPlanService {
                 LocalDateTime arrivalDate = LocalDateTime.of(currentDate, LocalTime.parse(startTime, timeFormatter));
                 LocalDateTime duringDate = LocalDateTime.of(currentDate, LocalTime.parse(endTime, timeFormatter));
                 Long contentId = tourSpotService.resolveOrRegisterSpotByTitle(title);
-
+                if (contentId != null && contentId == -1L) {
+                    contentId = null;
+                }
                 if (currentDayIndex >= 0 && currentDayIndex < days.size()) {
                     CreateSpotDto spot = new CreateSpotDto(arrivalDate, duringDate, contentId, title, memo);
                     days.get(currentDayIndex).getSpots().add(spot);
@@ -116,6 +119,7 @@ public class AiPlanService {
                 }
             }
         }
+
 
         return days;
     }

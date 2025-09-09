@@ -131,7 +131,7 @@ public class ChatRoomCommandService {
         validateGenderRestrictionForCreation(userProfile.getGender(), request.getGenderRestriction());
 
         // 관광지 조회
-        TouristSpot touristSpot = touristSpotRepository.findById(request.getContentId())
+        TouristSpot touristSpot =  touristSpotRepository.findByContentId(request.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
         // joinDate 유효성 검사 - 현재 시간 이전이면 에러

@@ -37,7 +37,7 @@ public class GoogleOcrService {
     public Boolean verifyReceipt(Long contentId, MultipartFile file) {
         try {
             List<String> lines = extractTextFromImage(file); // 줄 단위 텍스트
-            TouristSpot touristSpot = touristSpotRepository.findById(contentId)
+            TouristSpot touristSpot =  touristSpotRepository.findByContentId(contentId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
             return checkReceipt(touristSpot.getName(), lines);

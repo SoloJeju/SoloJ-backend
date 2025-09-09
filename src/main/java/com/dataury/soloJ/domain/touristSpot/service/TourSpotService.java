@@ -39,7 +39,7 @@ public class TourSpotService {
                 .map(item -> Long.valueOf(item.getContentid()))
                 .toList();
 
-        List<TouristSpot> spots = touristSpotRepository.findAllById(contentIds);
+        List<TouristSpot> spots = touristSpotRepository.findAllByContentIdIn(contentIds);
 
         // 관광지 ID → TouristSpot 맵핑
         Map<Long, TouristSpot> spotMap = spots.stream()
@@ -141,7 +141,7 @@ public class TourSpotService {
         Map<String, Object> intro = tourApiService.fetchDetailIntroAsMap(contentId, contentTypeId);
         List<Map<String, Object>> info = tourApiService.fetchDetailInfo(contentId, contentTypeId);
 
-        TouristSpot spot = touristSpotRepository.findById(contentId)
+        TouristSpot spot =  touristSpotRepository.findByContentId(contentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
         List<String> reviewTags = tagRepository.findAllByTouristSpot(spot).stream()
@@ -207,7 +207,17 @@ public class TourSpotService {
                 int distance = getLevenshteinDistance(normalizedTarget, normalizedBestMatch);
                 System.out.println("🏆 [Best Match] " + bestMatch.getTitle() + " (거리=" + distance + ")");
                 if (distance <= 3) { // 유연하게 조정
-                    return Long.valueOf(bestMatch.getContentid());
+                    Long contentId = Long.valueOf(bestMatch.getContentid());
+                    TouristSpot spot = touristSpotRepository.findByContentId(contentId)
+                            .orElseGet(() -> touristSpotRepository.save(
+                                    TouristSpot.builder()
+                                            .contentId(contentId)
+                                            .name(bestMatch.getTitle())
+                                            .contentTypeId(Integer.parseInt(bestMatch.getContenttypeid()))
+                                            .firstImage(bestMatch.getFirstimage())
+                                            .build()
+                            ));
+                    return spot.getContentId();
                 } else {
                     System.out.println("🚫 거리 임계값 초과 → null 반환");
                 }
@@ -216,7 +226,7 @@ public class TourSpotService {
         }
 
         System.out.println("🚨 최종 실패: [" + originalTitle + "]에 대한 매핑 실패");
-        return null;
+        return -1L;
     }
 
 

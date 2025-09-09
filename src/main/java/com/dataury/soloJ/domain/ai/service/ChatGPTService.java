@@ -39,7 +39,7 @@ public class ChatGPTService {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(response.getBody());
                 String result = root.path("choices").get(0).path("message").path("content").asText();
-
+                System.out.println(result);
 
                 return result.trim();
             } else {

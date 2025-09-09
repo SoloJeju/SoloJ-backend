@@ -8,6 +8,7 @@ import com.dataury.soloJ.domain.plan.entity.Plan;
 import com.dataury.soloJ.domain.plan.repository.JoinPlanLocationRepository;
 import com.dataury.soloJ.domain.plan.repository.PlanRepository;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
+import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.touristSpot.service.TourSpotService;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
@@ -34,6 +35,7 @@ public class PlanService {
     private final TourSpotService tourSpotService;
     private final UserRepository userRepository;
     private final AiPlanService aiPlanService;
+    private final TouristSpotRepository touristSpotRepository;
 
 
     @Transactional
@@ -65,7 +67,25 @@ public class PlanService {
         for (DayPlanDto day : dto.getDays()) {
             for (CreateSpotDto spotDto : day.getSpots()) {
                 TouristSpot spot = spotMap.get(spotDto.getContentId());
-                if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                System.out.println(spot);
+                if (spot == null) {
+                    Long cid = spotDto.getContentId();
+                    System.out.println("contentId = " + cid);
+
+                    if (cid == null || cid == -1L) {
+                        spot = touristSpotRepository.save(
+                                TouristSpot.builder()
+                                        .name(spotDto.getTitle())
+                                        .contentId(null)
+                                        .contentTypeId(0)
+                                        .firstImage("")
+                                        .aiGenerated(true)
+                                        .build()
+                        );
+                    } else {
+                        throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                    }
+                }
                 locations.get(i).settingTouristSpot(spot);
                 i++;
             }
@@ -115,7 +135,19 @@ public class PlanService {
             for (DayPlanDto day : dto.getDays()) {
                 for (CreateSpotDto spotDto : day.getSpots()) {
                     TouristSpot spot = spotMap.get(spotDto.getContentId());
-                    if (spot == null) throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                    if (spot == null) {
+                        if (spotDto.getContentId() == null) {
+                            spot = touristSpotRepository.save(
+                                    TouristSpot.builder()
+                                            .name(spotDto.getTitle())
+                                            .contentTypeId(0)
+                                            .firstImage("")
+                                            .build()
+                            );
+                        } else {
+                            throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
+                        }
+                    }
                     locations.get(i).settingTouristSpot(spot);
                     i++;
                 }
@@ -211,7 +243,7 @@ public class PlanService {
 
     public CreatePlanDto generatePlanFromAI(CreatePlanAIDto requestDto) {
         List<DayPlanDto> days = aiPlanService.generate(requestDto);
-
+        System.out.println("days: " + days);
         return CreatePlanDto.builder()
                 .title(requestDto.getTitle())
                 .transportType(requestDto.getTransportType())
