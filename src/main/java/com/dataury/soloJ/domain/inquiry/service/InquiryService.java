@@ -62,7 +62,6 @@ public class InquiryService {
             saveAttachments(inquiry, requestDto.getAttachmentUrls());
         }
 
-        log.info("문의 등록 완료: inquiryId={}, userId={}", inquiry.getId(), userId);
         return convertToResponseDto(inquiry);
     }
 

@@ -29,7 +29,6 @@ public class AiPlanService {
     public List<DayPlanDto> generate(CreatePlanAIDto requestDto) {
         String prompt = createPrompt(requestDto);
         String gptResponse = chatGPTService.generate(prompt);
-        System.out.println("gptResponse: " + gptResponse);
         return parseAiResponse(gptResponse, requestDto.getStartDate().toLocalDate());
     }
 
@@ -114,7 +113,6 @@ public class AiPlanService {
                     CreateSpotDto spot = new CreateSpotDto(arrivalDate, duringDate, contentId, title, memo);
                     days.get(currentDayIndex).getSpots().add(spot);
                 } else {
-                    log.warn("🚨 잘못된 currentDayIndex: {}, days.size() = {}", currentDayIndex, days.size());
 
                 }
             }

@@ -243,7 +243,7 @@ public class ChatRoomCommandService {
                     
                     return ChatRoomResponseDto.ChatRoomUsersResponse.UserInfo.builder()
                             .userId(user.getId())
-                            .username(user.getName())
+                            .username(userProfile.getNickName())
                             .profileImage(userProfile != null ? userProfile.getImageUrl() : null)
                             .joinedAt(joinChat.getCreatedAt())
                             .isActive(joinChat.getStatus() == JoinChatStatus.ACTIVE)

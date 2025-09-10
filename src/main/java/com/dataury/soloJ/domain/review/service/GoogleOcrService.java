@@ -114,7 +114,6 @@ public class GoogleOcrService {
                 AnnotateImageResponse res = response.getResponsesList().get(0);
 
                 if (res.hasError()) {
-                    log.warn("Vision API error: {}", res.getError().getMessage());
                     throw new GeneralException(ErrorStatus.IMAGE_TEXT_FAILD);
                 }
 

@@ -45,7 +45,6 @@ public class HomeApiController {
                 }
             }
         } catch (Exception e) {
-            log.debug("홈화면 조회 시 토큰 처리 오류 (무시하고 진행): {}", e.getMessage());
         }
         
         HomeResponse.HomeMainResponse homeData = homeService.getHomeData(userId);
@@ -96,7 +95,6 @@ public class HomeApiController {
                 }
             }
         } catch (Exception e) {
-            log.error("토큰 처리 오류: {}", e.getMessage());
         }
         
         return ApiResponse.onSuccess(homeService.getRecommendedChatRooms(userId));

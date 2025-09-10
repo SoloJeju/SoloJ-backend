@@ -35,9 +35,6 @@ public class SpotSearchService {
      */
     @Transactional
     public TourSpotResponse.TourSpotListResponse searchSpotsWithOffset(TourSpotRequest.SpotSearchRequestDto request) {
-        log.info("📌 [Offset 검색 요청] keyword={}, areaCode={}, contentTypeId={}, page={}, size={}",
-                request.getKeyword(), request.getAreaCode(), request.getContentTypeId(),
-                request.getPage(), request.getSize());
 
         List<TourApiResponse.Item> apiResults = tourApiService.searchSpotsByKeyword(
                 request.getKeyword(),
@@ -76,7 +73,7 @@ public class SpotSearchService {
                         .build();
                 touristSpotRepository.save(newSpot);
                 dbSpotMap.put(contentId, newSpot);
-                log.info("🆕 새 관광지 저장: contentId={}, title={}", contentId, item.getTitle());
+
             }
         });
         Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(contentIds).stream()
@@ -103,7 +100,6 @@ public class SpotSearchService {
                 })
                 .toList();
 
-        log.info("✅ 최종 응답 results 개수 = {}", results.size());
 
         return TourSpotResponse.TourSpotListResponse.builder()
                 .list(results)
@@ -116,7 +112,6 @@ public class SpotSearchService {
     @Transactional(readOnly = true)
     public CursorTourSpotListResponse searchSpotsByCursor(TourSpotRequest.SpotSearchRequestDto request) {
         int pageNo = decodeCursorToPage(request.getCursor());
-        log.info("📌 [Cursor 검색 요청] keyword={}, pageNo={}, size={}", request.getKeyword(), pageNo, request.getSize());
 
         List<TourApiResponse.Item> apiResults = tourApiService.searchSpotsByKeyword(
                 request.getKeyword(),
@@ -126,16 +121,11 @@ public class SpotSearchService {
                 request.getSize() + 1
         );
 
-        log.info("🚀 Cursor API 결과 개수 = {}", apiResults.size());
 
         boolean hasNext = apiResults.size() > request.getSize();
         if (hasNext) {
             apiResults = apiResults.subList(0, request.getSize());
         }
-
-        apiResults.forEach(item ->
-                log.debug("➡️ [Cursor] contentId={}, title={}, addr1={}", item.getContentid(), item.getTitle(), item.getAddr1())
-        );
 
         List<Long> contentIds = apiResults.stream()
                 .map(item -> Long.valueOf(item.getContentid()))
@@ -169,8 +159,6 @@ public class SpotSearchService {
                 .toList();
 
         String nextCursor = hasNext ? encodePageToCursor(pageNo + 1) : null;
-
-        log.info("✅ 최종 응답 results 개수 = {}, hasNext={}, nextCursor={}", results.size(), hasNext, nextCursor);
 
         return CursorTourSpotListResponse.builder()
                 .list(results)

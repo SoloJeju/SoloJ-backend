@@ -13,9 +13,9 @@ import java.util.Optional;
 
 public interface TouristSpotRepository extends JpaRepository<TouristSpot, Long> {
     List<TouristSpot> findAllByContentIdIn(List<Long> contentIds);
-    Optional<TouristSpot> findByName(String title);
+    List<TouristSpot> findAllByName(String name);
     Optional<TouristSpot> findByContentId(Long contentId);
-    
+    List<TouristSpot> findByNameAndContentIdIsNull(String name);
     // 제목으로 관광지 검색
     @Query("SELECT t FROM TouristSpot t WHERE t.name LIKE %:keyword% " +
            "AND (:contentTypeId IS NULL OR t.contentTypeId = :contentTypeId) " +

@@ -61,7 +61,6 @@ public class TourApiService {
             return parsed.getResponse().getBody().getItems().getItem();
 
         } catch (Exception e) {
-            log.error("Tour API 호출 중 에러 발생");
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -83,7 +82,6 @@ public class TourApiService {
             return parsed.getResponse().getBody().getItems().getItem();
 
         } catch (Exception e) {
-            log.error("Tour API 호출 중 에러 발생: contentId={}", contentId, e);
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -161,7 +159,6 @@ public class TourApiService {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         } catch (Exception e) {
-            log.error("Tour API 호출 중 에러 발생: contentId={}, contentTypeId={}", contentId, contentTypeId, e);
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -224,12 +221,10 @@ public class TourApiService {
                 + "&pageNo=" + page
                 + "&numOfRows=" + rows;
 
-        log.info("[TourAPI] detailImage2 page call URL={}", url);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                log.warn("[TourAPI] HTTP={} bodyNull={}", response.getStatusCodeValue(), response.getBody()==null);
                 return List.of();
             }
             String body = response.getBody().trim();
@@ -243,17 +238,14 @@ public class TourApiService {
                 } else if (itemNode.isObject()) {
                     images.add(toImageItem(itemNode));
                 }
-                log.info("[TourAPI] contentId={} pageNo={} rows={} items={}", contentId, page, rows, images.size());
                 return images;
             }
 
             // XML fallback
             List<TourApiResponse.ImageItem> fallback = parseImageItemsFromXml(body);
-            log.info("[TourAPI] XML fallback contentId={} pageNo={} items={}", contentId, page, fallback.size());
             return fallback;
 
         } catch (Exception e) {
-            log.error("[TourAPI] error contentId={} pageNo={}", contentId, page, e);
             return List.of();
         }
     }
@@ -293,7 +285,6 @@ public class TourApiService {
             }
             return images;
         } catch (Exception ex) {
-            log.warn("[TourAPI] XML fallback parse failed: {}", ex.toString());
             return List.of();
         }
     }
@@ -337,16 +328,12 @@ public class TourApiService {
             }
 
             String url = urlBuilder.toString();
-            log.info("[TourAPI] 키워드 검색 URL: {}", url);
 
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             String responseBody = response.getBody();
 
-            log.debug("[TourAPI] 응답 내용: {}", responseBody);
-
             // XML인지 JSON인지 확인
             if (responseBody.trim().startsWith("<")) {
-                log.warn("[TourAPI] XML 응답 받음, XML 파싱으로 전환");
                 return parseXmlSearchResponse(responseBody);
             } else {
                 // JSON 파싱
@@ -370,7 +357,6 @@ public class TourApiService {
                 return result;
             }
         } catch (Exception e) {
-            log.error("[TourAPI] 키워드 검색 실패: {}", e.getMessage());
             return Collections.emptyList(); // 예외 발생 시 빈 리스트 반환 (DB 결과는 유지)
         }
     }
@@ -384,8 +370,6 @@ public class TourApiService {
         tourItem.setAddr1(item.path("addr1").asText());
         tourItem.setFirstimage(item.path("firstimage").asText());
 
-        log.debug("[TourAPI] 파싱된 아이템 - 제목: {}, 주소: {}",
-                tourItem.getTitle(), tourItem.getAddr1());
 
         return tourItem;
     }
@@ -414,7 +398,6 @@ public class TourApiService {
             }
             return result;
         } catch (Exception e) {
-            log.error("[TourAPI] XML 파싱 실패: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -439,7 +422,6 @@ public class TourApiService {
         }
 
         String url = urlBuilder.toString();
-        log.info("[TourAPI] 위치 기반 조회 URL: {}", url);
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -464,7 +446,6 @@ public class TourApiService {
             }
             return Collections.emptyList();
         } catch (Exception e) {
-            log.error("[TourAPI] 위치 기반 조회 실패: {}", e.getMessage());
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }
@@ -507,7 +488,6 @@ public class TourApiService {
             return result;
 
         } catch (Exception e) {
-            log.error("[TourAPI] detailInfo2 호출 실패 contentId={}, contentTypeId={}", contentId, contentTypeId, e);
             throw new GeneralException(ErrorStatus.TOUR_API_FAIL);
         }
     }

@@ -15,21 +15,17 @@ import java.util.stream.Collectors;
 public class FCMService {
 
     public void sendPushNotification(String fcmToken, String title, String body, Long notificationId) {
-        log.info("FCM sendPushNotification called - notificationId: {}, title: {}, body: {}, fcmToken: {}", 
-                notificationId, title, body, fcmToken != null ? fcmToken.substring(0, Math.min(20, fcmToken.length())) + "..." : "null");
+
         
         if (fcmToken == null || fcmToken.isEmpty()) {
-            log.warn("FCM token is empty for notification: {}", notificationId);
             return;
         }
 
         // Firebase가 초기화되지 않은 경우 처리
         if (!isFirebaseInitialized()) {
-            log.error("Firebase is not initialized. Skipping FCM notification for: {}", notificationId);
             return;
         }
-        
-        log.info("Firebase is initialized. Proceeding with FCM notification for: {}", notificationId);
+
 
         try {
             Message message = Message.builder()
@@ -53,18 +49,13 @@ public class FCMService {
                     .build();
 
             String response = FirebaseMessaging.getInstance().send(message);
-            log.info("Successfully sent FCM message: {}", response);
         } catch (FirebaseMessagingException e) {
             if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
-                log.warn("FCM token is invalid or expired: {}", fcmToken);
                 // TODO: FCM 토큰 무효화 처리
             } else {
-                log.error("Failed to send FCM message", e);
             }
         } catch (IllegalStateException e) {
-            log.error("Firebase is not initialized properly: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error while sending FCM message", e);
         }
     }
 
@@ -75,7 +66,6 @@ public class FCMService {
 
         // Firebase가 초기화되지 않은 경우 처리
         if (!isFirebaseInitialized()) {
-            log.warn("Firebase is not initialized. Skipping FCM multicast notification for: {}", notificationId);
             return;
         }
 
@@ -119,13 +109,9 @@ public class FCMService {
                     }
                 }
             }
-            
-            log.info("FCM multicast result - Success: {}, Failure: {}", 
-                    response.getSuccessCount(), response.getFailureCount());
+
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to send multicast FCM message", e);
         } catch (Exception e) {
-            log.error("Unexpected error while sending multicast FCM message", e);
         }
     }
     
@@ -135,28 +121,18 @@ public class FCMService {
     private boolean isFirebaseInitialized() {
         try {
             List<FirebaseApp> apps = FirebaseApp.getApps();
-            log.info("Firebase apps count: {}", apps.size());
             
             if (apps.isEmpty()) {
-                log.error("No Firebase apps found. Firebase is not initialized.");
                 return false;
             }
-            
-            for (FirebaseApp app : apps) {
-                log.info("Found Firebase app: {} with project ID: {}", app.getName(), 
-                        app.getOptions().getProjectId());
-            }
+
             
             FirebaseApp defaultApp = FirebaseApp.getInstance();
-            log.info("Default Firebase app: {} with project ID: {}", 
-                    defaultApp.getName(), defaultApp.getOptions().getProjectId());
             
             return true;
         } catch (IllegalStateException e) {
-            log.error("Firebase default app does not exist: {}", e.getMessage());
             return false;
         } catch (Exception e) {
-            log.error("Firebase initialization check failed: {}", e.getMessage(), e);
             return false;
         }
     }

@@ -53,9 +53,8 @@ public class ChatRoomController {
             try {
                 Long userId = SecurityUtils.getCurrentUserId();
                 chatService.handleEnterMessage(roomId, userId.toString());
-                log.info("채팅방 입장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
+
             } catch (Exception e) {
-                log.error("채팅방 입장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
                 // 입장 메시지 실패해도 메시지 조회는 계속 진행
             }
 
@@ -74,9 +73,7 @@ public class ChatRoomController {
             // 사용자 정보를 가져와서 닉네임 전달
             var userInfo = chatRoomCommandService.getUserInfo(userId);
             chatService.handleExitMessage(roomId, userId, userInfo.getNickName());
-            log.info("채팅방 퇴장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
-        } catch (Exception e) {
-            log.error("채팅방 퇴장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
+        } catch (Exception e) {;
             // 퇴장 메시지 실패해도 채팅방 나가기는 계속 진행
         }
         
@@ -123,8 +120,6 @@ public class ChatRoomController {
                 .hasNext(pageResponse.isHasNext())
                 .build();
 
-        log.info("채팅방 메시지 조회 완료 - roomId: {}, 조회된 메시지 수: {}, hasNext: {}", 
-                roomId, responses.size(), pageResponse.isHasNext());
 
         return ApiResponse.onSuccess(response);
     }

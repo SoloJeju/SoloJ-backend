@@ -17,7 +17,6 @@ public class TouristSpotBatchService {
     
     @Transactional
     public void updateAllAverageRatings() {
-        log.info("Starting batch update of average ratings for all tourist spots");
         
         var allSpots = touristSpotRepository.findAll();
         int updated = 0;
@@ -33,6 +32,5 @@ public class TouristSpotBatchService {
         }
         
         touristSpotRepository.saveAll(allSpots);
-        log.info("Completed batch update. Updated {} tourist spots total", updated);
     }
 }

@@ -47,7 +47,6 @@ public class HomeService {
         // 캐시에서 먼저 조회
         List<HomeResponse.RecommendSpotDto> cachedSpots = cacheService.getTodayRecommendedSpots();
         if (cachedSpots != null && !cachedSpots.isEmpty()) {
-            log.info("오늘의 추천 장소 캐시에서 조회: {} spots", cachedSpots.size());
             return cachedSpots;
         }
         
@@ -78,7 +77,7 @@ public class HomeService {
         // 캐시에 저장
         cacheService.cacheTodayRecommendedSpots(spotDtos);
         
-        log.info("오늘의 추천 장소 DB에서 조회 후 캐시 저장: {} spots", spotDtos.size());
+
         return spotDtos;
     }
     
@@ -87,7 +86,7 @@ public class HomeService {
         // 캐시에서 먼저 조회
         List<HomeResponse.LatestReviewDto> cachedReviews = cacheService.getLatestReviews();
         if (cachedReviews != null && !cachedReviews.isEmpty()) {
-            log.info("최신 후기 캐시에서 조회: {} reviews", cachedReviews.size());
+
             return cachedReviews;
         }
         
@@ -108,7 +107,7 @@ public class HomeService {
         // 캐시에 저장
         cacheService.cacheLatestReviews(reviewDtos);
         
-        log.info("최신 후기 DB에서 조회 후 캐시 저장: {} reviews", reviewDtos.size());
+
         return reviewDtos;
     }
     
@@ -136,13 +135,13 @@ public class HomeService {
                     }
                 }
             } catch (Exception e) {
-                log.warn("사용자 성별 정보 조회 중 오류 발생, 필터링 없이 진행: {}", e.getMessage());
+
             }
             
             // 캐시에서 먼저 조회 (성별 필터링 이후)
             List<HomeResponse.OpenChatRoomDto> cachedRooms = cacheService.getUserRecommendedRooms(userId);
             if (cachedRooms != null && !cachedRooms.isEmpty()) {
-                log.info("사용자 {} 추천 동행방 캐시에서 조회: {} rooms", userId, cachedRooms.size());
+
                 return cachedRooms;
             }
             
@@ -177,9 +176,9 @@ public class HomeService {
         // 토큰이 있는 경우에만 캐시에 저장
         if (userId != null) {
             cacheService.cacheUserRecommendedRooms(userId, roomDtos);
-            log.info("사용자 {} 추천 동행방 DB에서 조회 후 캐시 저장: {} rooms", userId, roomDtos.size());
+
         } else {
-            log.info("비로그인 사용자 기본 동행방 조회: {} rooms", roomDtos.size());
+
         }
         
         return roomDtos;

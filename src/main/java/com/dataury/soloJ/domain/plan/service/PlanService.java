@@ -67,21 +67,38 @@ public class PlanService {
         for (DayPlanDto day : dto.getDays()) {
             for (CreateSpotDto spotDto : day.getSpots()) {
                 TouristSpot spot = spotMap.get(spotDto.getContentId());
-                System.out.println(spot);
                 if (spot == null) {
                     Long cid = spotDto.getContentId();
-                    System.out.println("contentId = " + cid);
 
                     if (cid == null || cid == -1L) {
-                        spot = touristSpotRepository.save(
-                                TouristSpot.builder()
-                                        .name(spotDto.getTitle())
-                                        .contentId(null)
-                                        .contentTypeId(0)
-                                        .firstImage("")
-                                        .aiGenerated(true)
-                                        .build()
-                        );
+                        // ✅ contentId 없는 경우 → 이름으로 중복 체크
+//                        spot = touristSpotRepository.findByNameAndContentIdIsNull(spotDto.getTitle())
+//                                .orElseGet(() -> touristSpotRepository.save(
+//                                        TouristSpot.builder()
+//                                                .name(spotDto.getTitle())
+//                                                .contentId(null)
+//                                                .contentTypeId(0)
+//                                                .firstImage("")
+//                                                .aiGenerated(true)
+//                                                .build()
+//                                ));
+                        List<TouristSpot> existingSpots = touristSpotRepository.findByNameAndContentIdIsNull(spotDto.getTitle());
+
+                        if (!existingSpots.isEmpty()) {
+                            // 이미 같은 이름의 contentId=null 관광지가 있으면 재사용
+                            spot = existingSpots.get(0);
+                        } else {
+                            // 없으면 새로 저장
+                            spot = touristSpotRepository.save(
+                                    TouristSpot.builder()
+                                            .name(spotDto.getTitle())
+                                            .contentId(null)
+                                            .contentTypeId(0)
+                                            .firstImage("")
+                                            .aiGenerated(true)
+                                            .build()
+                            );
+                        }
                     } else {
                         throw new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND);
                     }
@@ -243,7 +260,6 @@ public class PlanService {
 
     public CreatePlanDto generatePlanFromAI(CreatePlanAIDto requestDto) {
         List<DayPlanDto> days = aiPlanService.generate(requestDto);
-        System.out.println("days: " + days);
         return CreatePlanDto.builder()
                 .title(requestDto.getTitle())
                 .transportType(requestDto.getTransportType())

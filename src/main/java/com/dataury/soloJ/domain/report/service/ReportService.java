@@ -129,7 +129,6 @@ public class ReportService {
                 .build();
 
         report = reportRepository.save(report);
-        log.info("신고 접수 완료: reportId={}, reporter={}, target={}", report.getId(), reporterId, targetId);
 
         // 누적 제재 처리
         processUserPenalty(targetUser);
@@ -275,7 +274,6 @@ public class ReportService {
         }
         
         reportRepository.delete(report);
-        log.info("신고 취소: reportId={}, user={}", reportId, userId);
     }
 
     public UserReportStatsDto getUserReportStatistics() {
@@ -411,7 +409,6 @@ public class ReportService {
     public void markNotificationAsRead(Long notificationId) {
         Long userId = SecurityUtils.getCurrentUserId();
         // TODO: 알림 시스템과 연동하여 구현
-        log.info("알림 읽음 처리: notificationId={}, user={}", notificationId, userId);
     }
 
     // ===== 헬퍼 메서드들 =====

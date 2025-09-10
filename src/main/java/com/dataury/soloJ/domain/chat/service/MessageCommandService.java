@@ -63,16 +63,12 @@ public class MessageCommandService {
         if (chatRoom.getIsCompleted()) {
             throw new GeneralException(ErrorStatus.CHATROOM_COMPLETED);
         }
-        
-        log.info("📨 메시지 처리 시작 - messageId: {}, roomId: {}, senderId: {}, sendAt: {}", 
-            message.getMessageId(), message.getRoomId(), message.getSenderId(), message.getSendAt());
+
         
         // Redis에만 임시 저장 (MySQL 배치 저장은 스케줄러가 처리)
         saveMessageToRedis(message);   // Redis에 캐시
         broadcastMessage(message);
         sendNotificationToMembers(message); // 알림 전송
-        
-        log.info("✅ 메시지 처리 완료 - messageId: {}, roomId: {}", message.getMessageId(), message.getRoomId());
 
     }
 
@@ -148,7 +144,6 @@ public class MessageCommandService {
         if (messageId != null) {
             Boolean exists = redisTemplate.opsForSet().isMember(idSetKey, messageId);
             if (Boolean.TRUE.equals(exists)) {
-                log.debug("⚠️ Redis 중복 메시지 감지 - messageId: {}, roomId: {}", messageId, roomId);
                 return;
             }
         }
@@ -177,7 +172,6 @@ public class MessageCommandService {
         redisTemplate.expire(listKey, Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
         redisTemplate.expire(idSetKey, Duration.ofSeconds(REDIS_MESSAGE_TTL_SECONDS));
 
-        log.info("✅ Redis 캐시 저장 완료 - messageId: {}, roomId={}, sendAt(UTC)={}", messageId, roomId, sendAtUtc);
     }
 
 
@@ -196,8 +190,7 @@ public class MessageCommandService {
                 .image(message.getImage())
                 .sendAt(message.getSendAt())
                 .build();
-        
-        log.info("채팅방 내 메시지 전송 messageId={}, roomId={}, senderId={}", message.getMessageId(), message.getRoomId(), message.getSenderId());
+
         messagingTemplate.convertAndSend("/topic/" + message.getRoomId(), response);
     }
 
@@ -232,7 +225,6 @@ public class MessageCommandService {
     @Scheduled(fixedRate = 600000) // 10분마다 실행
     @Transactional
     public void batchSaveMessagesToMySQL() {
-        log.info("📦 배치 저장 작업 시작");
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
         int totalSavedMessages = 0;
         
@@ -241,12 +233,10 @@ public class MessageCommandService {
                 int savedCount = saveRoomMessagesToMySQL(chatRoom.getId());
                 totalSavedMessages += savedCount;
             } catch (Exception e) {
-                log.error("채팅방 {} 메시지 배치 저장 실패: {}", chatRoom.getId(), e.getMessage(), e);
                 // 한 방의 실패가 전체 작업을 중단시키지 않도록 계속 진행
             }
         }
-        
-        log.info("📦 배치 저장 작업 완료 - 총 저장된 메시지 수: {}", totalSavedMessages);
+
     }
 
     private int saveRoomMessagesToMySQL(Long roomId) {
@@ -264,7 +254,6 @@ public class MessageCommandService {
                     try {
                         return objectMapper.convertValue(obj, Message.class);
                     } catch (Exception e) {
-                        log.warn("Redis 메시지 변환 실패: {}", e.getMessage());
                         return null;
                     }
                 })
@@ -297,8 +286,6 @@ public class MessageCommandService {
             List<Message> messagesToSave = new ArrayList<>();
             
             for (Message msg : newMessages) {
-                log.debug("💾 MySQL 저장 준비 - messageId: {}, roomId: {}, senderId: {}, sendAt: {}", 
-                    msg.getMessageId(), msg.getRoomId(), msg.getSenderId(), msg.getSendAt());
                     
                 Message messageToSave = Message.builder()
                         .messageId(msg.getMessageId())
@@ -319,7 +306,6 @@ public class MessageCommandService {
             }
 
             messageRepository.saveAll(messagesToSave);
-            log.info("✅ MySQL 배치 저장 완료 - roomId: {}, 저장된 메시지 수: {}", roomId, messagesToSave.size());
             return messagesToSave.size();
         }
 
@@ -341,7 +327,6 @@ public class MessageCommandService {
             if (totalMessages != null && totalMessages > MAX_REDIS_MESSAGES) {
                 // 최신 200개만 유지
                 redisTemplate.opsForList().trim(chatRoomMessagesKey, 0, MAX_REDIS_MESSAGES - 1);
-                log.info("Redis 캐시 정리 완료 - roomId: {}, 유지된 메시지 수: {}", chatRoomId, MAX_REDIS_MESSAGES);
             }
         }
     }
