@@ -32,9 +32,9 @@ public class HomeCacheService {
             String key = TODAY_SPOTS_KEY + getTodayKey();
             String value = objectMapper.writeValueAsString(spots);
             redisTemplate.opsForValue().set(key, value, CACHE_DURATION);
-            log.info("오늘의 추천 장소 캐시 저장: {} spots", spots.size());
+
         } catch (Exception e) {
-            log.error("오늘의 추천 장소 캐시 저장 실패", e);
+
         }
     }
     
@@ -46,7 +46,7 @@ public class HomeCacheService {
                 return objectMapper.readValue(value, new TypeReference<List<HomeResponse.RecommendSpotDto>>() {});
             }
         } catch (Exception e) {
-            log.error("오늘의 추천 장소 캐시 조회 실패", e);
+
         }
         return null;
     }
@@ -56,9 +56,9 @@ public class HomeCacheService {
         try {
             String value = objectMapper.writeValueAsString(reviews);
             redisTemplate.opsForValue().set(LATEST_REVIEWS_KEY, value, Duration.ofMinutes(30)); // 30분 캐시
-            log.info("최신 후기 캐시 저장: {} reviews", reviews.size());
+
         } catch (Exception e) {
-            log.error("최신 후기 캐시 저장 실패", e);
+
         }
     }
     
@@ -69,7 +69,7 @@ public class HomeCacheService {
                 return objectMapper.readValue(value, new TypeReference<List<HomeResponse.LatestReviewDto>>() {});
             }
         } catch (Exception e) {
-            log.error("최신 후기 캐시 조회 실패", e);
+
         }
         return null;
     }
@@ -80,9 +80,9 @@ public class HomeCacheService {
             String key = USER_RECOMMENDED_ROOMS_KEY + userId + ":" + getTodayKey();
             String value = objectMapper.writeValueAsString(rooms);
             redisTemplate.opsForValue().set(key, value, CACHE_DURATION);
-            log.info("사용자 {} 추천 동행방 캐시 저장: {} rooms", userId, rooms.size());
+
         } catch (Exception e) {
-            log.error("사용자별 추천 동행방 캐시 저장 실패", e);
+
         }
     }
     
@@ -94,7 +94,7 @@ public class HomeCacheService {
                 return objectMapper.readValue(value, new TypeReference<List<HomeResponse.OpenChatRoomDto>>() {});
             }
         } catch (Exception e) {
-            log.error("사용자별 추천 동행방 캐시 조회 실패", e);
+
         }
         return null;
     }
@@ -108,9 +108,9 @@ public class HomeCacheService {
             String userPattern = USER_RECOMMENDED_ROOMS_KEY + "*:" + getTodayKey();
             redisTemplate.delete(redisTemplate.keys(userPattern));
             
-            log.info("오늘의 캐시 삭제 완료");
+
         } catch (Exception e) {
-            log.error("캐시 삭제 실패", e);
+
         }
     }
     

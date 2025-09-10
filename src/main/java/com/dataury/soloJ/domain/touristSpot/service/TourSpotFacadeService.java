@@ -38,7 +38,7 @@ public class TourSpotFacadeService {
                         .roomId(room.getChatRoomId())
                         .title(room.getTitle())
                         .description(room.getDescription())
-                        .spotContentId(contentId)
+                        .isCompleted(room.getIsCompleted())
                         .spotName(room.getSpotName())
                         .spotImage(room.getTouristSpotImage())
                         .currentParticipants(room.getCurrentMembers() != null ? room.getCurrentMembers().intValue() : 0)

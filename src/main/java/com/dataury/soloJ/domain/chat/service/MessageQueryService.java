@@ -148,7 +148,6 @@ public class MessageQueryService {
                         // ✅ 변환 금지: 그대로 역직렬화만 한다.
                         return objectMapper.convertValue(obj, Message.class);
                     } catch (Exception e) {
-                        log.warn("Redis 메시지 변환 실패: {}", e.getMessage());
                         return null;
                     }
                 })
@@ -156,7 +155,6 @@ public class MessageQueryService {
                 .toList();
 
 
-        log.info("Redis에서 조회된 메시지 수: {} (요청: {}), key={}", messages.size(), size, redisKey);
         return messages;
     }
 

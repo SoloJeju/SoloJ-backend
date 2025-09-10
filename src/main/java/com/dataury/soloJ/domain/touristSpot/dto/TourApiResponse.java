@@ -32,7 +32,11 @@ public class TourApiResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Body {
         private Items items;
+        private int numOfRows;
+        private int pageNo;
+        private int totalCount;
     }
+
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -54,7 +54,7 @@ public class HomeResponse {
         private Long roomId;
         private String title;
         private String description;
-        private Long spotContentId;
+        private Boolean isCompleted;
         private String spotName;
         private String spotImage;  // 관광지 사진
         private Integer currentParticipants;

@@ -3,6 +3,7 @@ package com.dataury.soloJ.domain.chat.repository;
 import com.dataury.soloJ.domain.chat.entity.Message;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,4 +46,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     // 특정 채팅방의 가장 최신 메시지 (sendAt 기준 내림차순 정렬 후 1개)
     Optional<Message> findTopByRoomIdOrderBySendAtDesc(Long roomId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Message m where m.roomId = :roomId")
+    void deleteByRoomId(@Param("roomId") Long roomId);
+
 }

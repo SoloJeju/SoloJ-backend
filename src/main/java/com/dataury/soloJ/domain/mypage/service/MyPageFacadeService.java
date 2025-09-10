@@ -1,12 +1,11 @@
 package com.dataury.soloJ.domain.mypage.service;
 
-import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
-import com.dataury.soloJ.domain.home.dto.HomeResponse;
 import com.dataury.soloJ.domain.chat.service.MessageReadQueryService;
 import com.dataury.soloJ.domain.community.dto.PostResponseDto;
 import com.dataury.soloJ.domain.community.service.PostService;
 import com.dataury.soloJ.domain.community.service.ScrapService;
+import com.dataury.soloJ.domain.home.dto.HomeResponse;
 import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
 import com.dataury.soloJ.domain.plan.service.PlanService;
 import com.dataury.soloJ.domain.review.dto.ReviewResponseDto;
@@ -18,8 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +36,7 @@ public class MyPageFacadeService {
                 .roomId(room.getChatRoomId())
                 .title(room.getTitle())
                 .description(room.getDescription())
-                .spotContentId(null) // 관광지 contentId 정보가 ChatRoomListItem에 없음
+                .isCompleted(room.getIsCompleted())
                 .spotName(room.getSpotName())
                 .spotImage(room.getTouristSpotImage())
                 .currentParticipants(room.getCurrentMembers() != null ? room.getCurrentMembers().intValue() : 0)
@@ -79,7 +76,7 @@ public class MyPageFacadeService {
                         .roomId(room.getChatRoomId())
                         .title(room.getTitle())
                         .description(room.getDescription())
-                        .spotContentId(null) // 관광지 contentId 정보가 ChatRoomListItem에 없음
+                        .isCompleted(room.getIsCompleted())
                         .spotName(room.getSpotName())
                         .spotImage(room.getTouristSpotImage())
                         .currentParticipants(room.getCurrentMembers() != null ? room.getCurrentMembers().intValue() : 0)

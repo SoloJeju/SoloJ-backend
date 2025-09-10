@@ -68,7 +68,7 @@ public class ReviewService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         // 관광지 찾기
-        TouristSpot touristSpot = touristSpotRepository.findById(reviewCreateDto.getContentId())
+        TouristSpot touristSpot =  touristSpotRepository.findByContentId(reviewCreateDto.getContentId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
         // 썸네일 설정 (첫 번째 이미지)

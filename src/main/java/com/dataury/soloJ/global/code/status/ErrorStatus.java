@@ -43,7 +43,8 @@ public enum ErrorStatus implements BaseErrorCode {
     JWT_MALFORMED(HttpStatus.UNAUTHORIZED, "AUTH003", "JWT 토큰이 올바르지 않은 형식입니다."),
 
     TOUR_API_FAIL(HttpStatus.BAD_REQUEST,"TOUR4001","TOUR API 호출에 실패하였습니다."),
-    TOURIST_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND,"TOURAPI4002","해당 관광지를 찾을 수 없습니다."),
+    TOURIST_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND,"TOUR4002","해당 관광지를 찾을 수 없습니다."),
+    SPOT_CART_ALERADY(HttpStatus.BAD_REQUEST, "TOUR4003","관광지 장바구니에 중복된 관광지를 넣을 수 없습니다."),
 
     // Plan 관련 에러
     INVALID_PLAN_DATE(HttpStatus.BAD_REQUEST, "PLAN4001", "시작 날짜는 종료 날짜보다 앞서야 합니다."),
@@ -64,6 +65,9 @@ public enum ErrorStatus implements BaseErrorCode {
     GENDER_RESTRICTION_VIOLATION(HttpStatus.FORBIDDEN,"CHAT4007","해당 채팅방의 성별 제한에 맞지 않습니다."),
     INVALID_GENDER_RESTRICTION_FOR_CREATION(HttpStatus.BAD_REQUEST,"CHAT4008","사용자 성별과 다른 성별 제한의 채팅방은 생성할 수 없습니다."),
     CHATROOM_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST,"CHAT4009","이미 종료된 채팅방입니다."),
+    OWNER_NOT_OUT(HttpStatus.BAD_REQUEST,"CHAT4010", "방장은 채팅방을 나갈 수 없습니다."),
+    OWNER_JOINCHAT(HttpStatus.BAD_REQUEST, "CHAT4011", "방장만 접근 가능한 권한입니다."),
+    CHATROOM_HAS_OTHERS(HttpStatus.BAD_REQUEST,"CHAT4011","방에 다른 사람이 있는 경우 삭제가 불가능합니다."),
 
 
     PAGE_BOUND_ERROR(HttpStatus.BAD_REQUEST, "PAGE4001", "페이징 번호가 적절하지 않습니다."),

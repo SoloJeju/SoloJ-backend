@@ -23,7 +23,7 @@ spring:
         format_sql: true
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
         implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-    show_sql: true
+    show_sql: false
   jackson:
     time-zone: Asia/Seoul
   security:

@@ -39,7 +39,7 @@ public class TourSpotService {
                 .map(item -> Long.valueOf(item.getContentid()))
                 .toList();
 
-        List<TouristSpot> spots = touristSpotRepository.findAllById(contentIds);
+        List<TouristSpot> spots = touristSpotRepository.findAllByContentIdIn(contentIds);
 
         // 관광지 ID → TouristSpot 맵핑
         Map<Long, TouristSpot> spotMap = spots.stream()
@@ -75,14 +75,9 @@ public class TourSpotService {
                         .name(item.getTitle())
                         .contentTypeId(Integer.parseInt(item.getContenttypeid()))
                         .firstImage(item.getFirstimage())
-                        .address(item.getAddr1())
                         .build());
             }
 
-            else if (spot.getAddress()==null){
-                spot.setAddress(item.getAddr1());
-                touristSpotRepository.save(spot);
-            }
 
             // 평균 별점 계산
             Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
@@ -93,6 +88,7 @@ public class TourSpotService {
                     .title(item.getTitle())
                     .addr1(item.getAddr1())
                     .firstimage(item.getFirstimage())
+                    .tel(item.getTel())
                     .difficulty(spot.getDifficulty())
                     .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
                     .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
@@ -145,7 +141,7 @@ public class TourSpotService {
         Map<String, Object> intro = tourApiService.fetchDetailIntroAsMap(contentId, contentTypeId);
         List<Map<String, Object>> info = tourApiService.fetchDetailInfo(contentId, contentTypeId);
 
-        TouristSpot spot = touristSpotRepository.findById(contentId)
+        TouristSpot spot =  touristSpotRepository.findByContentId(contentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.TOURIST_SPOT_NOT_FOUND));
 
         List<String> reviewTags = tagRepository.findAllByTouristSpot(spot).stream()
@@ -185,9 +181,10 @@ public class TourSpotService {
 
         // Step 2. DB 검색
         for (String candidate : nameCandidates) {
-            Optional<TouristSpot> existing = touristSpotRepository.findByName(candidate);
-            if (existing.isPresent()) {
-                return existing.get().getContentId();
+            List<TouristSpot> existingList = touristSpotRepository.findByNameAndContentIdIsNull(candidate);
+            if (!existingList.isEmpty()) {
+                // contentId가 null인 애들은 여러 개일 수 있으니까 첫 번째 것만 리턴
+                return existingList.get(0).getContentId();
             }
         }
 
@@ -196,31 +193,34 @@ public class TourSpotService {
             List<TourApiResponse.Item> items = tourApiService.searchTouristSpotByKeyword(candidate);
 
             if (items.isEmpty()) {
-                log.debug("🚨 [TourAPI] 결과 없음 for: " + candidate);
                 continue;
             }
 
-            for (TourApiResponse.Item item : items) {
-                log.debug("     • 결과: " + item.getTitle() + " (contentId=" + item.getContentid() + ")");
-            }
 
             TourApiResponse.Item bestMatch = getMostSimilarItem(originalTitle, items);
             if (bestMatch != null && bestMatch.getContentid() != null && !bestMatch.getContentid().isBlank()) {
                 String normalizedTarget = normalize(originalTitle);
                 String normalizedBestMatch = normalize(bestMatch.getTitle());
                 int distance = getLevenshteinDistance(normalizedTarget, normalizedBestMatch);
-                System.out.println("🏆 [Best Match] " + bestMatch.getTitle() + " (거리=" + distance + ")");
                 if (distance <= 3) { // 유연하게 조정
-                    return Long.valueOf(bestMatch.getContentid());
+                    Long contentId = Long.valueOf(bestMatch.getContentid());
+                    TouristSpot spot = touristSpotRepository.findByContentId(contentId)
+                            .orElseGet(() -> touristSpotRepository.save(
+                                    TouristSpot.builder()
+                                            .contentId(contentId)
+                                            .name(bestMatch.getTitle())
+                                            .contentTypeId(Integer.parseInt(bestMatch.getContenttypeid()))
+                                            .firstImage(bestMatch.getFirstimage())
+                                            .build()
+                            ));
+                    return spot.getContentId();
                 } else {
-                    System.out.println("🚫 거리 임계값 초과 → null 반환");
                 }
             }
 
         }
 
-        System.out.println("🚨 최종 실패: [" + originalTitle + "]에 대한 매핑 실패");
-        return null;
+        return -1L;
     }
 
 
@@ -250,7 +250,6 @@ public class TourSpotService {
         for (TourApiResponse.Item item : items) {
             String normalizedTitle = normalize(item.getTitle());
             if (normalizedTarget.equalsIgnoreCase(normalizedTitle)) {
-                System.out.println("🎯 [우선 매칭] 정규화 완전 일치: " + item.getTitle());
                 return item;
             }
         }
@@ -261,7 +260,6 @@ public class TourSpotService {
             if (normalizedTitle.contains(normalizedTarget)) {
                 int distance = getLevenshteinDistance(normalizedTarget, normalizedTitle);
                 if (distance <= 2) {
-                    System.out.println("🎯 [포함 + 거리 OK] 포함 일치: " + item.getTitle());
                     return item;
                 }
             }

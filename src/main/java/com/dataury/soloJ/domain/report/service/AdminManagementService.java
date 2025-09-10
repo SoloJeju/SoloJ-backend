@@ -6,6 +6,7 @@ import com.dataury.soloJ.domain.community.repository.CommentRepository;
 import com.dataury.soloJ.domain.community.repository.PostRepository;
 import com.dataury.soloJ.domain.inquiry.entity.status.InquiryStatus;
 import com.dataury.soloJ.domain.inquiry.repository.InquiryRepository;
+import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.domain.report.dto.admin.*;
 import com.dataury.soloJ.domain.report.entity.Report;
 import com.dataury.soloJ.domain.report.entity.UserPenalty;
@@ -17,7 +18,6 @@ import com.dataury.soloJ.domain.report.repository.UserPenaltyRepository;
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.entity.status.Role;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
-import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
@@ -30,7 +30,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -93,14 +92,13 @@ public class AdminManagementService {
     }
 
     public ReportListResponseDto getReports(int page, int limit, String status, String reason, String type, String search) {
-        log.info("getReports called with parameters: page={}, limit={}, status={}, reason={}, type={}, search={}", 
-                page, limit, status, reason, type, search);
+
         
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
         
         // 전체 신고 수 확인
         long totalReports = reportRepository.count();
-        log.info("Total reports in database: {}", totalReports);
+
         
         // 필터 파라미터 변환
         ReportStatus reportStatus = null;
@@ -108,16 +106,14 @@ public class AdminManagementService {
             try {
                 reportStatus = ReportStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid report status: {}", status);
+
             }
         }
         
         String reasonFilter = (reason != null && !reason.isEmpty() && !"all".equals(reason)) ? reason.toUpperCase() : null;
         String typeFilter = (type != null && !type.isEmpty() && !"all".equals(type)) ? type.toLowerCase() : null;
         String searchFilter = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
-        
-        log.info("Converted filters: reportStatus={}, reasonFilter={}, typeFilter={}, searchFilter={}", 
-                reportStatus, reasonFilter, typeFilter, searchFilter);
+
         
         // 필터링된 결과를 데이터베이스에서 직접 가져오기
         Page<Report> reportPage = reportRepository.findReportsWithFilters(
@@ -127,9 +123,7 @@ public class AdminManagementService {
             searchFilter, 
             pageable
         );
-        
-        log.info("Query result: totalElements={}, totalPages={}, numberOfElements={}", 
-                reportPage.getTotalElements(), reportPage.getTotalPages(), reportPage.getNumberOfElements());
+
 
         List<AdminReportDto> reports = reportPage.getContent().stream()
             .map(this::convertToAdminReportDto)
@@ -185,12 +179,10 @@ public class AdminManagementService {
                 reportId,
                 targetType
             );
-            log.info("Report processed notification sent to reporter: {}", report.getReporter().getId());
         } catch (Exception e) {
             log.error("Failed to send report processed notification: ", e);
         }
-        
-        log.info("Report {} processed with action: {}", reportId, processDto.getAction());
+
     }
 
     public void sendReportResultNotification(NotificationDto.ReportResultDto dto) {
@@ -331,8 +323,7 @@ public class AdminManagementService {
         } catch (Exception e) {
             log.error("Failed to send user action notification: ", e);
         }
-        
-        log.info("Admin {} applied action {} to user {}", adminId, actionDto.getActionType(), userId);
+
     }
 
     @Transactional
@@ -449,8 +440,6 @@ public class AdminManagementService {
     @Transactional
     public void applyContentAction(Long contentId, ContentActionDto actionDto) {
         Long adminId = SecurityUtils.getCurrentUserId();
-        log.info("Admin {} applying content action {} to content {} with reason: {}", 
-                adminId, actionDto.getActionType(), contentId, actionDto.getReason());
         
         // 콘텐츠 타입 판별 (Post 또는 Comment)
         String contentType = actionDto.getContentType();
@@ -500,7 +489,6 @@ public class AdminManagementService {
                     contentId,
                     actionDto.getReason()
                 );
-                log.info("Content action notification sent to content owner: {}", contentOwner.getId());
             } catch (Exception e) {
                 log.error("Failed to send content action notification: ", e);
             }
@@ -510,7 +498,6 @@ public class AdminManagementService {
     @Transactional
     public void updateContentStatus(String contentType, Long contentId, String status, String reason) {
         Long adminId = SecurityUtils.getCurrentUserId();
-        log.info("Admin {} updating {} {} status to {} with reason: {}", adminId, contentType, contentId, status, reason);
         
         if ("post".equals(contentType)) {
             Post post = postRepository.findById(contentId)

@@ -11,6 +11,7 @@ import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.TokenProvider;
+import com.dataury.soloJ.global.security.UserPenaltyChecker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -32,6 +33,7 @@ public class ChatWebSocketController {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final ChatService chatService;
+    private final UserPenaltyChecker userPenaltyChecker;
 
     @MessageMapping("/chat/{roomId}")
     public void sendMessage(@DestinationVariable Long roomId, 
@@ -45,6 +47,8 @@ public class ChatWebSocketController {
                     .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
             
             UserProfile userProfile = userProfileRepository.findByUser(user).orElse(null);
+
+            userPenaltyChecker.checkMessagePermission(senderId);
             
             // 메시지 ID 및 전송 시간 생성
             String messageId = UUID.randomUUID().toString();
@@ -88,17 +92,13 @@ public class ChatWebSocketController {
                             .build();
                     chatService.handleTalkMessage(defaultMessage);
             }
-            
-            log.info("메시지 전송 완료 - roomId: {}, senderId: {}, type: {}", roomId, senderId, messageRequest.getType());
+
             
         } catch (GeneralException e) {
-            log.error("메시지 전송 중 GeneralException 발생 - roomId: {}, error: {}", roomId, e.getErrorReason().getMessage(), e);
             throw e;
         } catch (IllegalArgumentException e) {
-            log.error("메시지 전송 중 잘못된 인자 - roomId: {}, error: {}", roomId, e.getMessage(), e);
             throw new GeneralException(ErrorStatus._BAD_REQUEST);
         } catch (Exception e) {
-            log.error("메시지 전송 중 예상치 못한 오류 발생 - roomId: {}, error: {}", roomId, e.getMessage(), e);
             throw new GeneralException(ErrorStatus._INTERNAL_SERVER_ERROR);
         }
     }

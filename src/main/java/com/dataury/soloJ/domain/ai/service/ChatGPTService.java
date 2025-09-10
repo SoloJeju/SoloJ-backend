@@ -40,7 +40,6 @@ public class ChatGPTService {
                 JsonNode root = mapper.readTree(response.getBody());
                 String result = root.path("choices").get(0).path("message").path("content").asText();
 
-
                 return result.trim();
             } else {
                 throw new RuntimeException("OpenAI 호출 실패: " + response.getStatusCode());

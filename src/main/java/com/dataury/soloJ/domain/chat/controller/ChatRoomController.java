@@ -1,10 +1,12 @@
 package com.dataury.soloJ.domain.chat.controller;
 
 import com.dataury.soloJ.domain.chat.dto.ChatMessageDto;
+import com.dataury.soloJ.domain.chat.dto.ChatRoomListItem;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomRequestDto;
 import com.dataury.soloJ.domain.chat.dto.ChatRoomResponseDto;
 import com.dataury.soloJ.domain.chat.entity.status.MessageType;
 import com.dataury.soloJ.domain.chat.service.ChatRoomCommandService;
+import com.dataury.soloJ.domain.chat.service.ChatRoomQueryService;
 import com.dataury.soloJ.domain.chat.service.ChatService;
 import com.dataury.soloJ.domain.chat.service.MessageQueryService;
 import com.dataury.soloJ.global.ApiResponse;
@@ -30,6 +32,7 @@ public class ChatRoomController {
 
     private final ChatRoomCommandService chatRoomCommandService;
     private final ChatService chatService;
+    private final ChatRoomQueryService chatRoomQueryService;
 
 
     @Operation(summary = "관광지 기반 채팅방 생성", description = "관광지 기반 동행 채팅방을 생성합니다. 생성한 사용자가 자동으로 방장이 됩니다.")
@@ -50,9 +53,8 @@ public class ChatRoomController {
             try {
                 Long userId = SecurityUtils.getCurrentUserId();
                 chatService.handleEnterMessage(roomId, userId.toString());
-                log.info("채팅방 입장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
+
             } catch (Exception e) {
-                log.error("채팅방 입장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
                 // 입장 메시지 실패해도 메시지 조회는 계속 진행
             }
 
@@ -71,9 +73,7 @@ public class ChatRoomController {
             // 사용자 정보를 가져와서 닉네임 전달
             var userInfo = chatRoomCommandService.getUserInfo(userId);
             chatService.handleExitMessage(roomId, userId, userInfo.getNickName());
-            log.info("채팅방 퇴장 메시지 전송 - roomId: {}, userId: {}", roomId, userId);
-        } catch (Exception e) {
-            log.error("채팅방 퇴장 메시지 전송 실패 - roomId: {}, error: {}", roomId, e.getMessage());
+        } catch (Exception e) {;
             // 퇴장 메시지 실패해도 채팅방 나가기는 계속 진행
         }
         
@@ -120,8 +120,6 @@ public class ChatRoomController {
                 .hasNext(pageResponse.isHasNext())
                 .build();
 
-        log.info("채팅방 메시지 조회 완료 - roomId: {}, 조회된 메시지 수: {}, hasNext: {}", 
-                roomId, responses.size(), pageResponse.isHasNext());
 
         return ApiResponse.onSuccess(response);
     }
@@ -131,6 +129,26 @@ public class ChatRoomController {
     public ApiResponse<String> markMessagesAsRead(@PathVariable Long roomId) {
         chatRoomCommandService.markAllMessagesAsRead(roomId);
         return ApiResponse.onSuccess("모든 메시지가 읽음 처리되었습니다.");
+    }
+
+    @Operation(summary = "채팅방 삭제", description = "방장이 채팅방을 삭제합니다. ")
+    @DeleteMapping("/{roomId}")
+    public ApiResponse<String> deleteChatRoom(@PathVariable Long roomId) {
+        chatRoomCommandService.deleteChatRoom(roomId);
+        return ApiResponse.onSuccess("채팅방 삭제가 완료되었습니다.");
+    }
+
+    @Operation(summary = "채팅방 완료 처리", description = "방장이 채팅방을 완료처리합니다.")
+    @PatchMapping("/{roomId}/complete")
+    public ApiResponse<String> completeChatRoom(@PathVariable Long roomId) {
+        chatRoomCommandService.completeChatRoom(roomId);
+        return ApiResponse.onSuccess("채팅방이 완료되었습니다.");
+    }
+
+    @Operation(summary = "채팅방 상세조회", description = "채팅방을 상세조회합니다.")
+    @GetMapping("/{roomId}")
+    public ApiResponse<ChatRoomListItem> getDetailChatRoom(@PathVariable Long roomId) {
+        return ApiResponse.onSuccess(chatRoomQueryService.getDetailChatRoom(roomId));
     }
 
 }

@@ -39,18 +39,16 @@ public class ChatService {
                 .roomId(roomId)
                 .senderId(user.getId())
                 .senderName(user.getName())
-                .content(user.getName() + " 님이 입장하셨습니다.")
+                .content(user.getUserProfile().getNickName()+ " 님이 입장하셨습니다.")
                 .sendAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")))
                 .image(null) // 입장/퇴장 메시지는 이모지 필요 없음
                 .build();
 
         handleMessage(message);
-        log.info("사용자 입장 메시지 처리 완료 - roomId: {}, userId: {}", roomId, user.getId());
     }
 
     public void handleTalkMessage(Message message) {
         handleMessage(message);
-        log.info("일반 메시지 처리 완료 - roomId: {}, messageId: {}", message.getRoomId(), message.getMessageId());
     }
 
     public void handleExitMessage(Long roomId, Long senderId, String senderName) {
@@ -65,7 +63,6 @@ public class ChatService {
                 .image(null) // 입장/퇴장 메시지는 이모지 필요 없음
                 .build();
         handleMessage(message);
-        log.info("사용자 퇴장 메시지 처리 완료 - roomId: {}, userId: {}", roomId, senderId);
     }
 
     private Long parseUserId(String content) {

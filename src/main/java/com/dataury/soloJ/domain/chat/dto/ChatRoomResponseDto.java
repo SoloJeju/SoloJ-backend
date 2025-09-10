@@ -89,6 +89,7 @@ public class ChatRoomResponseDto {
             private LocalDateTime joinedAt;
             private boolean isActive;
             private boolean isMine;  // 현재 로그인한 사용자인지 여부
+            private boolean isOwner; //방장 여부
         }
     }
 

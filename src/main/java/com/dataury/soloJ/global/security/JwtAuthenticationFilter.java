@@ -56,7 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             Long userId = tokenProvider.extractUserIdFromToken(token);
             String role = tokenProvider.extractUserRoleFromToken(token); // JWT에서 role 꺼내는 메서드 필요
-            log.info("Authenticated user ID: {}, role: {}", userId, role);
 
             // ROLE_ 접두어 붙여서 권한 생성
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));

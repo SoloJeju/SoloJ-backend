@@ -106,16 +106,18 @@ public class AiPlanService {
                 LocalDateTime arrivalDate = LocalDateTime.of(currentDate, LocalTime.parse(startTime, timeFormatter));
                 LocalDateTime duringDate = LocalDateTime.of(currentDate, LocalTime.parse(endTime, timeFormatter));
                 Long contentId = tourSpotService.resolveOrRegisterSpotByTitle(title);
-
+                if (contentId != null && contentId == -1L) {
+                    contentId = null;
+                }
                 if (currentDayIndex >= 0 && currentDayIndex < days.size()) {
                     CreateSpotDto spot = new CreateSpotDto(arrivalDate, duringDate, contentId, title, memo);
                     days.get(currentDayIndex).getSpots().add(spot);
                 } else {
-                    log.warn("🚨 잘못된 currentDayIndex: {}, days.size() = {}", currentDayIndex, days.size());
 
                 }
             }
         }
+
 
         return days;
     }

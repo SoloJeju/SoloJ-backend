@@ -135,9 +135,7 @@ public class MessageReadQueryService {
             boolean result = checkUnread(chatRoomId, userId, lastReadTime);
             unreadStatusMap.put(chatRoomId, result);
 
-            // 디버깅 로그
-            System.out.printf("📌 getUnreadStatusForAllChatRooms: chatRoomId=%d, lastReadAt=%s, result=%s%n",
-                    chatRoomId, lastReadTime, result);
+
         }
 
         return unreadStatusMap;
