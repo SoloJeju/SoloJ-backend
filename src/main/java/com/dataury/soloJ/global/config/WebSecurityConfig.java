@@ -7,10 +7,10 @@ import com.dataury.soloJ.global.security.oauth.CustomOAuth2UserService;
 import com.dataury.soloJ.global.security.oauth.OAuth2LoginSuccessHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
-@EnableMethodSecurity
 @EnableWebSecurity
+@Log4j2
 public class WebSecurityConfig {
 
     private final ObjectMapper objectMapper;
@@ -43,6 +43,7 @@ public class WebSecurityConfig {
             CustomOAuth2UserService customOAuth2UserService,
             OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler
     ) throws Exception {
+        log.info(">>>>>>>>>>  LATEST WebSecurityConfig IS LOADING! <<<<<<<<<<"); // ◀️ 이 로그 추가
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.httpBasic(basic -> basic.disable());
@@ -55,10 +56,11 @@ public class WebSecurityConfig {
                 .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                 .requestMatchers("/swagger", "/swagger/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/login", "/oauth2/**").permitAll()
+                .requestMatchers("/api/**").permitAll()  //
                 .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                 .requestMatchers("/ws/**", "/ws/info/**", "/ws/iframe.html**").permitAll()
                 .requestMatchers("/api/inquiries/**", "/api/reports/**").authenticated()
-                .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/api/tourist-spots", "/api/tourist-spots/**").permitAll()
                 .anyRequest().authenticated()
         );
 
@@ -104,7 +106,8 @@ public class WebSecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://soloj.vercel.app",
-                "https://soloj.store"
+                "https://soloj.store",
+                "https://soloj-admin-front.vercel.app/"
         );
 
         config.setAllowedOrigins(allowedOrigins);

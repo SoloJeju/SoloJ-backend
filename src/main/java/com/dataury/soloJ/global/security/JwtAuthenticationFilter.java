@@ -38,14 +38,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean isWhitelisted(HttpServletRequest req) {
         String uri = req.getRequestURI();
-        String method = req.getMethod();
-        // 필요하면 메서드까지 체크
         return WHITELIST.stream().anyMatch(uri::equals);
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = parseBearerToken(request);
 
@@ -55,18 +54,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             Long userId = tokenProvider.extractUserIdFromToken(token);
-            String role = tokenProvider.extractUserRoleFromToken(token); // JWT에서 role 꺼내는 메서드 필요
+            String role = tokenProvider.extractUserRoleFromToken(token);
 
-            // ROLE_ 접두어 붙여서 권한 생성
+            // 권한 세팅
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
+            // Principal을 DTO로 세팅
+            JwtUserPrincipal principal = new JwtUserPrincipal(userId, role);
+
             AbstractAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
             securityContext.setAuthentication(authentication);
             SecurityContextHolder.setContext(securityContext);
+
+            log.info("➡️ 최종 Authentication={}", SecurityContextHolder.getContext().getAuthentication());
 
             filterChain.doFilter(request, response);
 

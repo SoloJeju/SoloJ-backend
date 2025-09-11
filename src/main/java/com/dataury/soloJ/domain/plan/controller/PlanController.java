@@ -1,14 +1,12 @@
 package com.dataury.soloJ.domain.plan.controller;
 
-import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
 import com.dataury.soloJ.domain.plan.dto.CreatePlanAIDto;
 import com.dataury.soloJ.domain.plan.dto.CreatePlanDto;
-import com.dataury.soloJ.domain.plan.service.PlanService;
+import com.dataury.soloJ.domain.plan.dto.PlanResponseDto;
 import com.dataury.soloJ.domain.plan.service.PlanDetailService;
+import com.dataury.soloJ.domain.plan.service.PlanService;
 import com.dataury.soloJ.global.ApiResponse;
-import com.dataury.soloJ.global.auth.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

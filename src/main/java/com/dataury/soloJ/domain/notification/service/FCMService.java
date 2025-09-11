@@ -1,9 +1,11 @@
 package com.dataury.soloJ.domain.notification.service;
 
+import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,7 +15,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class FCMService {
+    private final UserRepository userRepository;
 
+    @Async
     public void sendPushNotification(String fcmToken, String title, String body, Long notificationId) {
 
         
@@ -51,8 +55,11 @@ public class FCMService {
             String response = FirebaseMessaging.getInstance().send(message);
         } catch (FirebaseMessagingException e) {
             if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
-                // TODO: FCM 토큰 무효화 처리
-            } else {
+                userRepository.findByFcmToken(fcmToken)
+                        .ifPresent(user -> {
+                            user.updateFcmToken(null);
+                            userRepository.save(user);
+                        });
             }
         } catch (IllegalStateException e) {
         } catch (Exception e) {

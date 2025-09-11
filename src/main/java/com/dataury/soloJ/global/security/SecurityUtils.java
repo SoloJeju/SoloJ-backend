@@ -17,8 +17,17 @@ public class SecurityUtils {
 
         Object principal = authentication.getPrincipal();
 
+        // JwtUserPrincipal일 때 처리 추가
+        if (principal instanceof JwtUserPrincipal p) {
+            return p.userId();
+        }
+
         if (principal instanceof Long) {
             return (Long) principal;
+        }
+
+        if (principal instanceof Integer) {
+            return ((Integer) principal).longValue();
         }
 
         if (principal instanceof String) {
@@ -34,16 +43,13 @@ public class SecurityUtils {
 
     public static boolean isAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
+
         if (authentication == null || authentication.getAuthorities() == null) {
             return false;
         }
-        
-        boolean isAdmin = authentication.getAuthorities().stream()
+
+        return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
-
-        return isAdmin;
     }
-
 }

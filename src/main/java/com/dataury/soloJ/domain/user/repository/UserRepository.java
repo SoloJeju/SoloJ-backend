@@ -14,5 +14,7 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Boolean existsByEmail(String email);
     
     long countByActiveAndIsDeleted(boolean active, boolean isDeleted);
+
+    Optional<User> findByFcmToken(String fcmToken);
 }
 

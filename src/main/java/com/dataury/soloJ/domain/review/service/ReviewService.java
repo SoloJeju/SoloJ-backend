@@ -54,7 +54,6 @@ public class ReviewService {
 
     // 리뷰 생성
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#reviewCreateDto.contentId")
     public ReviewResponseDto.ReviewDto createReview(ReviewRequestDto.ReviewCreateDto reviewCreateDto) {
         // rating 범위 검증 (1~5)
         if (reviewCreateDto.getRating() != null && 
@@ -146,7 +145,6 @@ public class ReviewService {
 
     // 리뷰 수정
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#review.touristSpot.contentId")
     public ReviewResponseDto.ReviewDto updateReview(Long reviewId, ReviewRequestDto.ReviewUpdateDto request) {
         // rating 범위 검증 (1~5)
         if (request.getRating() != null && 
@@ -242,7 +240,6 @@ public class ReviewService {
 
     // 리뷰 삭제
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(cacheNames = "spotAggPct", key = "#touristSpot.contentId")
     public void deleteReview(Long reviewId) {
         // 로그인한 사용자 찾기
         Long userId = SecurityUtils.getCurrentUserId();

@@ -95,12 +95,23 @@ public class TokenProvider {
             token = token.substring(7);
         }
 
+
         try {
-            return extractClaims(token).get("userId", Long.class);
+            Object rawUserId = extractClaims(token).get("userId");
+            if (rawUserId instanceof Integer) {
+                return ((Integer) rawUserId).longValue();
+            } else if (rawUserId instanceof Long) {
+                return (Long) rawUserId;
+            } else if (rawUserId instanceof String) {
+                return Long.parseLong((String) rawUserId);
+            } else {
+                throw new GeneralException(ErrorStatus.JWT_MALFORMED);
+            }
         } catch (Exception e) {
             throw new GeneralException(ErrorStatus.JWT_MALFORMED);
         }
     }
+
 
 
 
