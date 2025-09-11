@@ -11,7 +11,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +19,6 @@ import java.time.Instant;
 import java.util.Date;
 
 @Component
-@Log4j2
 public class TokenProvider {
 
     @Value("${jwt.secret}")
@@ -36,7 +34,6 @@ public class TokenProvider {
     
     @PostConstruct
     public void init() {
-        log.info("✅ Loaded JWT_SECRET: '{}'", secretString);
         byte[] keyBytes = secretString.getBytes();
         this.SECRET_KEY = Keys.hmacShaKeyFor(keyBytes);
     }
@@ -97,9 +94,6 @@ public class TokenProvider {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-
-        Claims claims = extractClaims(token);
-        log.info("JWT Claims = {}", claims);
 
 
         try {
