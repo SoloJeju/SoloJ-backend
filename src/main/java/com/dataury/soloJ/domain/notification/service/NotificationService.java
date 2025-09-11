@@ -1,5 +1,7 @@
 package com.dataury.soloJ.domain.notification.service;
 
+import com.dataury.soloJ.domain.notification.dto.GroupedNotificationDto;
+import com.dataury.soloJ.domain.notification.dto.GroupedNotificationView;
 import com.dataury.soloJ.domain.notification.dto.NotificationReadRequestDto;
 import com.dataury.soloJ.domain.notification.dto.NotificationResponseDto;
 import com.dataury.soloJ.domain.notification.entity.Notification;
@@ -310,4 +312,58 @@ public class NotificationService {
         
         return new CursorPageResponse<>(notificationDtos, nextCursor, hasNext, size);
     }
+
+    @Transactional(readOnly = true)
+    public CursorPageResponse<GroupedNotificationDto> getMyGroupedNotifications(String cursor, int size) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        log.info("🔑 Interceptor userId = {}", userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        Long cursorLatestId = null;
+        if (cursor != null && !cursor.isBlank()) {
+            try { cursorLatestId = Long.parseLong(cursor); }
+            catch (NumberFormatException e) { throw new GeneralException(ErrorStatus._BAD_REQUEST); }
+        }
+
+        // size+1 로 다음 페이지 유무 판단
+        List<GroupedNotificationView> rows =
+                notificationRepository.findGroupedByUserWithCursor(userId, cursorLatestId, size + 1);
+
+        boolean hasNext = rows.size() > size;
+        if (hasNext) rows = rows.subList(0, size);
+
+        String nextCursor = null;
+        if (hasNext && !rows.isEmpty()) {
+            nextCursor = String.valueOf(rows.get(rows.size() - 1).getLatestId());
+        }
+
+        List<GroupedNotificationDto> items = rows.stream()
+                .map(r -> GroupedNotificationDto.builder()
+                        .type(Type.valueOf(r.getType()))
+                        .resourceType(ResourceType.valueOf(r.getResourceType()))
+                        .resourceId(r.getResourceId())
+                        .latestId(r.getLatestId())
+                        .latestMessage(r.getLatestMessage())
+                        .totalCount(r.getTotalCount())
+                        .unreadCount(r.getUnreadCount())
+                        .latestCreatedAt(r.getLatestCreatedAt())
+                        .build())
+                .toList();
+
+        return new CursorPageResponse<>(items, nextCursor, hasNext, size);
+    }
+
+
+    @Transactional
+    public void markGroupAsRead(Type type, ResourceType resourceType, Long resourceId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        notificationRepository.markGroupAsRead(
+                userId, type.name(), resourceType.name(), resourceId
+        );
+    }
+
 }

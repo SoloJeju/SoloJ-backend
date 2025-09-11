@@ -1,8 +1,9 @@
 package com.dataury.soloJ.domain.notification.controller;
 
 import com.dataury.soloJ.domain.notification.dto.FCMTokenRequestDto;
-import com.dataury.soloJ.domain.notification.dto.NotificationListDto;
 import com.dataury.soloJ.domain.notification.dto.NotificationReadRequestDto;
+import com.dataury.soloJ.domain.notification.entity.status.ResourceType;
+import com.dataury.soloJ.domain.notification.entity.status.Type;
 import com.dataury.soloJ.domain.notification.service.NotificationService;
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.code.status.SuccessStatus;
@@ -10,11 +11,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Log4j2
 @Tag(name = "Notification API", description = "알림 관련 API")
 public class NotificationController {
     
@@ -100,4 +104,25 @@ public class NotificationController {
             return ApiResponse.onSuccess("Firebase 재초기화 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    @GetMapping("/grouped")
+    @Operation(summary = "내 알림 그룹 조회", description = "같은 리소스(type, resourceType, resourceId) 기준으로 묶인 알림을 반환합니다 (커서 기반)")
+    public ApiResponse<?> getMyGroupedNotifications(
+            @Parameter(description = "커서 (커서 기반 페이지네이션용)") @RequestParam(required = false) String cursor,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        log.info("📩 /api/notifications/grouped 컨트롤러 진입 userId={}", SecurityContextHolder.getContext().getAuthentication());
+
+        return ApiResponse.onSuccess(notificationService.getMyGroupedNotifications(cursor, size));
+    }
+
+    @PutMapping("/group-read")
+    @Operation(summary = "그룹 알림 읽음 처리", description = "같은 그룹(type, resourceType, resourceId) 기준으로 모든 알림을 읽음 처리합니다")
+    public ApiResponse<Void> markGroupAsRead(
+            @RequestParam Type type,
+            @RequestParam ResourceType resourceType,
+            @RequestParam Long resourceId) {
+        notificationService.markGroupAsRead(type, resourceType, resourceId);
+        return ApiResponse.of(SuccessStatus._OK, null);
+    }
+
 }

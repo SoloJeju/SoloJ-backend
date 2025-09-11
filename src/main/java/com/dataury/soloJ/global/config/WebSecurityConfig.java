@@ -58,7 +58,9 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/ws", "/api/ws/**", "/api/ws/info/**").permitAll()
                 .requestMatchers("/ws/**", "/ws/info/**", "/ws/iframe.html**").permitAll()
                 .requestMatchers("/api/inquiries/**", "/api/reports/**").authenticated()
+                .requestMatchers("/api/notifications/**").authenticated()
                 .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/api/tourist-spots", "/api/tourist-spots/**").permitAll()
                 .anyRequest().authenticated()
         );
 
@@ -104,7 +106,8 @@ public class WebSecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://soloj.vercel.app",
-                "https://soloj.store"
+                "https://soloj.store",
+                "https://soloj-admin-front.vercel.app/"
         );
 
         config.setAllowedOrigins(allowedOrigins);

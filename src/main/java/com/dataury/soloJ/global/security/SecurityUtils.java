@@ -21,6 +21,10 @@ public class SecurityUtils {
             return (Long) principal;
         }
 
+        if (principal instanceof Integer) {
+            return ((Integer) principal).longValue();
+        }
+
         if (principal instanceof String) {
             try {
                 return Long.parseLong((String) principal);
