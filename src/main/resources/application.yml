@@ -102,6 +102,9 @@ openai:
   model: gpt-4
   secret-key: ${AI_SECRET_KEY}
 
+app:
+  frontend:
+    redirect-url: ${FRONT_URL}
 
 discord:
   webhooks:
