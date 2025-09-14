@@ -78,6 +78,7 @@ public class User extends BaseEntity{
 
     public void deactivate() {
         this.active = false;
+        this.name = "탈퇴한 사용자";
     }
 
     public void activate() {

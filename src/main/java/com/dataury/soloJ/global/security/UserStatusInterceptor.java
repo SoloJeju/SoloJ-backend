@@ -2,13 +2,13 @@ package com.dataury.soloJ.global.security;
 
 import com.dataury.soloJ.domain.user.entity.User;
 import com.dataury.soloJ.domain.user.repository.UserRepository;
+import com.dataury.soloJ.global.code.status.ErrorStatus;
+import com.dataury.soloJ.global.exception.GeneralException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import static com.dataury.soloJ.global.security.SecurityUtils.getCurrentUserId;
 
 @Component
 @RequiredArgsConstructor
@@ -28,10 +28,9 @@ public class UserStatusInterceptor implements HandlerInterceptor {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (!user.isActive()) {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write("비활성화된 계정입니다. 관리자에게 문의하세요.");
-                return false;
+                throw new GeneralException(ErrorStatus.INACTIVE_USER);
             }
+
         }
         return true;
     }

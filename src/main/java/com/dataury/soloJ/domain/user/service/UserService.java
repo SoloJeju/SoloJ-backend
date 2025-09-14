@@ -133,6 +133,10 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
         
         user.deactivate();
+
+        UserProfile userProfile = user.getUserProfile();
+        userProfile.deactivate();
+        userProfileRepository.save(userProfile);
         userRepository.save(user);
     }
 }

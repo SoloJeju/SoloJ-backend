@@ -71,4 +71,11 @@ public class UserProfile {
 
     }
 
+    public void deactivate() {
+        this.nickName = "탈퇴한 사용자";
+        this.imageUrl = null;
+        this.imageName = null;
+    }
+
+
 }

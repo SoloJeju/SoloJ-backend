@@ -41,6 +41,7 @@ public enum ErrorStatus implements BaseErrorCode {
     JWT_SIGNATURE_INVALID(HttpStatus.UNAUTHORIZED, "AUTH001", "JWT 서명이 올바르지 않습니다."),
     JWT_EXPIRED(HttpStatus.UNAUTHORIZED, "AUTH002", "JWT 토큰이 만료되었습니다."),
     JWT_MALFORMED(HttpStatus.UNAUTHORIZED, "AUTH003", "JWT 토큰이 올바르지 않은 형식입니다."),
+    INACTIVE_USER(HttpStatus.BAD_REQUEST,"AUTH004"," 이미 탈퇴한/비활성화된 유저입니다."),
 
     TOUR_API_FAIL(HttpStatus.BAD_REQUEST,"TOUR4001","TOUR API 호출에 실패하였습니다."),
     TOURIST_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND,"TOUR4002","해당 관광지를 찾을 수 없습니다."),
