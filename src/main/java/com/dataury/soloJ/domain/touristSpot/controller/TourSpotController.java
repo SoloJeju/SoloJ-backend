@@ -1,6 +1,7 @@
 package com.dataury.soloJ.domain.touristSpot.controller;
 
 import com.dataury.soloJ.domain.home.dto.HomeResponse;
+import com.dataury.soloJ.domain.review.entity.status.Difficulty;
 import com.dataury.soloJ.domain.touristSpot.dto.CursorTourSpotListResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
@@ -97,14 +98,22 @@ public class TourSpotController {
 
 
     @Operation(summary = "사용자 위치기반 관광지 조회")
-    @PostMapping("/nearby")
+    @GetMapping("/nearby")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "COMMON400", description = "잘못된 요청입니다.", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ApiResponse<TourSpotResponse.NearbySpotListResponse> getNearbyTouristSpots(
-            @RequestBody TourSpotRequest.NearbySpotRequestDto request) {
-        return ApiResponse.onSuccess(nearbySpotService.getNearbySpots(request));
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(required = false, defaultValue = "1000") Integer radius,
+            @RequestParam(required = false) Integer contentTypeId,
+            @RequestParam(required = false) Difficulty difficulty) {
+
+        TourSpotRequest.NearbySpotRequestDto dto =
+                new TourSpotRequest.NearbySpotRequestDto(latitude, longitude, radius, contentTypeId, difficulty);
+
+        return ApiResponse.onSuccess(nearbySpotService.getNearbySpots(dto));
     }
 
     @PostMapping("/search")

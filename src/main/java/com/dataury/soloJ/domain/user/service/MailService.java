@@ -14,7 +14,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MailService {
     private final JavaMailSender javaMailSender;
-    private static final String senderEmail = "financeus77@gmail.com";
+    private static final String senderEmail = "soloojeju@gmail.com";
 
     private final AuthService authService;
 
@@ -24,7 +24,7 @@ public class MailService {
     @Async
     public void sendMail(String mail) {
         authService.validateEmail(mail);
-        authService.duplicationCheckEmail(mail);
+//        authService.duplicationCheckEmail(mail);
         int number = createNumber();
         MimeMessage message = javaMailSender.createMimeMessage();
 

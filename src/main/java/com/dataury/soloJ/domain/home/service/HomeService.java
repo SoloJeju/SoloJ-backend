@@ -71,6 +71,7 @@ public class HomeService {
                         .title(spot.getName())         // 이름
                         .firstImage(spot.getFirstImage()) // 사진
                         .difficulty(spot.getDifficulty()) // 혼놀난이도
+                        .contentTypeId(spot.getContentTypeId())
                         .build())
                 .collect(Collectors.toList());
         
@@ -97,6 +98,7 @@ public class HomeService {
                 .map(review -> HomeResponse.LatestReviewDto.builder()
                         .reviewId(review.getId())
                         .contentId(review.getTouristSpot().getContentId())
+                        .contentTypeId(review.getTouristSpot().getContentTypeId())
                         .spotName(review.getTouristSpot().getName())        // 관광지 이름
                         .spotImage(review.getTouristSpot().getFirstImage()) // 관광지 사진
                         .content(review.getReviewText())                       // 리뷰 내용

@@ -28,6 +28,7 @@ public class HomeResponse {
     @AllArgsConstructor
     public static class RecommendSpotDto {
         private Long contentId;
+        private int contentTypeId;
         private String title;        // 이름
         private String firstImage;   // 사진
         private Difficulty difficulty; // 혼놀난이도
@@ -40,6 +41,7 @@ public class HomeResponse {
     public static class LatestReviewDto {
         private Long reviewId;
         private Long contentId;
+        private int contentTypeId;
         private String spotName;        // 관광지 이름
         private String spotImage;       // 관광지 사진
         private String content;         // 리뷰 내용

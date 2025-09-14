@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.UUID;
 
@@ -27,6 +28,13 @@ public class GlobalExceptionHandler {
                 .status(ex.getErrorReason().getHttpStatus())
                 .body(ApiResponse.onFailure(ex.getErrorReason().getCode(), ex.getMessage(), ""));
     }
+
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public void handleNoResourceFound(NoResourceFoundException e) {
+        // favicon 요청 같은건 굳이 로그 안 남김
+    }
+
 
 
     @ExceptionHandler(Exception.class)
