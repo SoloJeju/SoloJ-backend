@@ -405,14 +405,14 @@ public class ReviewService {
 
     // 관광지별 리뷰 조회 (커서 기반) 
     @Transactional(readOnly = true)
-    public CursorReviewListWithSpotAggResponse getReviewsBySpotByCursor(Long spotId, String cursor, int size) {
+    public CursorReviewListWithSpotAggResponse getReviewsBySpotByCursor(Long contentId, String cursor, int size) {
         // 1) 커서 파싱
         LocalDateTime cursorDateTime = decodeCursor(cursor);
 
         // 2) size+1 로 더 가져와서 hasNext 판별
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        List<Review> reviews = reviewRepository.findBySpotByCursor(spotId, cursorDateTime, pageable);
+        List<Review> reviews = reviewRepository.findBySpotByCursor(contentId, cursorDateTime, pageable);
 
         boolean hasNext = reviews.size() > size;
         if (hasNext) {
@@ -444,7 +444,7 @@ public class ReviewService {
                 : null;
 
         // 5) 관광지 Agg 로드 (평균/난이도비율/태그비율 포함)
-        ReviewListWithSpotAggResponse.SpotAggDto agg = spotAggReadService.load(spotId);
+        ReviewListWithSpotAggResponse.SpotAggDto agg = spotAggReadService.load(contentId);
 
         // 6) 합쳐서 반환
         return CursorReviewListWithSpotAggResponse.builder()

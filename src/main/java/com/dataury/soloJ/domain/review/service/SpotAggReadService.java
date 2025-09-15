@@ -15,18 +15,22 @@ public class SpotAggReadService {
     private final ReviewAggregateRepository aggRepo;
     private final ReviewRepository reviewRepository;
 
-    @Cacheable(cacheNames = "spotAggPct", key = "#spotId")
-    public ReviewListWithSpotAggResponse.SpotAggDto load(Long spotId) {
-        var diff = aggRepo.difficultyPct(spotId);
+    @Cacheable(cacheNames = "spotAggPct", key = "#contentId")
+    public ReviewListWithSpotAggResponse.SpotAggDto load(Long contentId) {
+        var diff = aggRepo.difficultyPct(contentId);
         int total = 0; double easy = 0, med = 0, hard = 0;
 
         if (!diff.isEmpty()) {
             var v = diff.get(0);
             total = safe(v.getTotal());
-            if (total > 0) { easy = n(v.getEasyPct()); med = n(v.getMediumPct()); hard = n(v.getHardPct()); }
+            if (total > 0) {
+                easy = n(v.getEasyPct());
+                med = n(v.getMediumPct());
+                hard = n(v.getHardPct());
+            }
         }
 
-        var top = aggRepo.topTagsWithPct(spotId).stream().map(v -> {
+        var top = aggRepo.topTagsWithPct(contentId).stream().map(v -> {
             var tag = toEnum(v.getTag());
             return new ReviewListWithSpotAggResponse.TagPctDto(
                     tag != null ? tag.getCode() : -1,
@@ -36,15 +40,16 @@ public class SpotAggReadService {
             );
         }).toList();
 
-        // 평균 rating 조회
-        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(spotId);
+        Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
 
         return ReviewListWithSpotAggResponse.SpotAggDto.builder()
-                .spotId(spotId).totalReviews(total)
+                .spotId(contentId) // contentId 그대로 내려줌
+                .totalReviews(total)
                 .easyPct(easy).mediumPct(med).hardPct(hard)
                 .averageRating(averageRating)
                 .topTags(top).build();
     }
+
 
     private int safe(Integer i){ return i==null?0:i; }
     private double n(Double d){ return d==null?0.0:d; }

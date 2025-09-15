@@ -13,6 +13,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -40,13 +42,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
         String kakaoNickname = (String) profile.get("nickname");
+        String encodedNickname = URLEncoder.encode(kakaoNickname, StandardCharsets.UTF_8);
 
-        // 프론트 주소로 리다이렉트 (쿼리 파라미터 전달)
         String redirectUrl = frontendRedirectUrl + "/auth/kakao/callback"
                 + "?accessToken=" + token
                 + "&userId=" + user.getId()
                 + "&isProfileCompleted=" + isProfileCompleted
-                + "&kakaoNickname=" + kakaoNickname;
+                + "&kakaoNickname=" + encodedNickname;
 
         response.sendRedirect(redirectUrl);
     }

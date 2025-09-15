@@ -6,7 +6,6 @@ import com.dataury.soloJ.domain.touristSpot.dto.TourApiResponse;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotRequest;
 import com.dataury.soloJ.domain.touristSpot.dto.TourSpotResponse;
 import com.dataury.soloJ.domain.touristSpot.entity.TouristSpot;
-import com.dataury.soloJ.domain.touristSpot.entity.TouristSpotReviewTag;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotRepository;
 import com.dataury.soloJ.domain.touristSpot.repository.TouristSpotReviewTagRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
@@ -16,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,80 +34,103 @@ public class TourSpotService {
     private final ReviewRepository reviewRepository;
 
     public TourSpotResponse.TourSpotListResponse getTourSpotsSummary(Pageable pageable, TourSpotRequest.TourSpotRequestDto filter) {
-        List<TourApiResponse.Item> items = tourApiService.fetchTouristSpots(pageable, filter);
 
-        // 관광지 contentId 리스트 추출
-        List<Long> contentIds = items.stream()
-                .map(item -> Long.valueOf(item.getContentid()))
+        List<TouristSpot> spots;
+        List<TourApiResponse.Item> items = new ArrayList<>();
+
+        // 필터 있는 경우 → DB 조회 (API 안 탐)
+        if (filter.getDifficulty() != null) {
+            spots = touristSpotRepository.findAllByDifficulty(filter.getDifficulty(), pageable);
+
+            // address, tel 누락된 경우 → API 호출해서 보강
+            for (TouristSpot spot : spots) {
+                if (spot.getAddress() == null || spot.getTel() == null) {
+                    List<TourApiResponse.Item> apiItems = tourApiService.fetchTouristSpotDetailCommon(spot.getContentId());
+                    if (!apiItems.isEmpty()) {
+                        TourApiResponse.Item apiItem = apiItems.get(0);
+                        spot.setAddress(apiItem.getAddr1());
+                        spot.setTel(apiItem.getTel());
+                        touristSpotRepository.save(spot);
+                    }
+                }
+            }
+
+        } else {
+            // 필터 없는 경우 → TourAPI 호출 + DB 동기화
+            items = tourApiService.fetchTouristSpots(pageable, filter);
+            List<Long> contentIds = items.stream()
+                    .map(item -> Long.valueOf(item.getContentid()))
+                    .toList();
+
+            List<TouristSpot> existingSpots = touristSpotRepository.findAllByContentIdIn(contentIds);
+            Map<Long, TouristSpot> spotMap = existingSpots.stream()
+                    .collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
+
+            spots = new ArrayList<>();
+            for (TourApiResponse.Item item : items) {
+                Long contentId = Long.valueOf(item.getContentid());
+                TouristSpot spot = spotMap.get(contentId);
+
+                if (spot == null) {
+                    // 새로 저장 시 address, tel도 함께 저장
+                    spot = touristSpotRepository.save(TouristSpot.builder()
+                            .contentId(contentId)
+                            .name(item.getTitle())
+                            .contentTypeId(Integer.parseInt(item.getContenttypeid()))
+                            .firstImage(item.getFirstimage())
+                            .address(item.getAddr1())
+                            .tel(item.getTel())
+                            .build());
+                } else {
+                    // 이미 있는 경우에도 address, tel 업데이트
+                    if (spot.getAddress() == null || spot.getTel() == null) {
+                        spot.setAddress(item.getAddr1());
+                        spot.setTel(item.getTel());
+                        touristSpotRepository.save(spot);
+                    }
+                }
+                spots.add(spot);
+            }
+        }
+
+        // 공통 처리 (태그, 동행방, 리뷰)
+        Map<Long, String> tagMap = tagRepository.findAllByTouristSpotIn(spots).stream()
+                .collect(Collectors.toMap(
+                        tag -> tag.getTouristSpot().getContentId(),
+                        tag -> tag.getReviewTag().getDescription(),
+                        (existing, replacement) -> existing // 중복 있을 때 기존 것 유지
+                ));
+
+        Map<Long, Integer> roomCountMap = chatRoomRepository.countOpenRoomsBySpotIds(
+                spots.stream().map(TouristSpot::getContentId).toList()
+        ).stream().collect(Collectors.toMap(
+                row -> (Long) row[0],
+                row -> ((Long) row[1]).intValue()
+        ));
+
+        List<TourSpotResponse.TourSpotItemWithReview> result = spots.stream()
+                .map(spot -> {
+                    Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(spot.getContentId());
+                    return TourSpotResponse.TourSpotItemWithReview.builder()
+                            .contentid(String.valueOf(spot.getContentId()))
+                            .contenttypeid(String.valueOf(spot.getContentTypeId()))
+                            .title(spot.getName())
+                            .addr1(spot.getAddress())
+                            .firstimage(spot.getFirstImage())
+                            .tel(spot.getTel())
+                            .difficulty(spot.getDifficulty())
+                            .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
+                            .companionRoomCount(roomCountMap.getOrDefault(spot.getContentId(), 0))
+                            .averageRating(averageRating)
+                            .build();
+                })
                 .toList();
 
-        List<TouristSpot> spots = touristSpotRepository.findAllByContentIdIn(contentIds);
-
-        // 관광지 ID → TouristSpot 맵핑
-        Map<Long, TouristSpot> spotMap = spots.stream()
-                .collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
-
-        // 관광지 태그들 한 번에 조회
-        List<TouristSpotReviewTag> allTags = tagRepository.findAllByTouristSpotIn(spots);
-
-        // 관광지 ID → description 리스트 매핑
-        Map<Long, List<String>> tagMap = allTags.stream()
-                .collect(Collectors.groupingBy(
-                        tag -> tag.getTouristSpot().getContentId(),
-                        Collectors.mapping(tag -> tag.getReviewTag().getDescription(), Collectors.toList())
-                ));
-
-        // 동행방 개수 한 번에 조회
-        List<Object[]> counts = chatRoomRepository.countOpenRoomsBySpotIds(contentIds);
-        Map<Long, Integer> roomCountMap = counts.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> ((Long) row[1]).intValue()
-                ));
-
-        // 최종 응답 리스트 생성
-        List<TourSpotResponse.TourSpotItemWithReview> result = items.stream().map(item -> {
-            Long contentId = Long.valueOf(item.getContentid());
-
-            // DB에 없으면 새로 저장
-            TouristSpot spot = spotMap.get(contentId);
-            if (spot == null) {
-                spot = touristSpotRepository.save(TouristSpot.builder()
-                        .contentId(contentId)
-                        .name(item.getTitle())
-                        .contentTypeId(Integer.parseInt(item.getContenttypeid()))
-                        .firstImage(item.getFirstimage())
-                        .build());
-            }
-
-
-            // 평균 별점 계산
-            Double averageRating = reviewRepository.findAverageRatingByTouristSpotContentId(contentId);
-
-            return TourSpotResponse.TourSpotItemWithReview.builder()
-                    .contentid(item.getContentid())
-                    .contenttypeid(item.getContenttypeid())
-                    .title(item.getTitle())
-                    .addr1(item.getAddr1())
-                    .firstimage(item.getFirstimage())
-                    .tel(item.getTel())
-                    .difficulty(spot.getDifficulty())
-                    .reviewTags(spot.getReviewTag() != null ? spot.getReviewTag().getDescription() : null)
-                    .companionRoomCount(roomCountMap.getOrDefault(contentId, 0))
-                    .averageRating(averageRating)
-                    .build();
-        })
-        // 난이도 필터링 적용
-        .filter(item -> {
-            if (filter.getDifficulty() == null) {
-                return true; // 필터가 없으면 모두 조회
-            }
-            return item.getDifficulty() == filter.getDifficulty();
-        })
-        .toList();
 
         return new TourSpotResponse.TourSpotListResponse(result);
     }
+
+
 
 
     public TourSpotResponse.TourSpotDetailDto getTourSpotDetailCommon(Long contentId, Long contentTypeId) {

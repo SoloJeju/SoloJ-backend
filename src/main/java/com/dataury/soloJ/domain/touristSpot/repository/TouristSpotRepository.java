@@ -45,4 +45,6 @@ public interface TouristSpotRepository extends JpaRepository<TouristSpot, Long> 
                                                @Param("difficulty") Difficulty difficulty,
                                                @Param("cursor") LocalDateTime cursor,
                                                Pageable pageable);
+
+    List<TouristSpot> findAllByDifficulty(Difficulty difficulty, Pageable pageable);
 }
