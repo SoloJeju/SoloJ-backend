@@ -73,19 +73,20 @@ public class HomeCacheService {
         }
         return null;
     }
-    
-    // 사용자별 추천 동행방 캐싱
-    public void cacheUserRecommendedRooms(Long userId, List<HomeResponse.OpenChatRoomDto> rooms) {
-        try {
-            String key = USER_RECOMMENDED_ROOMS_KEY + userId + ":" + getTodayKey();
-            String value = objectMapper.writeValueAsString(rooms);
-            redisTemplate.opsForValue().set(key, value, CACHE_DURATION);
 
-        } catch (Exception e) {
+//    // 사용자별 추천 동행방 캐싱 (TTL 따로 설정)
+//    public void cacheUserRecommendedRooms(Long userId, List<HomeResponse.OpenChatRoomDto> rooms) {
+//        try {
+//            String key = USER_RECOMMENDED_ROOMS_KEY + userId + ":" + getTodayKey();
+//            String value = objectMapper.writeValueAsString(rooms);
+//            // TTL을 1시간으로 변경
+//            redisTemplate.opsForValue().set(key, value, Duration.ofHours(1));
+//        } catch (Exception e) {
+//            log.error("Failed to cache user recommended rooms for user {}: {}", userId, e.getMessage());
+//        }
+//    }
 
-        }
-    }
-    
+
     public List<HomeResponse.OpenChatRoomDto> getUserRecommendedRooms(Long userId) {
         try {
             String key = USER_RECOMMENDED_ROOMS_KEY + userId + ":" + getTodayKey();

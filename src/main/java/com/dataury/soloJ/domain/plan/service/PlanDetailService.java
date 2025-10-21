@@ -41,6 +41,7 @@ public class PlanDetailService {
                     List<PlanResponseDto.SpotDetailDto> spots = entry.getValue().stream()
                             .map(location -> PlanResponseDto.SpotDetailDto.builder()
                                     .locationId(location.getId())
+                                    .contentTypeId(location.getTouristSpot().getContentTypeId())
                                     .arrivalDate(location.getArrivalDate())
                                     .duringDate(location.getDuringDate())
                                     .memo(location.getMemo())

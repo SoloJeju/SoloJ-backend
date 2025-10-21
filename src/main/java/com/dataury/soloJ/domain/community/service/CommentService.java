@@ -69,7 +69,7 @@ public class CommentService {
         if (!post.getUser().getId().equals(userId)) {
             notificationService.createCommentNotification(
                     post.getUser(),
-                    user.getName(),
+                    user.getUserProfile().getNickName(),
                     postId
             );
         }

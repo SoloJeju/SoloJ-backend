@@ -25,8 +25,8 @@ public class AdminSystemController {
     @PostMapping("/auth/login")
     @Operation(summary = "관리자 로그인", description = "관리자 계정으로 로그인하여 토큰을 발급받습니다.")
     public ApiResponse<Map<String, String>> login(@RequestBody AdminLoginDto loginDto) {
-        String token = adminManagementService.authenticateAdmin(loginDto);
-        return ApiResponse.onSuccess(Map.of("token", token));
+        String accessToken = adminManagementService.authenticateAdmin(loginDto);
+        return ApiResponse.onSuccess(Map.of("accessToken", accessToken));
     }
 
     @GetMapping("/auth/permissions")

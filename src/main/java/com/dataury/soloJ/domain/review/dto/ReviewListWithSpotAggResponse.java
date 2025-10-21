@@ -42,6 +42,7 @@ public class ReviewListWithSpotAggResponse {
         private List<String> imageUrls;
         private String text;
         private String difficulty;
+        private Boolean receipt;
         private Integer rating;
         private LocalDateTime createdAt;
     }

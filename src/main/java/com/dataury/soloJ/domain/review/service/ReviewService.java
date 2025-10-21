@@ -1,5 +1,7 @@
 package com.dataury.soloJ.domain.review.service;
 
+import com.dataury.soloJ.domain.home.dto.HomeResponse;
+import com.dataury.soloJ.domain.home.service.HomeCacheService;
 import com.dataury.soloJ.domain.review.dto.CursorReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.review.dto.ReviewListWithSpotAggResponse;
 import com.dataury.soloJ.domain.review.dto.ReviewRequestDto;
@@ -43,6 +45,7 @@ public class ReviewService {
     private final GoogleOcrService googleOcrService;
     private final CacheManager cacheManager;
     private final SpotAggReadService spotAggReadService;
+    private final HomeCacheService homeCacheService;
 
     // contentTypeId로 리뷰 태그 목록 조회
     public List<ReviewResponseDto.ReviewTagResponseDto> getTagsByContentTypeId(int contentTypeId) {
@@ -137,6 +140,23 @@ public class ReviewService {
 
         evictSpotCaches(touristSpot.getContentId());
 
+        // 리뷰 저장 후 캐시 갱신
+        List<Review> latestReviews = reviewRepository.findTop2ByOrderByCreatedAtDesc();
+        List<HomeResponse.LatestReviewDto> reviewDtos = latestReviews.stream()
+                .map(r -> HomeResponse.LatestReviewDto.builder()
+                        .reviewId(r.getId())
+                        .contentId(r.getTouristSpot().getContentId())
+                        .contentTypeId(r.getTouristSpot().getContentTypeId())
+                        .spotName(r.getTouristSpot().getName())
+                        .spotImage(r.getTouristSpot().getFirstImage())
+                        .content(r.getReviewText())
+                        .rating(r.getRating())
+                        .build())
+                .toList();
+
+        homeCacheService.cacheLatestReviews(reviewDtos);
+
+
         return new ReviewResponseDto.ReviewDto(
                 savedReview.getId(),
                 savedReview.getReviewText()
@@ -230,6 +250,23 @@ public class ReviewService {
         touristSpot.updateAverageRating(averageRating);
         touristSpotRepository.save(touristSpot);
         evictSpotCaches(touristSpot.getContentId());
+
+        // 리뷰 저장 후 캐시 갱신
+        List<Review> latestReviews = reviewRepository.findTop2ByOrderByCreatedAtDesc();
+        List<HomeResponse.LatestReviewDto> reviewDtos = latestReviews.stream()
+                .map(r -> HomeResponse.LatestReviewDto.builder()
+                        .reviewId(r.getId())
+                        .contentId(r.getTouristSpot().getContentId())
+                        .contentTypeId(r.getTouristSpot().getContentTypeId())
+                        .spotName(r.getTouristSpot().getName())
+                        .spotImage(r.getTouristSpot().getFirstImage())
+                        .content(r.getReviewText())
+                        .rating(r.getRating())
+                        .build())
+                .toList();
+
+        homeCacheService.cacheLatestReviews(reviewDtos);
+
 
         return new ReviewResponseDto.ReviewDto(
                 updatedReview.getId(),
@@ -431,6 +468,7 @@ public class ReviewService {
                                 .map(img -> img.getImageUrl())
                                 .toList() : List.of())
                         .text(r.getReviewText())
+                        .receipt(r.getReceipt())
                         .difficulty(r.getDifficulty() != null ? r.getDifficulty().name() : "NONE")
                         .rating(r.getRating())
                         .createdAt(r.getCreatedAt())

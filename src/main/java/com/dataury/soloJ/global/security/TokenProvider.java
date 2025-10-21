@@ -39,6 +39,9 @@ public class TokenProvider {
     }
 
     public String generateAccessToken(User user) {
+        if (!user.isActive()) {
+            throw new GeneralException(ErrorStatus.INACTIVE_USER);
+        }
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("userId", user.getId())

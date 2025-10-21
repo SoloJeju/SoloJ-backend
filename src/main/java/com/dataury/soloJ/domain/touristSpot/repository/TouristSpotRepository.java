@@ -47,4 +47,6 @@ public interface TouristSpotRepository extends JpaRepository<TouristSpot, Long> 
                                                Pageable pageable);
 
     List<TouristSpot> findAllByDifficulty(Difficulty difficulty, Pageable pageable);
+
+    List<TouristSpot> findAllByDifficultyAndContentTypeId(Difficulty difficulty, int contentTypeId, Pageable pageable);
 }

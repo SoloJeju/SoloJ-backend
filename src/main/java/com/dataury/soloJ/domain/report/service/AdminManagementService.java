@@ -21,12 +21,14 @@ import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.dataury.soloJ.global.security.SecurityUtils;
+import com.dataury.soloJ.global.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,8 @@ public class AdminManagementService {
     private final CommentRepository commentRepository;
     private final InquiryRepository inquiryRepository;
     private final NotificationService notificationService;
+    private final TokenProvider tokenProvider;
+    private final PasswordEncoder passwordEncoder; // 있으면 로그인 검증 가능
 
     // ===== 대시보드 & 신고 관리 =====
     
@@ -564,8 +568,9 @@ public class AdminManagementService {
         if (admin.getRole() != Role.ADMIN) {
             throw new GeneralException(ErrorStatus.ADMIN_PERMISSION_DENIED);
         }
-        
-        return "admin-jwt-token-" + admin.getId();
+
+        return tokenProvider.generateAccessToken(admin);
+
     }
 
     public Map<String, Object> getAdminPermissions() {

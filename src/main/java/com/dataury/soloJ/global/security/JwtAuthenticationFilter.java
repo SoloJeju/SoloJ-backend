@@ -1,5 +1,7 @@
 package com.dataury.soloJ.global.security;
 
+import com.dataury.soloJ.domain.user.entity.User;
+import com.dataury.soloJ.domain.user.repository.UserRepository;
 import com.dataury.soloJ.global.code.status.ErrorStatus;
 import com.dataury.soloJ.global.exception.GeneralException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,8 +9,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,10 +28,12 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private TokenProvider tokenProvider;
+
+    private final TokenProvider tokenProvider;
+    private final UserRepository userRepository;
 
     private static final List<String> WHITELIST = List.of(
             "/api/reports/reasons",
@@ -46,31 +50,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            String token = parseBearerToken(request);
+            if (isWhitelisted(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
+            String token = parseBearerToken(request);
             if (!StringUtils.hasText(token) || token.equalsIgnoreCase("null")) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
+            if (!tokenProvider.isValidToken(token)) {
+                throw new GeneralException(ErrorStatus.JWT_MALFORMED);
+            }
+
             Long userId = tokenProvider.extractUserIdFromToken(token);
             String role = tokenProvider.extractUserRoleFromToken(token);
+
+            // DB에서 active 확인
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+            if (!user.isActive()) {
+                throw new GeneralException(ErrorStatus.INACTIVE_USER);
+            }
 
             // 권한 세팅
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-            // Principal을 DTO로 세팅
             JwtUserPrincipal principal = new JwtUserPrincipal(userId, role);
-
             AbstractAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-            securityContext.setAuthentication(authentication);
-            SecurityContextHolder.setContext(securityContext);
-
-            log.info("➡️ 최종 Authentication={}", SecurityContextHolder.getContext().getAuthentication());
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
 
             filterChain.doFilter(request, response);
 
@@ -98,4 +113,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "message", ex.getErrorReasonHttpStatus().getMessage()
         )));
     }
+
+
 }

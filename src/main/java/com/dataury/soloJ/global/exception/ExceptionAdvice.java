@@ -1,6 +1,5 @@
 package com.dataury.soloJ.global.exception;
 
-
 import com.dataury.soloJ.global.ApiResponse;
 import com.dataury.soloJ.global.code.ErrorReasonDTO;
 import com.dataury.soloJ.global.code.status.ErrorStatus;

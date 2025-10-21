@@ -41,7 +41,7 @@ public class HomeService {
                 .recommendedChatRooms(getRecommendedChatRooms(userId))
                 .build();
     }
-    
+
     // 오늘의 추천 장소 Top3 (하루마다 랜덤으로 변경)
     public List<HomeResponse.RecommendSpotDto> getTodayRecommendedSpots() {
         // 캐시에서 먼저 조회
@@ -49,39 +49,48 @@ public class HomeService {
         if (cachedSpots != null && !cachedSpots.isEmpty()) {
             return cachedSpots;
         }
-        
-        // 캐시에 없으면 DB에서 조회하고 랜덤 선택
+
+        // 캐시에 없으면 DB에서 조회
         List<TouristSpot> allSpots = touristSpotRepository.findAll();
         if (allSpots.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
+        // ✅ contentId가 null인 관광지 제외
+        List<TouristSpot> validSpots = allSpots.stream()
+                .filter(spot -> spot.getContentId() != null)
+                .collect(Collectors.toList());
+
+        if (validSpots.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         // 오늘 날짜를 시드로 사용하여 매일 같은 랜덤 결과 보장
         long seed = LocalDate.now().toEpochDay();
         Random random = new Random(seed);
-        
-        Collections.shuffle(allSpots, random);
-        List<TouristSpot> selectedSpots = allSpots.stream()
+
+        Collections.shuffle(validSpots, random);
+        List<TouristSpot> selectedSpots = validSpots.stream()
                 .limit(3)
                 .collect(Collectors.toList());
-        
+
         List<HomeResponse.RecommendSpotDto> spotDtos = selectedSpots.stream()
                 .map(spot -> HomeResponse.RecommendSpotDto.builder()
                         .contentId(spot.getContentId())
-                        .title(spot.getName())         // 이름
-                        .firstImage(spot.getFirstImage()) // 사진
-                        .difficulty(spot.getDifficulty()) // 혼놀난이도
+                        .title(spot.getName())             // 관광지 이름
+                        .firstImage(spot.getFirstImage())  // 사진
+                        .difficulty(spot.getDifficulty())  // 혼놀난이도
                         .contentTypeId(spot.getContentTypeId())
                         .build())
                 .collect(Collectors.toList());
-        
+
         // 캐시에 저장
         cacheService.cacheTodayRecommendedSpots(spotDtos);
-        
 
         return spotDtos;
     }
-    
+
+
     // 최신 혼자 후기 2개 (Redis 우선 조회)
     public List<HomeResponse.LatestReviewDto> getLatestReviews() {
         // 캐시에서 먼저 조회
@@ -121,6 +130,12 @@ public class HomeService {
         if (openRooms.isEmpty()) {
             return Collections.emptyList();
         }
+
+        // ✅ 인원이 꽉 찬 방은 제외
+        openRooms = openRooms.stream()
+                .filter(room -> room.getNumberOfMembers() <
+                        (room.getMaxMembers() != null ? room.getMaxMembers() : Long.MAX_VALUE))
+                .collect(Collectors.toList());
         
         // 로그인한 사용자인 경우 성별 필터링 적용
         if (userId != null) {
@@ -140,13 +155,13 @@ public class HomeService {
 
             }
             
-            // 캐시에서 먼저 조회 (성별 필터링 이후)
-            List<HomeResponse.OpenChatRoomDto> cachedRooms = cacheService.getUserRecommendedRooms(userId);
-            if (cachedRooms != null && !cachedRooms.isEmpty()) {
-
-                return cachedRooms;
-            }
-            
+//            // 캐시에서 먼저 조회 (성별 필터링 이후)
+//            List<HomeResponse.OpenChatRoomDto> cachedRooms = cacheService.getUserRecommendedRooms(userId);
+//            if (cachedRooms != null && !cachedRooms.isEmpty()) {
+//
+//                return cachedRooms;
+//            }
+//
             // 사용자별 시드 생성 (userId + 오늘 날짜)
             long seed = userId + LocalDate.now().toEpochDay();
             Random random = new Random(seed);
@@ -176,12 +191,12 @@ public class HomeService {
                 .collect(Collectors.toList());
         
         // 토큰이 있는 경우에만 캐시에 저장
-        if (userId != null) {
-            cacheService.cacheUserRecommendedRooms(userId, roomDtos);
-
-        } else {
-
-        }
+//        if (userId != null) {
+//            cacheService.cacheUserRecommendedRooms(userId, roomDtos);
+//
+//        } else {
+//
+//        }
         
         return roomDtos;
     }

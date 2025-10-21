@@ -40,7 +40,15 @@ public class TourSpotService {
 
         // 필터 있는 경우 → DB 조회 (API 안 탐)
         if (filter.getDifficulty() != null) {
-            spots = touristSpotRepository.findAllByDifficulty(filter.getDifficulty(), pageable);
+            if (filter.getContentTypeId() != null) {
+                spots = touristSpotRepository.findAllByDifficultyAndContentTypeId(
+                        filter.getDifficulty(),
+                        filter.getContentTypeId(),
+                        pageable
+                );
+            } else {
+                spots = touristSpotRepository.findAllByDifficulty(filter.getDifficulty(), pageable);
+            }
 
             // address, tel 누락된 경우 → API 호출해서 보강
             for (TouristSpot spot : spots) {

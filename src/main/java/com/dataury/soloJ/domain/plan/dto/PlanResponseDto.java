@@ -62,6 +62,7 @@ public class PlanResponseDto {
     @AllArgsConstructor
     public static class SpotDetailDto {
         private Long locationId;
+        private int contentTypeId;
         private LocalDateTime arrivalDate;
         private LocalDateTime duringDate;
         private String memo;
